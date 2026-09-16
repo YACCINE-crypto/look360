@@ -4,5 +4,5 @@
 project_id = "look360"
 
 [db]
-# Version majeure de Postgres (Supabase = 15 par défaut).
-major_version = 15
+# Version majeure de Postgres du projet distant.
+major_version = 17
