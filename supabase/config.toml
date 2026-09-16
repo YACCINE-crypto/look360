@@ -1,0 +1,8 @@
+# Configuration minimale du projet Supabase local (CLI).
+# `project_id` est un simple nom de référence local ; le vrai projet distant
+# est associé via `supabase link --project-ref <ref>`.
+project_id = "look360"
+
+[db]
+# Version majeure de Postgres (Supabase = 15 par défaut).
+major_version = 15
