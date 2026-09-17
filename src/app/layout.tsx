@@ -10,6 +10,16 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: "Look360",
   description: "Recherche & testing produit COD",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/icon-192.png",
+    apple: "/icon-192.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Look360",
+  },
 };
 
 // Prise en compte des zones de sécurité (encoche iOS) — système Kimba.
@@ -17,6 +27,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: "#1a56db",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

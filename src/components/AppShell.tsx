@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { SidebarNav } from "./Nav";
 import { Icon } from "./Icon";
+import { NotifBell } from "./NotifBell";
 import { logout } from "@/app/login/actions";
 
 /**
@@ -70,6 +71,7 @@ function Sidebar({
             <p className="text-muted-foreground text-xs capitalize">{role}</p>
           </div>
         </div>
+        <NotifBell />
         <form action={logout}>
           <button
             type="submit"
