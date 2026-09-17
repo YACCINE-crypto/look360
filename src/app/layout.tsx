@@ -10,10 +10,14 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: "Look360",
   description: "Recherche & testing produit COD",
-  manifest: "/manifest.webmanifest",
+  manifest: "/manifest.json",
   icons: {
-    icon: "/icon-192.png",
-    apple: "/icon-192.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-32.png", type: "image/png", sizes: "32x32" },
+      { url: "/favicon-16.png", type: "image/png", sizes: "16x16" },
+    ],
+    apple: "/apple-touch-icon.png",
   },
   appleWebApp: {
     capable: true,

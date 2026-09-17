@@ -14,17 +14,13 @@ import { logout } from "@/app/login/actions";
  */
 
 function Brand({ compact = false }: { compact?: boolean }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span
-        className={`bg-primary text-primary-foreground grid place-items-center rounded-lg font-bold ${
-          compact ? "h-7 w-7 text-xs" : "h-8 w-8 text-sm"
-        }`}
-      >
-        L
-      </span>
-      <span className="text-lg font-bold tracking-tight">Look360</span>
-    </div>
+  // Mobile compact : icône seule. Desktop : logo complet (icône + nom).
+  return compact ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src="/look360-icon.svg" alt="Look360" className="h-8 w-8" />
+  ) : (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src="/look360-logo.svg" alt="Look360" className="h-8 w-auto" />
   );
 }
 
