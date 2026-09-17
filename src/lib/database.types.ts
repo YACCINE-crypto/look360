@@ -15,6 +15,7 @@ export type Database = {
       produits: {
         Row: {
           angle_marketing: string | null
+          categorie: string | null
           cout_livre_estime: number | null
           created_at: string
           date_a_travailler: string | null
@@ -39,6 +40,7 @@ export type Database = {
         }
         Insert: {
           angle_marketing?: string | null
+          categorie?: string | null
           cout_livre_estime?: number | null
           created_at?: string
           date_a_travailler?: string | null
@@ -63,6 +65,7 @@ export type Database = {
         }
         Update: {
           angle_marketing?: string | null
+          categorie?: string | null
           cout_livre_estime?: number | null
           created_at?: string
           date_a_travailler?: string | null

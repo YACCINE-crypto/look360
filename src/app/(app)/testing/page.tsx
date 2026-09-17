@@ -1,51 +1,69 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { Icon } from "@/components/Icon";
 import { marcheLabel, formatFCFA } from "@/lib/produits";
+import { margeParProduit, margeColorClass } from "@/lib/testing";
 
 export default async function TestingPage() {
   const supabase = await createClient();
-  const { data: produits } = await supabase
-    .from("produits")
-    .select("*")
-    .eq("statut", "en_test")
-    .order("created_at", { ascending: false });
+  const [{ data: produits }, { data: tests }] = await Promise.all([
+    supabase
+      .from("produits")
+      .select("*")
+      .eq("statut", "en_test")
+      .order("created_at", { ascending: false }),
+    supabase.from("tests").select("*").order("created_at", { ascending: false }),
+  ]);
+
+  const marges = margeParProduit(tests ?? []);
 
   return (
-    <div>
-      <h1 className="text-2xl font-semibold tracking-tight">Testing</h1>
-      <p className="text-sm text-zinc-500">
-        {produits?.length ?? 0} produit{(produits?.length ?? 0) > 1 ? "s" : ""} en
-        test — ouvre une fiche pour saisir les chiffres réels et voir le verdict.
-      </p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Tests</h1>
+        <p className="text-muted-foreground text-sm">
+          {produits?.length ?? 0} produit
+          {(produits?.length ?? 0) > 1 ? "s" : ""} en test — ouvre une fiche pour
+          saisir les chiffres et voir le verdict.
+        </p>
+      </div>
 
       {produits && produits.length === 0 && (
-        <p className="mt-8 text-sm text-zinc-500">
-          Aucun produit en test.{" "}
-          <Link href="/recherche" className="underline">
+        <div className="border-border bg-surface rounded-xl border border-dashed p-12 text-center">
+          <p className="text-muted-foreground text-sm">Aucun produit en test.</p>
+          <Link
+            href="/recherche"
+            className="text-primary mt-3 inline-block text-sm font-medium hover:underline"
+          >
             Envoie-en un depuis la page Recherche.
           </Link>
-        </p>
+        </div>
       )}
 
-      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {produits?.map((p) => (
-          <Link
-            key={p.id}
-            href={`/testing/${p.id}`}
-            className="group flex items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
-          >
-            <div>
-              <p className="font-medium">{p.nom ?? "Sans nom"}</p>
-              <p className="text-sm text-zinc-500">
-                {marcheLabel(p.marche)} · Coût livré{" "}
-                {formatFCFA(p.cout_livre_estime)}
-              </p>
-            </div>
-            <span className="text-sm text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-100">
-              Ouvrir →
-            </span>
-          </Link>
-        ))}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {produits?.map((p) => {
+          const marge = marges[p.id] ?? null;
+          return (
+            <Link
+              key={p.id}
+              href={`/testing/${p.id}`}
+              className="border-border bg-surface hover:border-primary/40 flex items-center justify-between gap-4 rounded-xl border p-4 transition-colors"
+            >
+              <div>
+                <p className="font-semibold">{p.nom ?? "Sans nom"}</p>
+                <p className="text-muted-foreground text-sm">
+                  {marcheLabel(p.marche)} · {formatFCFA(p.cout_livre_estime)}
+                  {marge !== null && (
+                    <span className={`ml-2 font-medium ${margeColorClass(marge)}`}>
+                      {marge.toFixed(0)}% marge
+                    </span>
+                  )}
+                </p>
+              </div>
+              <Icon name="chevronRight" size={18} className="text-muted-foreground" />
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

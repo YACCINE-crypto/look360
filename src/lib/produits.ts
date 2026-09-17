@@ -23,15 +23,14 @@ export const STATUT_LABELS: Record<Statut, string> = {
   abandonne: "Abandonné",
 };
 
-// Classes Tailwind pour le badge de statut.
+// Classes Tailwind (tokens Banani) pour le chip de statut.
 export const STATUT_BADGE: Record<Statut, string> = {
-  idee: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
-  a_tester: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
-  en_test: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-  valide: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300",
-  production:
-    "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
-  abandonne: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
+  idee: "bg-chip-idee text-chip-idee-fg",
+  a_tester: "bg-chip-bleu text-chip-bleu-fg",
+  en_test: "bg-chip-bleu text-chip-bleu-fg",
+  valide: "bg-chip-valide text-chip-valide-fg",
+  production: "bg-primary text-primary-foreground",
+  abandonne: "bg-danger-bg text-danger",
 };
 
 // --- Marchés ciblés (§8 : FCFA partout) ---
@@ -50,6 +49,18 @@ export function marcheLabel(code: string | null): string {
   if (!code) return "—";
   return MARCHES.find((m) => m.code === code)?.label ?? code;
 }
+
+// --- Catégories produit (design "Nouveau produit") ---
+export const CATEGORIES = [
+  "Santé & Bien-être",
+  "Beauté & Cheveux",
+  "Tech & Accessoires",
+  "Maison & Jardin",
+  "Mode & Accessoires",
+  "Bébé & Enfant",
+  "Auto & Moto",
+  "Sport & Plein air",
+] as const;
 
 // --- Émotions / angles (§3 : biblio d'angles) ---
 export const EMOTIONS = [
@@ -90,15 +101,39 @@ export function formatFCFA(value: number | null | undefined): string {
   ) + " FCFA";
 }
 
+/** Nombre de jours entre aujourd'hui et la date (négatif = passé), ou null. */
+export function joursRestants(dateISO: string | null): number | null {
+  if (!dateISO) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const d = new Date(dateISO + "T00:00:00");
+  return Math.round((d.getTime() - today.getTime()) / 86_400_000);
+}
+
 /**
  * Badge d'échéance planning : true si la date est aujourd'hui ou dans <= 2 jours
  * (aligné sur la règle des notifs, §6).
  */
 export function echeanceProche(dateISO: string | null): boolean {
-  if (!dateISO) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const d = new Date(dateISO + "T00:00:00");
-  const diffJours = Math.round((d.getTime() - today.getTime()) / 86_400_000);
-  return diffJours <= 2;
+  const j = joursRestants(dateISO);
+  return j !== null && j <= 2;
+}
+
+/** Libellé court d'échéance : "Aujourd'hui", "Dans 3j", "Retard 2j". */
+export function echeanceLabel(dateISO: string | null): string | null {
+  const j = joursRestants(dateISO);
+  if (j === null) return null;
+  if (j === 0) return "Aujourd'hui";
+  if (j < 0) return `Retard ${-j}j`;
+  return `Dans ${j}j`;
+}
+
+/** Échéance planning la plus proche entre les deux dates du produit. */
+export function prochaineEcheance(
+  dateATravailler: string | null,
+  dateTest: string | null,
+): string | null {
+  const dates = [dateATravailler, dateTest].filter(Boolean) as string[];
+  if (dates.length === 0) return null;
+  return dates.sort()[0];
 }

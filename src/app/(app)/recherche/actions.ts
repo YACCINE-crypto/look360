@@ -20,7 +20,7 @@ function str(formData: FormData, key: string): string | null {
   return raw === "" ? null : raw;
 }
 
-/** Création d'un produit (page Recherche). */
+/** Création d'un produit (panneau ou page). */
 export async function createProduit(formData: FormData): Promise<void> {
   const supabase = await createClient();
   const {
@@ -28,14 +28,16 @@ export async function createProduit(formData: FormData): Promise<void> {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const backTo = String(formData.get("redirect_to") ?? "/recherche");
   const nom = str(formData, "nom");
   if (!nom) {
-    redirect("/recherche/nouveau?error=nom");
+    redirect(`${backTo}?error=nom`);
   }
 
   const payload: ProduitInsert = {
     nom,
     soumis_par: user.id,
+    categorie: str(formData, "categorie"),
     image_url: str(formData, "image_url"),
     lien_source: str(formData, "lien_source"),
     lien_concurrent: str(formData, "lien_concurrent"),
@@ -44,6 +46,8 @@ export async function createProduit(formData: FormData): Promise<void> {
     angle_marketing: str(formData, "angle_marketing"),
     emotion_tag: str(formData, "emotion_tag"),
     marche: str(formData, "marche"),
+    // Le design saisit un "Coût livré" direct : stocké dans prix_sourcing
+    // (poids/frais optionnels) => la colonne générée cout_livre_estime le reflète.
     prix_sourcing: num(formData, "prix_sourcing"),
     poids_kg: num(formData, "poids_kg"),
     frais_logistiques_kilo: num(formData, "frais_logistiques_kilo"),
@@ -55,11 +59,12 @@ export async function createProduit(formData: FormData): Promise<void> {
 
   const { error } = await supabase.from("produits").insert(payload);
   if (error) {
-    redirect("/recherche/nouveau?error=save");
+    redirect(`${backTo}?error=save`);
   }
 
   revalidatePath("/recherche");
-  redirect("/recherche");
+  revalidatePath("/pipeline");
+  redirect(backTo.split("?")[0]);
 }
 
 /** Change le statut d'un produit (ex. "Envoyer en test" -> en_test). */
@@ -80,6 +85,15 @@ export async function setStatut(id: string, statut: Statut): Promise<void> {
 export async function envoyerEnTest(formData: FormData): Promise<void> {
   const id = String(formData.get("id") ?? "");
   if (id) await setStatut(id, "en_test");
+}
+
+/** Bouton "Production" (Pipeline, colonne Validé). */
+export async function passerEnProduction(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "");
+  if (id) {
+    await setStatut(id, "production");
+    revalidatePath("/pipeline");
+  }
 }
 
 /** Suppression d'un produit. */

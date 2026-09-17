@@ -1,7 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/app/login/actions";
+import { SidebarNav, BottomNav } from "@/components/Nav";
+import { Icon } from "@/components/Icon";
 
 export default async function AppLayout({
   children,
@@ -20,50 +21,73 @@ export default async function AppLayout({
     .eq("id", user.id)
     .maybeSingle();
 
+  const displayName = profile?.nom ?? user.email ?? "Utilisateur";
+  const initials = displayName.slice(0, 2).toUpperCase();
+
   return (
-    <div className="min-h-full">
-      <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-3">
-          <div className="flex items-center gap-6">
-            <Link href="/recherche" className="font-semibold tracking-tight">
-              Look360
-            </Link>
-            <nav className="flex items-center gap-1 text-sm">
-              <Link
-                href="/recherche"
-                className="rounded-md px-3 py-1.5 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-              >
-                Recherche
-              </Link>
-              <Link
-                href="/testing"
-                className="rounded-md px-3 py-1.5 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-              >
-                Testing
-              </Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-zinc-500 sm:inline">
-              {profile?.nom ?? user.email}
-              {profile?.role === "admin" && (
-                <span className="ml-1.5 rounded bg-zinc-900 px-1.5 py-0.5 text-[10px] font-medium uppercase text-white dark:bg-zinc-100 dark:text-zinc-900">
-                  admin
-                </span>
-              )}
-            </span>
-            <form action={logout}>
-              <button
-                type="submit"
-                className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
-              >
-                Déconnexion
-              </button>
-            </form>
-          </div>
+    <div className="min-h-full md:flex">
+      {/* Sidebar desktop */}
+      <aside className="border-border bg-surface sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r p-4 md:flex">
+        <div className="flex items-center gap-2 px-2 py-1">
+          <span className="bg-primary text-primary-foreground grid h-8 w-8 place-items-center rounded-md text-sm font-bold">
+            L
+          </span>
+          <span className="text-lg font-bold tracking-tight">Look360</span>
         </div>
-      </header>
-      <main className="mx-auto max-w-5xl px-6 py-8">{children}</main>
+
+        <div className="mt-6 flex-1">
+          <SidebarNav />
+        </div>
+
+        <div className="border-border flex items-center gap-3 border-t pt-4">
+          <span className="bg-secondary text-secondary-foreground grid h-9 w-9 place-items-center rounded-full text-xs font-semibold">
+            {initials}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium">{displayName}</p>
+            <p className="text-muted-foreground text-xs capitalize">
+              {profile?.role ?? "—"}
+            </p>
+          </div>
+          <form action={logout}>
+            <button
+              type="submit"
+              title="Déconnexion"
+              className="text-muted-foreground hover:bg-input hover:text-foreground rounded-md p-2 transition-colors"
+            >
+              <Icon name="logout" size={18} />
+            </button>
+          </form>
+        </div>
+      </aside>
+
+      {/* Colonne principale */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        {/* Topbar mobile */}
+        <header className="border-border bg-surface sticky top-0 z-10 flex items-center justify-between border-b px-4 py-3 md:hidden">
+          <div className="flex items-center gap-2">
+            <span className="bg-primary text-primary-foreground grid h-7 w-7 place-items-center rounded-md text-xs font-bold">
+              L
+            </span>
+            <span className="font-bold tracking-tight">Look360</span>
+          </div>
+          <form action={logout}>
+            <button
+              type="submit"
+              title="Déconnexion"
+              className="text-muted-foreground hover:text-foreground rounded-md p-2"
+            >
+              <Icon name="logout" size={18} />
+            </button>
+          </form>
+        </header>
+
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-6 md:px-8 md:pb-10">
+          {children}
+        </main>
+      </div>
+
+      <BottomNav />
     </div>
   );
 }

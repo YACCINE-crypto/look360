@@ -153,6 +153,40 @@ export function verdictTierFromInput(input: TestInput): VerdictTier | null {
   return computeTest(input).verdict?.tier ?? null;
 }
 
+/** Marge % calculée depuis une ligne de test (ou null). */
+export function margePctFromTest(t: Test): number | null {
+  return computeTest({
+    prix_vente_prevu: t.prix_vente_prevu,
+    commandes_recues: t.commandes_recues,
+    commandes_confirmees: t.commandes_confirmees,
+    depense_pub: t.depense_pub,
+    cout_produit_estime: t.cout_produit_estime,
+    frais_livraison_prevu: t.frais_livraison_prevu,
+  }).margePct;
+}
+
+/**
+ * Construit une map produit_id -> marge % du test le plus récent.
+ * `tests` doit être trié du plus récent au plus ancien.
+ */
+export function margeParProduit(tests: Test[]): Record<string, number> {
+  const map: Record<string, number> = {};
+  for (const t of tests) {
+    if (t.produit_id in map) continue; // on garde le plus récent
+    const m = margePctFromTest(t);
+    if (m !== null) map[t.produit_id] = m;
+  }
+  return map;
+}
+
+/** Classe de couleur signal pour un % de marge (vert/ambre/rouge). */
+export function margeColorClass(margePct: number | null): string {
+  if (margePct === null) return "text-muted-foreground";
+  if (margePct >= 30) return "text-success";
+  if (margePct >= 15) return "text-warning";
+  return "text-danger";
+}
+
 export function verdictMeta(tier: string | null) {
   if (tier && tier in VERDICT_META) {
     return VERDICT_META[tier as VerdictTier];

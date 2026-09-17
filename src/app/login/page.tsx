@@ -7,18 +7,21 @@ export default function LoginPage() {
   const [error, formAction, pending] = useActionState(login, null);
 
   return (
-    <main className="flex flex-1 items-center justify-center px-4 py-16">
+    <main className="bg-background flex min-h-screen items-center justify-center px-4 py-16">
       <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">Look360</h1>
-          <p className="mt-1 text-sm text-zinc-500">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <span className="bg-primary text-primary-foreground mb-3 grid h-11 w-11 place-items-center rounded-lg text-lg font-bold">
+            L
+          </span>
+          <h1 className="text-2xl font-bold tracking-tight">Look360</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
             Recherche &amp; testing produit COD
           </p>
         </div>
 
         <form
           action={formAction}
-          className="space-y-4 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+          className="border-border bg-surface space-y-4 rounded-xl border p-6 shadow-sm"
         >
           <div className="space-y-1.5">
             <label htmlFor="email" className="text-sm font-medium">
@@ -30,7 +33,7 @@ export default function LoginPage() {
               type="email"
               autoComplete="email"
               required
-              className="w-full rounded-lg border border-zinc-300 bg-transparent px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:focus:border-zinc-100"
+              className="border-border bg-input focus:border-primary w-full rounded-md border px-3 py-2 text-sm outline-none"
             />
           </div>
 
@@ -44,18 +47,16 @@ export default function LoginPage() {
               type="password"
               autoComplete="current-password"
               required
-              className="w-full rounded-lg border border-zinc-300 bg-transparent px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:border-zinc-700 dark:focus:border-zinc-100"
+              className="border-border bg-input focus:border-primary w-full rounded-md border px-3 py-2 text-sm outline-none"
             />
           </div>
 
-          {error && (
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-          )}
+          {error && <p className="text-danger text-sm">{error}</p>}
 
           <button
             type="submit"
             disabled={pending}
-            className="w-full rounded-lg bg-zinc-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="bg-primary text-primary-foreground w-full rounded-md px-3 py-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
           >
             {pending ? "Connexion…" : "Se connecter"}
           </button>

@@ -1,26 +1,61 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   Look360 — Design system (tokens Banani, handoff §2)
+   Accent de marque = BLEU. Vert / ambre / rouge = signaux uniquement.
+   ========================================================================== */
+@theme {
+  /* Surfaces & texte */
+  --color-background: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-foreground: #111827;
+  --color-border: #e5e8ef;
+  --color-input: #f0f2f7;
+  --color-muted: #e5e8ef;
+  --color-muted-foreground: #6b7280;
+
+  /* Marque */
+  --color-primary: #1a56db;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #dbeafe;
+  --color-secondary-foreground: #1a56db;
+
+  /* Signaux */
+  --color-success: #16a34a;
+  --color-success-bg: #dcfce7;
+  --color-warning: #d97706;
+  --color-warning-bg: #fef3c7;
+  --color-danger: #dc2626;
+  --color-danger-bg: #fee2e2;
+
+  /* Chips de statut */
+  --color-chip-idee: #ede9fe;
+  --color-chip-idee-fg: #6d28d9;
+  --color-chip-bleu: #dbeafe;
+  --color-chip-bleu-fg: #1a56db;
+  --color-chip-valide: #dcfce7;
+  --color-chip-valide-fg: #16a34a;
+
+  /* Rayons */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  /* Typo */
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-lg: 17px;
+  --text-2xl: 24px;
+  --text-4xl: 38px;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  color-scheme: light;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
 }
