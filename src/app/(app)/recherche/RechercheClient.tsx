@@ -13,17 +13,19 @@ import { type Produit, type Tri } from "@/lib/produits";
 export function RechercheClient({
   produits,
   marges,
+  scores,
   stats,
   addError,
 }: {
   produits: Produit[];
   marges: Record<string, number>;
+  scores: Record<string, number>;
   stats: Stat[];
   addError?: string;
 }) {
   const [statut, setStatut] = useState("");
   const [marche, setMarche] = useState("");
-  const [tri, setTri] = useState<Tri>("recent");
+  const [tri, setTri] = useState<Tri>("score_desc");
   const [q, setQ] = useState("");
 
   // Filtrage + tri EN MÉMOIRE → réponse instantanée, aucun aller-retour serveur.
@@ -37,6 +39,12 @@ export function RechercheClient({
     });
     const arr = [...list];
     switch (tri) {
+      case "score_desc":
+        arr.sort((a, b) => (scores[b.id] ?? 0) - (scores[a.id] ?? 0));
+        break;
+      case "score_asc":
+        arr.sort((a, b) => (scores[a.id] ?? 0) - (scores[b.id] ?? 0));
+        break;
       case "ancien":
         arr.sort((a, b) => a.created_at.localeCompare(b.created_at));
         break;
@@ -50,7 +58,7 @@ export function RechercheClient({
         arr.sort((a, b) => b.created_at.localeCompare(a.created_at));
     }
     return arr;
-  }, [produits, statut, marche, tri, q]);
+  }, [produits, statut, marche, tri, q, scores]);
 
   return (
     <div className="space-y-4">
@@ -115,7 +123,12 @@ export function RechercheClient({
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((p) => (
-            <ProductCard key={p.id} p={p} marge={marges[p.id] ?? null} />
+            <ProductCard
+              key={p.id}
+              p={p}
+              marge={marges[p.id] ?? null}
+              score={scores[p.id] ?? null}
+            />
           ))}
         </div>
       )}

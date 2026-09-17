@@ -3,6 +3,7 @@ import { Icon } from "./Icon";
 import { StatusChip } from "./StatusChip";
 import { envoyerEnTest } from "@/app/(app)/recherche/actions";
 import { margeColorClass } from "@/lib/testing";
+import { scoreMeta } from "@/lib/score";
 import {
   marcheLabel,
   formatFCFA,
@@ -18,9 +19,11 @@ import {
 export function ProductCard({
   p,
   marge,
+  score,
 }: {
   p: Produit;
   marge?: number | null;
+  score?: number | null;
 }) {
   const statut = p.statut as Statut;
   const echeance = prochaineEcheance(p.date_a_travailler, p.date_lancement_testing);
@@ -48,9 +51,12 @@ export function ProductCard({
         <div className="absolute left-3 top-3">
           <StatusChip statut={statut} />
         </div>
-        {urgent && (
-          <span className="bg-warning-bg text-warning absolute right-3 top-3 rounded-full px-2 py-0.5 text-xs font-semibold">
-            Urgent
+        {score != null && (
+          <span
+            className={`absolute right-3 top-3 rounded-full px-2 py-0.5 text-xs font-semibold ${scoreMeta(score).badge}`}
+            title="Score produit gagnant (0–100)"
+          >
+            Score {score} · {scoreMeta(score).label}
           </span>
         )}
       </div>

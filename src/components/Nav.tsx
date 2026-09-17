@@ -9,6 +9,7 @@ const ITEMS = [
   { href: "/recherche", label: "Recherche", icon: "search" as const },
   { href: "/pipeline", label: "Pipeline", icon: "pipeline" as const },
   { href: "/testing", label: "Testing", icon: "flask" as const },
+  { href: "/angles", label: "Angles", icon: "tag" as const },
 ];
 
 function useActive() {

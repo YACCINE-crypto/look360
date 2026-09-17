@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { RechercheClient } from "./RechercheClient";
 import type { Stat } from "@/components/StatsStrip";
 import { margeParProduit } from "@/lib/testing";
+import { scoreParProduit } from "@/lib/score";
 
 export default async function RecherchePage({
   searchParams,
@@ -19,12 +20,14 @@ export default async function RecherchePage({
   ]);
 
   const marges = margeParProduit(tests ?? []);
+  const scores = scoreParProduit(produits ?? [], tests ?? []);
   const stats = buildStats(produits ?? [], tests ?? []);
 
   return (
     <RechercheClient
       produits={produits ?? []}
       marges={marges}
+      scores={scores}
       stats={stats}
       addError={error}
     />

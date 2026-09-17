@@ -14,6 +14,7 @@ type IconName =
   | "menu"
   | "bell"
   | "bellOff"
+  | "tag"
   | "x";
 
 const PATHS: Record<IconName, React.ReactNode> = {
@@ -78,6 +79,12 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="M6 8a6 6 0 0 0 0 0c0 7-3 9-3 9h13" />
       <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
       <path d="m2 2 20 20" />
+    </>
+  ),
+  tag: (
+    <>
+      <path d="M12 2H2v10l9.3 9.3a1 1 0 0 0 1.4 0l7.6-7.6a1 1 0 0 0 0-1.4z" transform="translate(1 0)" />
+      <circle cx="7.5" cy="7.5" r="1.3" />
     </>
   ),
   x: <path d="M18 6 6 18M6 6l12 12" />,

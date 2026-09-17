@@ -71,9 +71,26 @@ export const EMOTIONS = [
   "confort",
   "curiosite",
 ] as const;
+export type Emotion = (typeof EMOTIONS)[number];
+
+export const EMOTION_LABELS: Record<string, string> = {
+  peur: "Peur",
+  desir: "Désir",
+  statut: "Statut",
+  economie: "Économie",
+  confort: "Confort",
+  curiosite: "Curiosité",
+};
+
+export function emotionLabel(code: string | null): string {
+  if (!code) return "—";
+  return EMOTION_LABELS[code] ?? code;
+}
 
 // --- Tri de la page Recherche ---
 export const TRIS = {
+  score_desc: "Score (meilleur)",
+  score_asc: "Score (faible)",
   recent: "Plus récent",
   ancien: "Plus ancien",
   cout_asc: "Coût livré ↑",
