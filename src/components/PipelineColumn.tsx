@@ -57,7 +57,7 @@ export function PipelineColumn({
 
         <Link
           href="/recherche?add=1"
-          className="border-border text-muted-foreground hover:text-primary mt-auto flex items-center justify-center gap-1.5 rounded-lg border border-dashed py-2 text-sm font-medium"
+          className="border-border text-muted-foreground hover:text-primary mt-auto flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-dashed py-2 text-sm font-medium"
         >
           <Icon name="plus" size={14} />
           Ajouter
@@ -102,7 +102,7 @@ function PipelineCard({ p, marge }: { p: Produit; marge: number | null }) {
 
 function PipelineAction({ statut, id }: { statut: Statut; id: string }) {
   const btn =
-    "bg-secondary text-secondary-foreground block w-full rounded-md py-1.5 text-center text-xs font-semibold transition-colors hover:opacity-90";
+    "bg-secondary text-secondary-foreground flex min-h-[44px] w-full items-center justify-center rounded-md text-center text-xs font-semibold transition-colors hover:opacity-90";
   if (statut === "a_tester") {
     return (
       <form action={envoyerEnTest}>

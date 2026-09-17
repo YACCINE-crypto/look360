@@ -34,7 +34,7 @@ export function FilterBar() {
               key={p.value || "tous"}
               type="button"
               onClick={() => update("statut", p.value)}
-              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              className={`inline-flex min-h-[44px] items-center rounded-md px-3.5 text-sm font-medium transition-colors ${
                 active
                   ? "bg-primary text-primary-foreground"
                   : "bg-input text-muted-foreground hover:text-foreground"
@@ -50,7 +50,7 @@ export function FilterBar() {
         <select
           value={currentMarche}
           onChange={(e) => update("marche", e.target.value)}
-          className="border-border bg-surface rounded-md border px-2.5 py-1.5 text-sm"
+          className="border-border bg-surface min-h-[44px] rounded-md border px-2.5 text-sm"
           aria-label="Marché"
         >
           <option value="">Tous marchés</option>
@@ -64,7 +64,7 @@ export function FilterBar() {
         <select
           value={currentTri}
           onChange={(e) => update("tri", e.target.value)}
-          className="border-border bg-surface rounded-md border px-2.5 py-1.5 text-sm"
+          className="border-border bg-surface min-h-[44px] rounded-md border px-2.5 text-sm"
           aria-label="Trier"
         >
           {(Object.keys(TRIS) as Tri[]).map((t) => (

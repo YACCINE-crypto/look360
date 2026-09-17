@@ -18,7 +18,7 @@ import { Icon } from "./Icon";
 /* eslint-disable @next/next/no-img-element */
 
 const inputCls =
-  "w-full rounded-md border border-border bg-input px-3 py-2 text-sm outline-none focus:border-primary";
+  "w-full min-h-[44px] rounded-md border border-border bg-input px-3 py-2 text-sm outline-none focus:border-primary";
 const labelCls = "text-xs font-medium text-muted-foreground";
 
 export function AddProductPanel() {
@@ -89,7 +89,7 @@ export function AddProductPanel() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="bg-primary text-primary-foreground inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-90"
+        className="bg-primary text-primary-foreground inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-90"
       >
         <Icon name="plus" size={16} />
         Ajouter
@@ -108,7 +108,7 @@ export function AddProductPanel() {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="text-muted-foreground hover:text-foreground rounded-md p-1"
+                className="text-muted-foreground hover:text-foreground -mr-2 inline-flex h-11 w-11 items-center justify-center rounded-md"
                 aria-label="Fermer"
               >
                 <Icon name="x" size={18} />
@@ -136,7 +136,7 @@ export function AddProductPanel() {
                       type="button"
                       onClick={() => fileRef.current?.click()}
                       disabled={uploading}
-                      className="bg-input text-foreground rounded-md px-3 py-1.5 text-sm font-medium disabled:opacity-60"
+                      className="bg-input text-foreground inline-flex min-h-[44px] items-center rounded-md px-3 py-1.5 text-sm font-medium disabled:opacity-60"
                     >
                       {uploading ? "Envoi…" : imageUrl ? "Changer" : "Téléverser"}
                     </button>
@@ -310,14 +310,14 @@ export function AddProductPanel() {
                 <button
                   type="submit"
                   disabled={uploading}
-                  className="bg-primary text-primary-foreground rounded-md px-5 py-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
+                  className="bg-primary text-primary-foreground inline-flex min-h-[44px] items-center justify-center rounded-md px-5 py-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
                 >
                   Ajouter
                 </button>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="bg-input text-foreground rounded-md px-5 py-2 text-sm font-semibold"
+                  className="bg-input text-foreground inline-flex min-h-[44px] items-center justify-center rounded-md px-5 py-2 text-sm font-semibold"
                 >
                   Annuler
                 </button>

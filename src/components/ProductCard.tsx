@@ -94,7 +94,7 @@ export function ProductCard({
           {statut === "en_test" ? (
             <Link
               href={`/testing/${p.id}`}
-              className="bg-primary text-primary-foreground block w-full rounded-md py-2 text-center text-sm font-semibold transition-opacity hover:opacity-90"
+              className="bg-primary text-primary-foreground flex min-h-[44px] w-full items-center justify-center rounded-md text-center text-sm font-semibold transition-opacity hover:opacity-90"
             >
               Voir le verdict
             </Link>
@@ -103,7 +103,7 @@ export function ProductCard({
               <input type="hidden" name="id" value={p.id} />
               <button
                 type="submit"
-                className="bg-primary text-primary-foreground block w-full rounded-md py-2 text-center text-sm font-semibold transition-opacity hover:opacity-90"
+                className="bg-primary text-primary-foreground flex min-h-[44px] w-full items-center justify-center rounded-md text-center text-sm font-semibold transition-opacity hover:opacity-90"
               >
                 Envoyer en test
               </button>
@@ -111,7 +111,7 @@ export function ProductCard({
           ) : (
             <Link
               href={`/testing/${p.id}`}
-              className="bg-input text-foreground block w-full rounded-md py-2 text-center text-sm font-semibold transition-colors hover:bg-muted"
+              className="bg-input text-foreground flex min-h-[44px] w-full items-center justify-center rounded-md text-center text-sm font-semibold transition-colors hover:bg-muted"
             >
               Détails
             </Link>

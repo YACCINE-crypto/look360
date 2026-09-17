@@ -16,7 +16,7 @@ export function SearchBox() {
   }
 
   return (
-    <div className="border-border bg-input flex items-center gap-2 rounded-md border px-3 py-2">
+    <div className="border-border bg-input flex min-h-[44px] items-center gap-2 rounded-md border px-3 py-2">
       <Icon name="search" size={16} className="text-muted-foreground" />
       <input
         defaultValue={params.get("q") ?? ""}

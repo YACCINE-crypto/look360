@@ -46,7 +46,7 @@ function Sidebar({
         {onClose && (
           <button
             onClick={onClose}
-            className="text-muted-foreground hover:text-foreground lg:hidden"
+            className="text-muted-foreground hover:text-foreground -mr-2 inline-flex h-11 w-11 items-center justify-center lg:hidden"
             aria-label="Fermer le menu"
           >
             <Icon name="x" size={18} />
@@ -73,7 +73,7 @@ function Sidebar({
         <form action={logout}>
           <button
             type="submit"
-            className="text-muted-foreground hover:bg-input hover:text-danger flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors"
+            className="text-muted-foreground hover:bg-input hover:text-danger flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors"
           >
             <Icon name="logout" size={16} />
             Déconnexion
@@ -129,13 +129,13 @@ export function AppShell({
         <header className="border-border bg-surface flex items-center justify-between border-b px-4 py-3 lg:hidden">
           <button
             onClick={() => setMobileOpen(true)}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground -ml-2 inline-flex h-11 w-11 items-center justify-center"
             aria-label="Ouvrir le menu"
           >
             <Icon name="menu" size={22} />
           </button>
           <Brand compact />
-          <div className="w-[22px]" aria-hidden="true" />
+          <div className="h-11 w-11" aria-hidden="true" />
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>

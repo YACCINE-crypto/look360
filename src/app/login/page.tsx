@@ -33,7 +33,7 @@ export default function LoginPage() {
               type="email"
               autoComplete="email"
               required
-              className="border-border bg-input focus:border-primary w-full rounded-md border px-3 py-2 text-sm outline-none"
+              className="border-border bg-input focus:border-primary w-full min-h-[44px] rounded-md border px-3 py-2 text-sm outline-none"
             />
           </div>
 
@@ -47,7 +47,7 @@ export default function LoginPage() {
               type="password"
               autoComplete="current-password"
               required
-              className="border-border bg-input focus:border-primary w-full rounded-md border px-3 py-2 text-sm outline-none"
+              className="border-border bg-input focus:border-primary w-full min-h-[44px] rounded-md border px-3 py-2 text-sm outline-none"
             />
           </div>
 
@@ -56,7 +56,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={pending}
-            className="bg-primary text-primary-foreground w-full rounded-md px-3 py-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
+            className="bg-primary text-primary-foreground inline-flex min-h-[44px] w-full items-center justify-center rounded-md px-3 py-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
           >
             {pending ? "Connexion…" : "Se connecter"}
           </button>

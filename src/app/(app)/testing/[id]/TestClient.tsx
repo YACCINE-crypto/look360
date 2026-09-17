@@ -15,7 +15,7 @@ const CONFIRMATION_SHORT: Record<ConfirmationTier, string> = {
 };
 
 const inputCls =
-  "w-full rounded-md border border-border bg-input px-3 py-2 text-sm outline-none focus:border-primary";
+  "w-full min-h-[44px] rounded-md border border-border bg-input px-3 py-2 text-sm outline-none focus:border-primary";
 const fieldLabel = "text-xs font-medium text-muted-foreground";
 
 type Props = {
@@ -92,13 +92,13 @@ export function TestClient({ produit, initial }: Props) {
           </span>
           <form action={validerProduit}>
             <input type="hidden" name="produit_id" value={produit.id} />
-            <button className="bg-success text-primary-foreground inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-90">
+            <button className="bg-success text-primary-foreground inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-90">
               <Icon name="check" size={15} /> Valider le produit
             </button>
           </form>
           <form action={abandonnerProduit}>
             <input type="hidden" name="produit_id" value={produit.id} />
-            <button className="text-danger border-danger/40 hover:bg-danger-bg inline-flex items-center gap-1.5 rounded-md border px-4 py-2 text-sm font-semibold transition-colors">
+            <button className="text-danger border-danger/40 hover:bg-danger-bg inline-flex min-h-[44px] items-center gap-1.5 rounded-md border px-4 py-2 text-sm font-semibold transition-colors">
               <Icon name="x" size={15} /> Rejeter
             </button>
           </form>
@@ -310,7 +310,7 @@ export function TestClient({ produit, initial }: Props) {
 
             <button
               type="submit"
-              className="bg-primary text-primary-foreground flex w-full items-center justify-center gap-2 rounded-md py-2.5 text-sm font-semibold transition-opacity hover:opacity-90"
+              className="bg-primary text-primary-foreground flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md py-2.5 text-sm font-semibold transition-opacity hover:opacity-90"
             >
               <Icon name="clock" size={15} /> Recalculer &amp; enregistrer
             </button>
