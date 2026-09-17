@@ -1,12 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import {
-  STATUT_BADGE,
-  STATUT_LABELS,
-  marcheLabel,
-  formatFCFA,
-  type Statut,
-} from "@/lib/produits";
+import { marcheLabel, formatFCFA } from "@/lib/produits";
 
 export default async function TestingPage() {
   const supabase = await createClient();
@@ -20,14 +14,9 @@ export default async function TestingPage() {
     <div>
       <h1 className="text-2xl font-semibold tracking-tight">Testing</h1>
       <p className="text-sm text-zinc-500">
-        Produits en cours de test ({produits?.length ?? 0}).
+        {produits?.length ?? 0} produit{(produits?.length ?? 0) > 1 ? "s" : ""} en
+        test — ouvre une fiche pour saisir les chiffres réels et voir le verdict.
       </p>
-
-      <div className="mt-4 rounded-lg border border-dashed border-zinc-300 bg-zinc-50 p-4 text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
-        La fiche de test complète (taux de confirmation, bénéfice projeté,
-        verdict) arrive à l&apos;étape 3. Pour l&apos;instant, voici les produits
-        envoyés en test depuis la page Recherche.
-      </div>
 
       {produits && produits.length === 0 && (
         <p className="mt-8 text-sm text-zinc-500">
@@ -38,11 +27,12 @@ export default async function TestingPage() {
         </p>
       )}
 
-      <ul className="mt-6 space-y-2">
+      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
         {produits?.map((p) => (
-          <li
+          <Link
             key={p.id}
-            className="flex items-center justify-between gap-4 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+            href={`/testing/${p.id}`}
+            className="group flex items-center justify-between gap-4 rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600"
           >
             <div>
               <p className="font-medium">{p.nom ?? "Sans nom"}</p>
@@ -51,16 +41,12 @@ export default async function TestingPage() {
                 {formatFCFA(p.cout_livre_estime)}
               </p>
             </div>
-            <span
-              className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                STATUT_BADGE[p.statut as Statut]
-              }`}
-            >
-              {STATUT_LABELS[p.statut as Statut]}
+            <span className="text-sm text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-100">
+              Ouvrir →
             </span>
-          </li>
+          </Link>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }
