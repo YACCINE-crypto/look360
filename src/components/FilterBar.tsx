@@ -1,40 +1,39 @@
 "use client";
 
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { STATUTS, STATUT_LABELS, MARCHES, TRIS, type Tri } from "@/lib/produits";
+import { STATUTS, STATUT_LABELS, MARCHES, TRIS, type Statut, type Tri } from "@/lib/produits";
 
-export function FilterBar() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const params = useSearchParams();
-
-  const currentStatut = params.get("statut") ?? "";
-  const currentMarche = params.get("marche") ?? "";
-  const currentTri = (params.get("tri") as Tri) ?? "recent";
-
-  function update(key: string, value: string) {
-    const next = new URLSearchParams(params.toString());
-    if (value) next.set(key, value);
-    else next.delete(key);
-    router.push(`${pathname}?${next.toString()}`);
-  }
-
+export function FilterBar({
+  statut,
+  marche,
+  tri,
+  onStatut,
+  onMarche,
+  onTri,
+}: {
+  statut: string;
+  marche: string;
+  tri: Tri;
+  onStatut: (v: string) => void;
+  onMarche: (v: string) => void;
+  onTri: (v: Tri) => void;
+}) {
   const pills: { value: string; label: string }[] = [
     { value: "", label: "Tous" },
-    ...STATUTS.map((s) => ({ value: s, label: STATUT_LABELS[s] })),
+    ...STATUTS.map((s) => ({ value: s as string, label: STATUT_LABELS[s as Statut] })),
   ];
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-col gap-3 md:flex-row md:items-center">
+      {/* Chips statut : UNE seule ligne, scroll horizontal tactile */}
+      <div className="no-scrollbar -mx-1 flex touch-pan-x flex-nowrap gap-1.5 overflow-x-auto px-1 md:flex-1">
         {pills.map((p) => {
-          const active = currentStatut === p.value;
+          const active = statut === p.value;
           return (
             <button
               key={p.value || "tous"}
               type="button"
-              onClick={() => update("statut", p.value)}
-              className={`inline-flex min-h-[44px] items-center rounded-md px-3.5 text-sm font-medium transition-colors ${
+              onClick={() => onStatut(p.value)}
+              className={`inline-flex min-h-[44px] shrink-0 items-center whitespace-nowrap rounded-md px-3.5 text-sm font-medium transition-colors ${
                 active
                   ? "bg-primary text-primary-foreground"
                   : "bg-input text-muted-foreground hover:text-foreground"
@@ -46,10 +45,10 @@ export function FilterBar() {
         })}
       </div>
 
-      <div className="ml-auto flex gap-2">
+      <div className="flex shrink-0 gap-2">
         <select
-          value={currentMarche}
-          onChange={(e) => update("marche", e.target.value)}
+          value={marche}
+          onChange={(e) => onMarche(e.target.value)}
           className="border-border bg-surface min-h-[44px] rounded-md border px-2.5 text-sm"
           aria-label="Marché"
         >
@@ -62,8 +61,8 @@ export function FilterBar() {
         </select>
 
         <select
-          value={currentTri}
-          onChange={(e) => update("tri", e.target.value)}
+          value={tri}
+          onChange={(e) => onTri(e.target.value as Tri)}
           className="border-border bg-surface min-h-[44px] rounded-md border px-2.5 text-sm"
           aria-label="Trier"
         >
