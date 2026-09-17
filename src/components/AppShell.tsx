@@ -28,11 +28,15 @@ function Sidebar({
   displayName,
   initials,
   role,
+  isAdmin,
+  pendingCount,
   onClose,
 }: {
   displayName: string;
   initials: string;
   role: string;
+  isAdmin: boolean;
+  pendingCount: number;
   onClose?: () => void;
 }) {
   return (
@@ -53,7 +57,11 @@ function Sidebar({
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-2 py-3">
-        <SidebarNav onNavigate={onClose} />
+        <SidebarNav
+          onNavigate={onClose}
+          isAdmin={isAdmin}
+          pendingCount={pendingCount}
+        />
       </nav>
 
       {/* Profil */}
@@ -87,19 +95,28 @@ export function AppShell({
   displayName,
   initials,
   role,
+  pendingCount = 0,
 }: {
   children: React.ReactNode;
   displayName: string;
   initials: string;
   role: string;
+  pendingCount?: number;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isAdmin = role === "admin";
 
   return (
     <div className="bg-background flex h-screen overflow-hidden">
       {/* Sidebar desktop */}
       <div className="hidden h-full lg:flex">
-        <Sidebar displayName={displayName} initials={initials} role={role} />
+        <Sidebar
+          displayName={displayName}
+          initials={initials}
+          role={role}
+          isAdmin={isAdmin}
+          pendingCount={pendingCount}
+        />
       </div>
 
       {/* Drawer mobile */}
@@ -115,6 +132,8 @@ export function AppShell({
               displayName={displayName}
               initials={initials}
               role={role}
+              isAdmin={isAdmin}
+              pendingCount={pendingCount}
               onClose={() => setMobileOpen(false)}
             />
           </div>

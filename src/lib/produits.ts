@@ -33,6 +33,24 @@ export const STATUT_BADGE: Record<Statut, string> = {
   abandonne: "bg-danger-bg text-danger",
 };
 
+// --- Statut de revue (workflow soumission agent -> validation admin) ---
+export const STATUTS_REVUE = ["soumis", "en_analyse", "approuve", "rejete"] as const;
+export type StatutRevue = (typeof STATUTS_REVUE)[number];
+
+export const STATUT_REVUE_LABELS: Record<StatutRevue, string> = {
+  soumis: "Soumis",
+  en_analyse: "En analyse",
+  approuve: "Approuvé",
+  rejete: "Rejeté",
+};
+
+export const STATUT_REVUE_BADGE: Record<StatutRevue, string> = {
+  soumis: "bg-chip-bleu text-chip-bleu-fg",
+  en_analyse: "bg-warning-bg text-warning",
+  approuve: "bg-success-bg text-success",
+  rejete: "bg-danger-bg text-danger",
+};
+
 // --- Marchés ciblés (§8 : FCFA partout) ---
 export const MARCHES = [
   { code: "CI", label: "Côte d'Ivoire" },

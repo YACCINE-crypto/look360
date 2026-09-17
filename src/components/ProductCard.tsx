@@ -10,8 +10,11 @@ import {
   echeanceLabel,
   echeanceProche,
   prochaineEcheance,
+  STATUT_REVUE_LABELS,
+  STATUT_REVUE_BADGE,
   type Produit,
   type Statut,
+  type StatutRevue,
 } from "@/lib/produits";
 
 /* eslint-disable @next/next/no-img-element */
@@ -68,6 +71,13 @@ export function ProductCard({
           )}
           <h3 className="font-semibold leading-snug">{p.nom ?? "Sans nom"}</h3>
           <p className="text-muted-foreground text-xs">{marcheLabel(p.marche)}</p>
+          {p.statut_revue !== "approuve" && (
+            <span
+              className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATUT_REVUE_BADGE[p.statut_revue as StatutRevue]}`}
+            >
+              {STATUT_REVUE_LABELS[p.statut_revue as StatutRevue]}
+            </span>
+          )}
         </div>
 
         <div className="flex items-end justify-between">

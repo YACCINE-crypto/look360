@@ -15,6 +15,8 @@ type IconName =
   | "bell"
   | "bellOff"
   | "tag"
+  | "users"
+  | "inbox"
   | "x";
 
 const PATHS: Record<IconName, React.ReactNode> = {
@@ -85,6 +87,19 @@ const PATHS: Record<IconName, React.ReactNode> = {
     <>
       <path d="M12 2H2v10l9.3 9.3a1 1 0 0 0 1.4 0l7.6-7.6a1 1 0 0 0 0-1.4z" transform="translate(1 0)" />
       <circle cx="7.5" cy="7.5" r="1.3" />
+    </>
+  ),
+  users: (
+    <>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+    </>
+  ),
+  inbox: (
+    <>
+      <path d="M22 12h-6l-2 3h-4l-2-3H2" />
+      <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
     </>
   ),
   x: <path d="M18 6 6 18M6 6l12 12" />,

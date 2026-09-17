@@ -10,6 +10,8 @@ const ITEMS = [
   { href: "/pipeline", label: "Pipeline", icon: "pipeline" as const },
   { href: "/testing", label: "Testing", icon: "flask" as const },
   { href: "/angles", label: "Angles", icon: "tag" as const },
+  { href: "/validation", label: "Validation", icon: "inbox" as const, adminOnly: true },
+  { href: "/equipe", label: "Équipe", icon: "users" as const, adminOnly: true },
 ];
 
 function useActive() {
@@ -20,11 +22,19 @@ function useActive() {
 
 /** Navigation latérale — desktop (sidebar) et drawer mobile.
  *  `onNavigate` ferme le panneau mobile au clic sur un lien. */
-export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+export function SidebarNav({
+  onNavigate,
+  isAdmin = false,
+  pendingCount = 0,
+}: {
+  onNavigate?: () => void;
+  isAdmin?: boolean;
+  pendingCount?: number;
+}) {
   const isActive = useActive();
   return (
     <nav className="flex flex-col gap-0.5">
-      {ITEMS.map((it) => {
+      {ITEMS.filter((it) => !it.adminOnly || isAdmin).map((it) => {
         const active = isActive(it.href);
         return (
           <Link
@@ -38,7 +48,12 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             }`}
           >
             <Icon name={it.icon} size={18} className="shrink-0" />
-            {it.label}
+            <span className="flex-1">{it.label}</span>
+            {it.href === "/validation" && pendingCount > 0 && (
+              <span className="bg-primary text-primary-foreground ml-auto rounded-full px-1.5 py-0.5 text-xs font-semibold">
+                {pendingCount}
+              </span>
+            )}
           </Link>
         );
       })}
