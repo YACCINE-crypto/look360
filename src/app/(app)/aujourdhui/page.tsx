@@ -1,14 +1,15 @@
 import { Icon } from "@/components/Icon";
+import { PageHeader } from "@/components/ui";
 
 export default function AujourdhuiPage() {
   return (
-    <div>
-      <h1 className="text-2xl font-bold tracking-tight">Aujourd&apos;hui</h1>
-      <p className="text-muted-foreground text-sm">
-        Ton prochain produit à traiter, un à la fois.
-      </p>
+    <div className="space-y-4">
+      <PageHeader
+        title="Aujourd'hui"
+        subtitle="Ton prochain produit à traiter, un à la fois."
+      />
 
-      <div className="border-border bg-surface mt-8 flex flex-col items-center gap-3 rounded-xl border border-dashed p-12 text-center">
+      <div className="border-border bg-surface flex flex-col items-center gap-3 rounded-xl border border-dashed p-12 text-center">
         <span className="bg-secondary text-primary grid h-12 w-12 place-items-center rounded-full">
           <Icon name="today" size={24} />
         </span>

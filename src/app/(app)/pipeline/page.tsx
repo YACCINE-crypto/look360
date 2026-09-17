@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { PipelineColumn } from "@/components/PipelineColumn";
+import { PageHeader } from "@/components/ui";
 import { margeParProduit } from "@/lib/testing";
 import { type Produit, type Statut } from "@/lib/produits";
 
@@ -26,18 +27,14 @@ export default async function PipelinePage() {
     (produits ?? []).filter((p) => p.statut === s);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Pipeline des produits
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          Suivi complet du flux : idée → production.
-        </p>
-      </div>
+    <div className="space-y-4">
+      <PageHeader
+        title="Pipeline des produits"
+        subtitle="Suivi complet du flux : idée → production."
+      />
 
       {/* Desktop : colonnes horizontales scrollables ; mobile : empilé */}
-      <div className="flex flex-col gap-4 md:flex-row md:overflow-x-auto md:pb-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:overflow-x-auto lg:pb-4">
         {COLONNES.map((s) => (
           <PipelineColumn
             key={s}

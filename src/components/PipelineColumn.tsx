@@ -30,7 +30,7 @@ export function PipelineColumn({
   marges: Record<string, number>;
 }) {
   return (
-    <section className="border-border bg-surface flex w-full shrink-0 flex-col rounded-xl border md:w-72">
+    <section className="border-border bg-surface flex w-full shrink-0 flex-col rounded-xl border shadow-card lg:w-72">
       <div className="border-border flex items-center justify-between border-b px-4 py-3">
         <div className="flex items-center gap-2">
           <Icon name={COLUMN_ICON[statut] ?? "today"} size={16} className="text-muted-foreground" />

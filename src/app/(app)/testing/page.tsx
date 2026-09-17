@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Icon } from "@/components/Icon";
+import { PageHeader } from "@/components/ui";
 import { marcheLabel, formatFCFA } from "@/lib/produits";
 import { margeParProduit, margeColorClass } from "@/lib/testing";
 
@@ -18,15 +19,13 @@ export default async function TestingPage() {
   const marges = margeParProduit(tests ?? []);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Tests</h1>
-        <p className="text-muted-foreground text-sm">
-          {produits?.length ?? 0} produit
-          {(produits?.length ?? 0) > 1 ? "s" : ""} en test — ouvre une fiche pour
-          saisir les chiffres et voir le verdict.
-        </p>
-      </div>
+    <div className="space-y-4">
+      <PageHeader
+        title="Tests"
+        subtitle={`${produits?.length ?? 0} produit${
+          (produits?.length ?? 0) > 1 ? "s" : ""
+        } en test — ouvre une fiche pour saisir les chiffres et voir le verdict.`}
+      />
 
       {produits && produits.length === 0 && (
         <div className="border-border bg-surface rounded-xl border border-dashed p-12 text-center">
@@ -47,7 +46,7 @@ export default async function TestingPage() {
             <Link
               key={p.id}
               href={`/testing/${p.id}`}
-              className="border-border bg-surface hover:border-primary/40 flex items-center justify-between gap-4 rounded-xl border p-4 transition-colors"
+              className="border-border bg-surface hover:border-primary/40 flex items-center justify-between gap-4 rounded-xl border p-4 shadow-card transition-colors"
             >
               <div>
                 <p className="font-semibold">{p.nom ?? "Sans nom"}</p>

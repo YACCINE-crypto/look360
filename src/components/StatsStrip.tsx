@@ -1,4 +1,5 @@
 import { Icon } from "./Icon";
+import { StatCard } from "./ui";
 
 type IconName = Parameters<typeof Icon>[0]["name"];
 
@@ -9,23 +10,18 @@ export type Stat = {
   valueClass?: string;
 };
 
+/** Bandeau de statistiques — grille de cartes KPI (recette Kimba). */
 export function StatsStrip({ stats }: { stats: Stat[] }) {
   return (
-    <div className="border-border bg-surface flex flex-wrap items-center gap-x-8 gap-y-4 rounded-xl border px-5 py-4">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {stats.map((s) => (
-        <div key={s.label} className="flex items-center gap-3">
-          <span className="bg-input text-muted-foreground grid h-9 w-9 shrink-0 place-items-center rounded-md">
-            <Icon name={s.icon} size={18} />
-          </span>
-          <div>
-            <p className="text-muted-foreground text-xs font-medium">
-              {s.label}
-            </p>
-            <p className={`text-lg font-bold tabular-nums ${s.valueClass ?? ""}`}>
-              {s.value}
-            </p>
-          </div>
-        </div>
+        <StatCard
+          key={s.label}
+          label={s.label}
+          value={s.value}
+          icon={s.icon}
+          valueClass={s.valueClass}
+        />
       ))}
     </div>
   );

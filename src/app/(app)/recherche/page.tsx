@@ -5,6 +5,7 @@ import { FilterBar } from "@/components/FilterBar";
 import { StatsStrip, type Stat } from "@/components/StatsStrip";
 import { AddProductPanel } from "@/components/AddProductPanel";
 import { SearchBox } from "@/components/SearchBox";
+import { PageHeader } from "@/components/ui";
 import { margeParProduit } from "@/lib/testing";
 import { STATUTS, MARCHES, TRIS, type Statut, type Tri } from "@/lib/produits";
 
@@ -66,21 +67,16 @@ export default async function RecherchePage({
   const stats = buildStats(tousStatuts ?? [], tests ?? []);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Recherche produit</h1>
-          <p className="text-muted-foreground text-sm">
-            Trouvez, évaluez et envoyez les produits prometteurs en test.
-          </p>
+    <div className="space-y-4">
+      <PageHeader
+        title="Recherche produit"
+        subtitle="Trouvez, évaluez et envoyez les produits prometteurs en test."
+      >
+        <div className="hidden sm:block">
+          <SearchBox />
         </div>
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:block">
-            <SearchBox />
-          </div>
-          <AddProductPanel />
-        </div>
-      </div>
+        <AddProductPanel />
+      </PageHeader>
 
       <StatsStrip stats={stats} />
 
@@ -112,7 +108,7 @@ export default async function RecherchePage({
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {produits?.map((p) => (
             <ProductCard key={p.id} p={p} marge={marges[p.id] ?? null} />
           ))}

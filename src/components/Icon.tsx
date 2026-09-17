@@ -11,6 +11,7 @@ type IconName =
   | "chevronRight"
   | "clock"
   | "check"
+  | "menu"
   | "x";
 
 const PATHS: Record<IconName, React.ReactNode> = {
@@ -62,6 +63,7 @@ const PATHS: Record<IconName, React.ReactNode> = {
     </>
   ),
   check: <path d="M20 6 9 17l-5-5" />,
+  menu: <path d="M3 6h18M3 12h18M3 18h18" />,
   x: <path d="M18 6 6 18M6 6l12 12" />,
 };
 

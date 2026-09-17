@@ -1,11 +1,13 @@
 @import "tailwindcss";
 
 /* ==========================================================================
-   Look360 — Design system (tokens Banani, handoff §2)
+   Look360 — Design system.
    Accent de marque = BLEU. Vert / ambre / rouge = signaux uniquement.
+   COULEURS + POLICE = thème Look360 (inchangés).
+   ÉCHELLES (typo, rayons, ombre, espacements) = système de layout Kimba.
    ========================================================================== */
 @theme {
-  /* Surfaces & texte */
+  /* Surfaces & texte — COULEURS THÈME (inchangées) */
   --color-background: #f7f8fa;
   --color-surface: #ffffff;
   --color-foreground: #111827;
@@ -14,13 +16,13 @@
   --color-muted: #e5e8ef;
   --color-muted-foreground: #6b7280;
 
-  /* Marque */
+  /* Marque — COULEURS THÈME (inchangées) */
   --color-primary: #1a56db;
   --color-primary-foreground: #ffffff;
   --color-secondary: #dbeafe;
   --color-secondary-foreground: #1a56db;
 
-  /* Signaux */
+  /* Signaux — COULEURS THÈME (inchangées) */
   --color-success: #16a34a;
   --color-success-bg: #dcfce7;
   --color-warning: #d97706;
@@ -28,7 +30,7 @@
   --color-danger: #dc2626;
   --color-danger-bg: #fee2e2;
 
-  /* Chips de statut */
+  /* Chips de statut — COULEURS THÈME (inchangées) */
   --color-chip-idee: #ede9fe;
   --color-chip-idee-fg: #6d28d9;
   --color-chip-bleu: #dbeafe;
@@ -36,26 +38,72 @@
   --color-chip-valide: #dcfce7;
   --color-chip-valide-fg: #16a34a;
 
-  /* Rayons */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  /* Rayons — ÉCHELLE KIMBA (boutons/inputs 8 · chips 12 · cartes 16).
+     Les classes existantes (rounded-md/lg/xl) sont remappées ici, une fois. */
+  --radius-sm: 8px;   /* rounded-sm  → boutons/inputs (Kimba rounded-lg) */
+  --radius-md: 8px;   /* rounded-md  → boutons/inputs/chips */
+  --radius-lg: 12px;  /* rounded-lg  → petites cartes (Kimba rounded-xl) */
+  --radius-xl: 16px;  /* rounded-xl  → cartes standard (Kimba rounded-2xl) */
+  --radius-2xl: 16px; /* rounded-2xl → cartes standard */
 
-  /* Typo */
+  /* Typo — TAILLES KIMBA (= échelle Tailwind par défaut). Police = thème. */
   --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
-  --text-xs: 11px;
-  --text-sm: 13px;
-  --text-base: 15px;
-  --text-lg: 17px;
-  --text-2xl: 24px;
-  --text-4xl: 38px;
+  /* (plus d'override --text-* : text-xs=12 · text-sm=14 · text-base=16
+      · text-lg=18 · text-2xl=24 · text-4xl=36, comme Kimba) */
+
+  /* Ombre de carte Kimba (subtile, neutre) */
+  --shadow-card: 0 1px 3px 0 rgb(15 23 42 / 0.04), 0 1px 2px -1px rgb(15 23 42 / 0.03);
+
+  /* Largeur canonique de la sidebar (Kimba = 224px) */
+  --spacing-sidebar: 14rem;
 }
 
 :root {
   color-scheme: light;
 }
 
+/* Base — reprise du socle Kimba */
+* {
+  box-sizing: border-box;
+}
 body {
   font-family: var(--font-sans);
+}
+
+/* Scrollbars fines (couleur dérivée du thème, pas d'ajout de teinte) */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-muted-foreground) 45%, transparent);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--color-muted-foreground) 70%, transparent);
+}
+
+/* Utilitaires layout Kimba */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Panneau/sheet mobile : glisse depuis le bord */
+@keyframes sheet-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+.animate-sheet-in {
+  animation: sheet-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }

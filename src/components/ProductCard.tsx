@@ -29,7 +29,7 @@ export function ProductCard({
 
   return (
     <article
-      className={`bg-surface flex flex-col overflow-hidden rounded-xl border ${
+      className={`bg-surface flex flex-col overflow-hidden rounded-xl border shadow-card ${
         urgent ? "border-warning" : "border-border"
       }`}
     >
@@ -49,7 +49,7 @@ export function ProductCard({
           <StatusChip statut={statut} />
         </div>
         {urgent && (
-          <span className="bg-warning-bg text-warning absolute right-3 top-3 rounded-md px-2 py-0.5 text-xs font-semibold">
+          <span className="bg-warning-bg text-warning absolute right-3 top-3 rounded-full px-2 py-0.5 text-xs font-semibold">
             Urgent
           </span>
         )}
