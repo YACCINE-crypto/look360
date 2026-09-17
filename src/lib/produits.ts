@@ -81,16 +81,34 @@ export const TRIS = {
 } as const;
 export type Tri = keyof typeof TRIS;
 
+// --- Mode de transit ---
+export const MODES_TRANSIT = [
+  { code: "aerien", label: "Aérien (au kilo)" },
+  { code: "maritime", label: "Maritime (au CBM)" },
+] as const;
+export type ModeTransit = (typeof MODES_TRANSIT)[number]["code"];
+
+/** Frais de transit aérien par défaut (FCFA / kg). */
+export const DEFAULT_FRAIS_TRANSIT_KILO = 12000;
+
 /**
- * Coût livré estimé (§5). Identique à la colonne générée en base ;
- * utilisé pour l'aperçu live dans le formulaire.
+ * Coût livré estimé — identique à la colonne générée en base (aperçu live) :
+ *   Aérien   : prix_fournisseur + poids_kg × frais_transit_kilo
+ *   Maritime : prix_fournisseur + cbm × frais_transit_cbm
  */
-export function coutLivreEstime(
-  prixSourcing: number | null | undefined,
-  poidsKg: number | null | undefined,
-  fraisLogistiquesKilo: number | null | undefined,
-): number {
-  return (prixSourcing ?? 0) + (poidsKg ?? 0) * (fraisLogistiquesKilo ?? 0);
+export function coutLivreEstime(input: {
+  mode: ModeTransit;
+  prixFournisseur: number | null | undefined;
+  poidsKg?: number | null;
+  fraisTransitKilo?: number | null;
+  cbm?: number | null;
+  fraisTransitCbm?: number | null;
+}): number {
+  const prix = input.prixFournisseur ?? 0;
+  if (input.mode === "maritime") {
+    return prix + (input.cbm ?? 0) * (input.fraisTransitCbm ?? 0);
+  }
+  return prix + (input.poidsKg ?? 0) * (input.fraisTransitKilo ?? 0);
 }
 
 /** Formatage FCFA (pas de décimales). */

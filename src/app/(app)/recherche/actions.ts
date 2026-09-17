@@ -34,6 +34,8 @@ export async function createProduit(formData: FormData): Promise<void> {
     redirect(`${backTo}?error=nom`);
   }
 
+  const mode = str(formData, "mode_transit") === "maritime" ? "maritime" : "aerien";
+
   const payload: ProduitInsert = {
     nom,
     soumis_par: user.id,
@@ -42,18 +44,17 @@ export async function createProduit(formData: FormData): Promise<void> {
     lien_source: str(formData, "lien_source"),
     lien_concurrent: str(formData, "lien_concurrent"),
     lien_ad_library: str(formData, "lien_ad_library"),
-    date_debut_pub_concurrent: str(formData, "date_debut_pub_concurrent"),
     angle_marketing: str(formData, "angle_marketing"),
-    emotion_tag: str(formData, "emotion_tag"),
     marche: str(formData, "marche"),
-    // Le design saisit un "Coût livré" direct : stocké dans prix_sourcing
-    // (poids/frais optionnels) => la colonne générée cout_livre_estime le reflète.
-    prix_sourcing: num(formData, "prix_sourcing"),
+    // Sourcing / transit — la colonne générée cout_livre_estime est calculée
+    // en base selon le mode de transit.
+    prix_fournisseur: num(formData, "prix_fournisseur"),
     poids_kg: num(formData, "poids_kg"),
-    frais_logistiques_kilo: num(formData, "frais_logistiques_kilo"),
+    mode_transit: mode,
+    frais_transit_kilo: num(formData, "frais_transit_kilo"),
+    cbm: num(formData, "cbm"),
+    frais_transit_cbm: num(formData, "frais_transit_cbm"),
     statut: (str(formData, "statut") as Statut | null) ?? "idee",
-    date_a_travailler: str(formData, "date_a_travailler"),
-    date_lancement_testing: str(formData, "date_lancement_testing"),
     notes: str(formData, "notes"),
   };
 

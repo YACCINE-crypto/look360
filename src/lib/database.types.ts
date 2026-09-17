@@ -16,6 +16,7 @@ export type Database = {
         Row: {
           angle_marketing: string | null
           categorie: string | null
+          cbm: number | null
           cout_livre_estime: number | null
           created_at: string
           date_a_travailler: string | null
@@ -23,16 +24,20 @@ export type Database = {
           date_lancement_testing: string | null
           emotion_tag: string | null
           frais_logistiques_kilo: number | null
+          frais_transit_cbm: number | null
+          frais_transit_kilo: number | null
           id: string
           image_url: string | null
           lien_ad_library: string | null
           lien_concurrent: string | null
           lien_source: string | null
           marche: string | null
+          mode_transit: string
           nom: string | null
           notes: string | null
           notif_envoyee: boolean
           poids_kg: number | null
+          prix_fournisseur: number | null
           prix_sourcing: number | null
           soumis_par: string | null
           statut: string
@@ -41,6 +46,7 @@ export type Database = {
         Insert: {
           angle_marketing?: string | null
           categorie?: string | null
+          cbm?: number | null
           cout_livre_estime?: number | null
           created_at?: string
           date_a_travailler?: string | null
@@ -48,16 +54,20 @@ export type Database = {
           date_lancement_testing?: string | null
           emotion_tag?: string | null
           frais_logistiques_kilo?: number | null
+          frais_transit_cbm?: number | null
+          frais_transit_kilo?: number | null
           id?: string
           image_url?: string | null
           lien_ad_library?: string | null
           lien_concurrent?: string | null
           lien_source?: string | null
           marche?: string | null
+          mode_transit?: string
           nom?: string | null
           notes?: string | null
           notif_envoyee?: boolean
           poids_kg?: number | null
+          prix_fournisseur?: number | null
           prix_sourcing?: number | null
           soumis_par?: string | null
           statut?: string
@@ -66,6 +76,7 @@ export type Database = {
         Update: {
           angle_marketing?: string | null
           categorie?: string | null
+          cbm?: number | null
           cout_livre_estime?: number | null
           created_at?: string
           date_a_travailler?: string | null
@@ -73,16 +84,20 @@ export type Database = {
           date_lancement_testing?: string | null
           emotion_tag?: string | null
           frais_logistiques_kilo?: number | null
+          frais_transit_cbm?: number | null
+          frais_transit_kilo?: number | null
           id?: string
           image_url?: string | null
           lien_ad_library?: string | null
           lien_concurrent?: string | null
           lien_source?: string | null
           marche?: string | null
+          mode_transit?: string
           nom?: string | null
           notes?: string | null
           notif_envoyee?: boolean
           poids_kg?: number | null
+          prix_fournisseur?: number | null
           prix_sourcing?: number | null
           soumis_par?: string | null
           statut?: string

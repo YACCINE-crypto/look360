@@ -1,10 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createProduit } from "@/app/(app)/recherche/actions";
-import { MARCHES, CATEGORIES } from "@/lib/produits";
+import { createClient } from "@/lib/supabase/client";
+import {
+  MARCHES,
+  CATEGORIES,
+  MODES_TRANSIT,
+  DEFAULT_FRAIS_TRANSIT_KILO,
+  coutLivreEstime,
+  formatFCFA,
+  type ModeTransit,
+} from "@/lib/produits";
 import { Icon } from "./Icon";
+
+/* eslint-disable @next/next/no-img-element */
 
 const inputCls =
   "w-full rounded-md border border-border bg-input px-3 py-2 text-sm outline-none focus:border-primary";
@@ -15,6 +26,63 @@ export function AddProductPanel() {
   const [open, setOpen] = useState(
     params.get("add") === "1" || params.has("error"),
   );
+
+  // Sourcing / transit (état pour le calcul live du coût livré)
+  const [mode, setMode] = useState<ModeTransit>("aerien");
+  const [prix, setPrix] = useState("");
+  const [poids, setPoids] = useState("");
+  const [fraisKilo, setFraisKilo] = useState(String(DEFAULT_FRAIS_TRANSIT_KILO));
+  const [cbm, setCbm] = useState("");
+  const [fraisCbm, setFraisCbm] = useState("");
+
+  // Image
+  const [imageUrl, setImageUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const n = (s: string): number | null => {
+    if (s.trim() === "") return null;
+    const v = Number(s.replace(",", "."));
+    return Number.isFinite(v) ? v : null;
+  };
+
+  const cout = coutLivreEstime({
+    mode,
+    prixFournisseur: n(prix),
+    poidsKg: n(poids),
+    fraisTransitKilo: n(fraisKilo),
+    cbm: n(cbm),
+    fraisTransitCbm: n(fraisCbm),
+  });
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadError(null);
+    setUploading(true);
+    try {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("Non connecté");
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("produits")
+        .upload(path, file, { upsert: false, contentType: file.type });
+      if (error) throw error;
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("produits").getPublicUrl(path);
+      setImageUrl(publicUrl);
+    } catch {
+      setUploadError("Échec de l'upload. Réessaie.");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   return (
     <>
@@ -49,6 +117,42 @@ export function AddProductPanel() {
 
             <form action={createProduit} className="space-y-4">
               <input type="hidden" name="redirect_to" value="/recherche" />
+              <input type="hidden" name="image_url" value={imageUrl} />
+              <input type="hidden" name="mode_transit" value={mode} />
+
+              {/* Image */}
+              <div className="space-y-1.5">
+                <span className={labelCls}>Image</span>
+                <div className="flex items-center gap-3">
+                  <div className="bg-input text-muted-foreground grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-md">
+                    {imageUrl ? (
+                      <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <Icon name="image" size={22} />
+                    )}
+                  </div>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => fileRef.current?.click()}
+                      disabled={uploading}
+                      className="bg-input text-foreground rounded-md px-3 py-1.5 text-sm font-medium disabled:opacity-60"
+                    >
+                      {uploading ? "Envoi…" : imageUrl ? "Changer" : "Téléverser"}
+                    </button>
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFile}
+                      className="hidden"
+                    />
+                    {uploadError && (
+                      <p className="text-danger mt-1 text-xs">{uploadError}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               <label className="block space-y-1.5">
                 <span className={labelCls}>Nom du produit *</span>
@@ -60,33 +164,17 @@ export function AddProductPanel() {
                 />
               </label>
 
-              <label className="block space-y-1.5">
-                <span className={labelCls}>Lien fournisseur</span>
-                <input
-                  name="lien_source"
-                  placeholder="https://…"
-                  className={inputCls}
-                />
-              </label>
-
-              <label className="block space-y-1.5">
-                <span className={labelCls}>Pub concurrent (optionnel)</span>
-                <input
-                  name="lien_concurrent"
-                  placeholder="https://…"
-                  className={inputCls}
-                />
-              </label>
-
               <div className="grid grid-cols-2 gap-3">
                 <label className="block space-y-1.5">
-                  <span className={labelCls}>Coût livré (FCFA)</span>
-                  <input
-                    name="prix_sourcing"
-                    inputMode="decimal"
-                    placeholder="0"
-                    className={inputCls}
-                  />
+                  <span className={labelCls}>Catégorie</span>
+                  <select name="categorie" defaultValue="" className={inputCls}>
+                    <option value="">Sélectionner…</option>
+                    {CATEGORIES.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <label className="block space-y-1.5">
                   <span className={labelCls}>Marché</span>
@@ -101,6 +189,114 @@ export function AddProductPanel() {
               </div>
 
               <label className="block space-y-1.5">
+                <span className={labelCls}>Lien fournisseur</span>
+                <input name="lien_source" placeholder="https://…" className={inputCls} />
+              </label>
+
+              <label className="block space-y-1.5">
+                <span className={labelCls}>Lien boutique concurrent</span>
+                <input name="lien_concurrent" placeholder="https://…" className={inputCls} />
+              </label>
+
+              <label className="block space-y-1.5">
+                <span className={labelCls}>Lien pub / Ad Library</span>
+                <input name="lien_ad_library" placeholder="https://…" className={inputCls} />
+              </label>
+
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block space-y-1.5">
+                  <span className={labelCls}>Prix fournisseur (FCFA)</span>
+                  <input
+                    name="prix_fournisseur"
+                    inputMode="decimal"
+                    value={prix}
+                    onChange={(e) => setPrix(e.target.value)}
+                    placeholder="0"
+                    className={inputCls}
+                  />
+                </label>
+                <label className="block space-y-1.5">
+                  <span className={labelCls}>Poids (kg)</span>
+                  <input
+                    name="poids_kg"
+                    inputMode="decimal"
+                    value={poids}
+                    onChange={(e) => setPoids(e.target.value)}
+                    placeholder="0"
+                    className={inputCls}
+                  />
+                </label>
+              </div>
+
+              <label className="block space-y-1.5">
+                <span className={labelCls}>Mode de transit</span>
+                <select
+                  value={mode}
+                  onChange={(e) => setMode(e.target.value as ModeTransit)}
+                  className={inputCls}
+                >
+                  {MODES_TRANSIT.map((m) => (
+                    <option key={m.code} value={m.code}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {mode === "aerien" ? (
+                <label className="block space-y-1.5">
+                  <span className={labelCls}>Frais transit / kg (FCFA)</span>
+                  <input
+                    name="frais_transit_kilo"
+                    inputMode="decimal"
+                    value={fraisKilo}
+                    onChange={(e) => setFraisKilo(e.target.value)}
+                    className={inputCls}
+                  />
+                </label>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="block space-y-1.5">
+                    <span className={labelCls}>CBM (m³)</span>
+                    <input
+                      name="cbm"
+                      inputMode="decimal"
+                      value={cbm}
+                      onChange={(e) => setCbm(e.target.value)}
+                      placeholder="0"
+                      className={inputCls}
+                    />
+                  </label>
+                  <label className="block space-y-1.5">
+                    <span className={labelCls}>Frais / CBM (FCFA)</span>
+                    <input
+                      name="frais_transit_cbm"
+                      inputMode="decimal"
+                      value={fraisCbm}
+                      onChange={(e) => setFraisCbm(e.target.value)}
+                      placeholder="0"
+                      className={inputCls}
+                    />
+                  </label>
+                </div>
+              )}
+
+              {/* Coût livré — lecture seule, calculé en direct */}
+              <div className="border-border bg-input flex items-center justify-between rounded-md border px-3 py-2.5">
+                <div>
+                  <p className={labelCls}>Coût livré (calculé)</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {mode === "aerien"
+                      ? "prix + poids × frais/kg"
+                      : "prix + CBM × frais/CBM"}
+                  </p>
+                </div>
+                <span className="text-lg font-bold tabular-nums">
+                  {formatFCFA(cout)}
+                </span>
+              </div>
+
+              <label className="block space-y-1.5">
                 <span className={labelCls}>Angle marketing</span>
                 <textarea
                   name="angle_marketing"
@@ -110,22 +306,11 @@ export function AddProductPanel() {
                 />
               </label>
 
-              <label className="block space-y-1.5">
-                <span className={labelCls}>Catégorie</span>
-                <select name="categorie" defaultValue="" className={inputCls}>
-                  <option value="">Sélectionner…</option>
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <div className="flex items-center gap-3 pt-2">
+              <div className="flex items-center gap-3 pt-1">
                 <button
                   type="submit"
-                  className="bg-primary text-primary-foreground rounded-md px-5 py-2 text-sm font-semibold transition-opacity hover:opacity-90"
+                  disabled={uploading}
+                  className="bg-primary text-primary-foreground rounded-md px-5 py-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
                 >
                   Ajouter
                 </button>
