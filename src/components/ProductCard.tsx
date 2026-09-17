@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Icon } from "./Icon";
 import { StatusChip } from "./StatusChip";
+import { ProductActions } from "./ProductActions";
 import { envoyerEnTest } from "@/app/(app)/recherche/actions";
 import { margeColorClass } from "@/lib/testing";
 import { scoreMeta } from "@/lib/score";
@@ -35,82 +36,92 @@ export function ProductCard({
 
   return (
     <article
-      className={`bg-surface flex flex-col overflow-hidden rounded-xl border shadow-card ${
+      className={`bg-surface flex h-full flex-col overflow-hidden rounded-xl border shadow-card ${
         urgent ? "border-warning" : "border-border"
       }`}
     >
-      <div className="bg-surface relative aspect-[4/3] w-full">
+      <div className="bg-input relative aspect-[4/3] w-full">
         {p.image_url ? (
           <img
             src={p.image_url}
             alt={p.nom ?? "Produit"}
-            className="h-full w-full object-contain p-3"
+            className="h-full w-full object-cover"
           />
         ) : (
-          <div className="text-muted-foreground bg-input grid h-full w-full place-items-center">
+          <div className="text-muted-foreground grid h-full w-full place-items-center">
             <Icon name="image" size={28} />
           </div>
         )}
-        <div className="absolute left-3 top-3">
+        <div className="absolute left-2 top-2">
           <StatusChip statut={statut} />
         </div>
         {score != null && (
           <span
-            className={`absolute right-3 top-3 rounded-full px-2 py-0.5 text-xs font-semibold ${scoreMeta(score).badge}`}
+            className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-semibold ${scoreMeta(score).badge}`}
             title="Score produit gagnant (0–100)"
           >
-            Score {score} · {scoreMeta(score).label}
+            {score} · {scoreMeta(score).label}
           </span>
         )}
+        <ProductActions
+          id={p.id}
+          nom={p.nom}
+          dateATravailler={p.date_a_travailler}
+          dateLancementTesting={p.date_lancement_testing}
+        />
       </div>
 
-      <div className="flex flex-1 flex-col gap-3 border-t border-border p-4">
-        <div>
-          {p.categorie && (
-            <p className="text-muted-foreground text-xs">{p.categorie}</p>
-          )}
-          <h3 className="font-semibold leading-snug">{p.nom ?? "Sans nom"}</h3>
-          <p className="text-muted-foreground text-xs">{marcheLabel(p.marche)}</p>
-          {p.statut_revue !== "approuve" && (
-            <span
-              className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATUT_REVUE_BADGE[p.statut_revue as StatutRevue]}`}
-            >
-              {STATUT_REVUE_LABELS[p.statut_revue as StatutRevue]}
-            </span>
-          )}
+      <div className="flex flex-1 flex-col gap-2 border-t border-border p-3">
+        <div className="min-w-0">
+          <h3 className="truncate font-semibold leading-snug" title={p.nom ?? ""}>
+            {p.nom ?? "Sans nom"}
+          </h3>
+          <p className="text-muted-foreground truncate text-xs">
+            {p.categorie ? `${p.categorie} · ` : ""}
+            {marcheLabel(p.marche)}
+          </p>
         </div>
 
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="text-muted-foreground text-xs">Coût livré</p>
-            <p className="font-semibold">
+        <div className="flex items-end justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-muted-foreground text-[11px]">Coût livré</p>
+            <p className="truncate text-sm font-semibold">
               {formatFCFA(p.cout_livre_estime)}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-muted-foreground text-xs">Marge est.</p>
-            <p className={`font-semibold ${margeColorClass(marge ?? null)}`}>
+            <p className="text-muted-foreground text-[11px]">Marge est.</p>
+            <p className={`text-sm font-semibold ${margeColorClass(marge ?? null)}`}>
               {marge == null ? "—" : `${marge.toFixed(0)}%`}
             </p>
           </div>
         </div>
 
-        {echLabel && (
-          <span
-            className={`inline-flex w-fit items-center gap-1 text-xs font-medium ${
-              urgent ? "text-warning" : "text-muted-foreground"
-            }`}
-          >
-            <Icon name="clock" size={12} />
-            {echLabel}
-          </span>
-        )}
+        <div className="flex min-h-[18px] flex-wrap items-center gap-1.5">
+          {p.statut_revue !== "approuve" && (
+            <span
+              className={`inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium ${STATUT_REVUE_BADGE[p.statut_revue as StatutRevue]}`}
+            >
+              {STATUT_REVUE_LABELS[p.statut_revue as StatutRevue]}
+            </span>
+          )}
+          {echLabel && (
+            <span
+              className={`inline-flex items-center gap-1 text-[11px] font-medium ${
+                urgent ? "text-warning" : "text-muted-foreground"
+              }`}
+            >
+              <Icon name="clock" size={11} />
+              {echLabel}
+            </span>
+          )}
+        </div>
 
-        <div className="mt-auto pt-1">
+        <div className="mt-auto pt-0.5">
           {statut === "en_test" ? (
             <Link
               href={`/testing/${p.id}`}
-              className="bg-primary text-primary-foreground flex min-h-[44px] w-full items-center justify-center rounded-md text-center text-sm font-semibold transition-opacity hover:opacity-90"
+              className="bg-primary text-primary-foreground flex min-h-[40px] w-full items-center justify-center rounded-md text-center text-sm font-semibold transition-opacity hover:opacity-90"
             >
               Voir le verdict
             </Link>
@@ -119,7 +130,7 @@ export function ProductCard({
               <input type="hidden" name="id" value={p.id} />
               <button
                 type="submit"
-                className="bg-primary text-primary-foreground flex min-h-[44px] w-full items-center justify-center rounded-md text-center text-sm font-semibold transition-opacity hover:opacity-90"
+                className="bg-primary text-primary-foreground flex min-h-[40px] w-full items-center justify-center rounded-md text-center text-sm font-semibold transition-opacity hover:opacity-90"
               >
                 Envoyer en test
               </button>
@@ -127,7 +138,7 @@ export function ProductCard({
           ) : (
             <Link
               href={`/testing/${p.id}`}
-              className="bg-input text-foreground flex min-h-[44px] w-full items-center justify-center rounded-md text-center text-sm font-semibold transition-colors hover:bg-muted"
+              className="bg-input text-foreground flex min-h-[40px] w-full items-center justify-center rounded-md text-center text-sm font-semibold transition-colors hover:bg-muted"
             >
               Détails
             </Link>

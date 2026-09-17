@@ -116,6 +116,17 @@ export const TRIS = {
 } as const;
 export type Tri = keyof typeof TRIS;
 
+// --- Type d'approvisionnement ---
+export const TYPES_APPRO = [
+  { code: "import", label: "Import Chine" },
+  { code: "local", label: "Local" },
+] as const;
+export type TypeAppro = (typeof TYPES_APPRO)[number]["code"];
+
+export function typeApproLabel(code: string | null): string {
+  return TYPES_APPRO.find((t) => t.code === code)?.label ?? "Import Chine";
+}
+
 // --- Mode de transit ---
 export const MODES_TRANSIT = [
   { code: "aerien", label: "Aérien (au kilo)" },
@@ -128,17 +139,21 @@ export const DEFAULT_FRAIS_TRANSIT_KILO = 12000;
 
 /**
  * Coût livré estimé — identique à la colonne générée en base (aperçu live) :
+ *   Local    : prix_achat_local
  *   Aérien   : prix_fournisseur + poids_kg × frais_transit_kilo
  *   Maritime : prix_fournisseur + cbm × frais_transit_cbm
  */
 export function coutLivreEstime(input: {
+  typeAppro?: TypeAppro;
   mode: ModeTransit;
   prixFournisseur: number | null | undefined;
+  prixAchatLocal?: number | null;
   poidsKg?: number | null;
   fraisTransitKilo?: number | null;
   cbm?: number | null;
   fraisTransitCbm?: number | null;
 }): number {
+  if (input.typeAppro === "local") return input.prixAchatLocal ?? 0;
   const prix = input.prixFournisseur ?? 0;
   if (input.mode === "maritime") {
     return prix + (input.cbm ?? 0) * (input.fraisTransitCbm ?? 0);

@@ -34,6 +34,7 @@ export async function createProduit(formData: FormData): Promise<void> {
   }
 
   const mode = str(formData, "mode_transit") === "maritime" ? "maritime" : "aerien";
+  const typeAppro = str(formData, "type_approvisionnement") === "local" ? "local" : "import";
 
   const payload: ProduitInsert = {
     nom,
@@ -46,13 +47,18 @@ export async function createProduit(formData: FormData): Promise<void> {
     angle_marketing: str(formData, "angle_marketing"),
     marche: str(formData, "marche"),
     // Sourcing / transit — la colonne générée cout_livre_estime est calculée
-    // en base selon le mode de transit.
-    prix_fournisseur: num(formData, "prix_fournisseur"),
-    poids_kg: num(formData, "poids_kg"),
+    // en base selon le type d'appro puis le mode de transit.
+    type_approvisionnement: typeAppro,
+    prix_achat_local: typeAppro === "local" ? num(formData, "prix_achat_local") : null,
+    prix_fournisseur: typeAppro === "local" ? null : num(formData, "prix_fournisseur"),
+    poids_kg: typeAppro === "local" ? null : num(formData, "poids_kg"),
     mode_transit: mode,
-    frais_transit_kilo: num(formData, "frais_transit_kilo"),
-    cbm: num(formData, "cbm"),
-    frais_transit_cbm: num(formData, "frais_transit_cbm"),
+    frais_transit_kilo: typeAppro === "local" ? null : num(formData, "frais_transit_kilo"),
+    cbm: typeAppro === "local" ? null : num(formData, "cbm"),
+    frais_transit_cbm: typeAppro === "local" ? null : num(formData, "frais_transit_cbm"),
+    // Planning
+    date_a_travailler: str(formData, "date_a_travailler"),
+    date_lancement_testing: str(formData, "date_lancement_testing"),
     statut: (str(formData, "statut") as Statut | null) ?? "idee",
     notes: str(formData, "notes"),
   };
@@ -96,11 +102,39 @@ export async function passerEnProduction(formData: FormData): Promise<void> {
   }
 }
 
-/** Suppression d'un produit. */
+/** Suppression d'un produit (RLS : propriétaire ou admin uniquement). */
 export async function deleteProduit(formData: FormData): Promise<void> {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
   const supabase = await createClient();
   const { error } = await supabase.from("produits").delete().eq("id", id);
-  if (!error) revalidatePath("/recherche");
+  if (!error) {
+    revalidatePath("/recherche");
+    revalidatePath("/pipeline");
+    revalidatePath("/aujourdhui");
+  }
+}
+
+/**
+ * Planifie un produit : dates "à travailler" / "lancement testing".
+ * Réarme la notif (notif_envoyee -> false) pour que le rappel reparte sur
+ * la nouvelle échéance. RLS : propriétaire ou admin uniquement.
+ */
+export async function updatePlanning(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("produits")
+    .update({
+      date_a_travailler: str(formData, "date_a_travailler"),
+      date_lancement_testing: str(formData, "date_lancement_testing"),
+      notif_envoyee: false,
+    })
+    .eq("id", id);
+  if (!error) {
+    revalidatePath("/recherche");
+    revalidatePath("/aujourdhui");
+    revalidatePath(`/testing/${id}`);
+  }
 }

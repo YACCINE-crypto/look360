@@ -8,10 +8,12 @@ import {
   MARCHES,
   CATEGORIES,
   MODES_TRANSIT,
+  TYPES_APPRO,
   DEFAULT_FRAIS_TRANSIT_KILO,
   coutLivreEstime,
   formatFCFA,
   type ModeTransit,
+  type TypeAppro,
 } from "@/lib/produits";
 import { Icon } from "./Icon";
 
@@ -28,8 +30,10 @@ export function AddProductPanel() {
   );
 
   // Sourcing / transit (état pour le calcul live du coût livré)
+  const [typeAppro, setTypeAppro] = useState<TypeAppro>("import");
   const [mode, setMode] = useState<ModeTransit>("aerien");
   const [prix, setPrix] = useState("");
+  const [prixLocal, setPrixLocal] = useState("");
   const [poids, setPoids] = useState("");
   const [fraisKilo, setFraisKilo] = useState(String(DEFAULT_FRAIS_TRANSIT_KILO));
   const [cbm, setCbm] = useState("");
@@ -48,8 +52,10 @@ export function AddProductPanel() {
   };
 
   const cout = coutLivreEstime({
+    typeAppro,
     mode,
     prixFournisseur: n(prix),
+    prixAchatLocal: n(prixLocal),
     poidsKg: n(poids),
     fraisTransitKilo: n(fraisKilo),
     cbm: n(cbm),
@@ -119,6 +125,7 @@ export function AddProductPanel() {
               <input type="hidden" name="redirect_to" value="/recherche" />
               <input type="hidden" name="image_url" value={imageUrl} />
               <input type="hidden" name="mode_transit" value={mode} />
+              <input type="hidden" name="type_approvisionnement" value={typeAppro} />
 
               {/* Image */}
               <div className="space-y-1.5">
@@ -203,82 +210,120 @@ export function AddProductPanel() {
                 <input name="lien_ad_library" placeholder="https://…" className={inputCls} />
               </label>
 
-              <div className="grid grid-cols-2 gap-3">
-                <label className="block space-y-1.5">
-                  <span className={labelCls}>Prix fournisseur (FCFA)</span>
-                  <input
-                    name="prix_fournisseur"
-                    inputMode="decimal"
-                    value={prix}
-                    onChange={(e) => setPrix(e.target.value)}
-                    placeholder="0"
-                    className={inputCls}
-                  />
-                </label>
-                <label className="block space-y-1.5">
-                  <span className={labelCls}>Poids (kg)</span>
-                  <input
-                    name="poids_kg"
-                    inputMode="decimal"
-                    value={poids}
-                    onChange={(e) => setPoids(e.target.value)}
-                    placeholder="0"
-                    className={inputCls}
-                  />
-                </label>
+              {/* Type d'approvisionnement */}
+              <div className="space-y-1.5">
+                <span className={labelCls}>Approvisionnement</span>
+                <div className="border-border bg-input flex gap-1 rounded-md border p-1">
+                  {TYPES_APPRO.map((t) => (
+                    <button
+                      key={t.code}
+                      type="button"
+                      onClick={() => setTypeAppro(t.code)}
+                      className={`min-h-[38px] flex-1 rounded-[6px] text-sm font-medium transition-colors ${
+                        typeAppro === t.code
+                          ? "bg-surface text-foreground shadow-sm"
+                          : "text-muted-foreground"
+                      }`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <label className="block space-y-1.5">
-                <span className={labelCls}>Mode de transit</span>
-                <select
-                  value={mode}
-                  onChange={(e) => setMode(e.target.value as ModeTransit)}
-                  className={inputCls}
-                >
-                  {MODES_TRANSIT.map((m) => (
-                    <option key={m.code} value={m.code}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              {mode === "aerien" ? (
+              {typeAppro === "local" ? (
+                /* Local : un seul prix, aucun frais de transit. */
                 <label className="block space-y-1.5">
-                  <span className={labelCls}>Frais transit / kg (FCFA)</span>
+                  <span className={labelCls}>Prix d&apos;achat local (FCFA)</span>
                   <input
-                    name="frais_transit_kilo"
+                    name="prix_achat_local"
                     inputMode="decimal"
-                    value={fraisKilo}
-                    onChange={(e) => setFraisKilo(e.target.value)}
+                    value={prixLocal}
+                    onChange={(e) => setPrixLocal(e.target.value)}
+                    placeholder="0"
                     className={inputCls}
                   />
                 </label>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="block space-y-1.5">
+                      <span className={labelCls}>Prix fournisseur (FCFA)</span>
+                      <input
+                        name="prix_fournisseur"
+                        inputMode="decimal"
+                        value={prix}
+                        onChange={(e) => setPrix(e.target.value)}
+                        placeholder="0"
+                        className={inputCls}
+                      />
+                    </label>
+                    <label className="block space-y-1.5">
+                      <span className={labelCls}>Poids (kg)</span>
+                      <input
+                        name="poids_kg"
+                        inputMode="decimal"
+                        value={poids}
+                        onChange={(e) => setPoids(e.target.value)}
+                        placeholder="0"
+                        className={inputCls}
+                      />
+                    </label>
+                  </div>
+
                   <label className="block space-y-1.5">
-                    <span className={labelCls}>CBM (m³)</span>
-                    <input
-                      name="cbm"
-                      inputMode="decimal"
-                      value={cbm}
-                      onChange={(e) => setCbm(e.target.value)}
-                      placeholder="0"
+                    <span className={labelCls}>Mode de transit</span>
+                    <select
+                      value={mode}
+                      onChange={(e) => setMode(e.target.value as ModeTransit)}
                       className={inputCls}
-                    />
+                    >
+                      {MODES_TRANSIT.map((m) => (
+                        <option key={m.code} value={m.code}>
+                          {m.label}
+                        </option>
+                      ))}
+                    </select>
                   </label>
-                  <label className="block space-y-1.5">
-                    <span className={labelCls}>Frais / CBM (FCFA)</span>
-                    <input
-                      name="frais_transit_cbm"
-                      inputMode="decimal"
-                      value={fraisCbm}
-                      onChange={(e) => setFraisCbm(e.target.value)}
-                      placeholder="0"
-                      className={inputCls}
-                    />
-                  </label>
-                </div>
+
+                  {mode === "aerien" ? (
+                    <label className="block space-y-1.5">
+                      <span className={labelCls}>Frais transit / kg (FCFA)</span>
+                      <input
+                        name="frais_transit_kilo"
+                        inputMode="decimal"
+                        value={fraisKilo}
+                        onChange={(e) => setFraisKilo(e.target.value)}
+                        className={inputCls}
+                      />
+                    </label>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3">
+                      <label className="block space-y-1.5">
+                        <span className={labelCls}>CBM (m³)</span>
+                        <input
+                          name="cbm"
+                          inputMode="decimal"
+                          value={cbm}
+                          onChange={(e) => setCbm(e.target.value)}
+                          placeholder="0"
+                          className={inputCls}
+                        />
+                      </label>
+                      <label className="block space-y-1.5">
+                        <span className={labelCls}>Frais / CBM (FCFA)</span>
+                        <input
+                          name="frais_transit_cbm"
+                          inputMode="decimal"
+                          value={fraisCbm}
+                          onChange={(e) => setFraisCbm(e.target.value)}
+                          placeholder="0"
+                          className={inputCls}
+                        />
+                      </label>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* Coût livré — lecture seule, calculé en direct */}
@@ -286,9 +331,11 @@ export function AddProductPanel() {
                 <div>
                   <p className={labelCls}>Coût livré (calculé)</p>
                   <p className="text-[11px] text-muted-foreground">
-                    {mode === "aerien"
-                      ? "prix + poids × frais/kg"
-                      : "prix + CBM × frais/CBM"}
+                    {typeAppro === "local"
+                      ? "= prix d'achat local"
+                      : mode === "aerien"
+                        ? "prix + poids × frais/kg"
+                        : "prix + CBM × frais/CBM"}
                   </p>
                 </div>
                 <span className="text-lg font-bold tabular-nums">
@@ -305,6 +352,18 @@ export function AddProductPanel() {
                   className={inputCls}
                 />
               </label>
+
+              {/* Planning (optionnel) — rappel push le jour J et 2 jours avant */}
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block space-y-1.5">
+                  <span className={labelCls}>À travailler le</span>
+                  <input type="date" name="date_a_travailler" className={inputCls} />
+                </label>
+                <label className="block space-y-1.5">
+                  <span className={labelCls}>Lancement testing</span>
+                  <input type="date" name="date_lancement_testing" className={inputCls} />
+                </label>
+              </div>
 
               <div className="flex items-center gap-3 pt-1">
                 <button

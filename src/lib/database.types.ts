@@ -7,6 +7,8 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
@@ -37,11 +39,13 @@ export type Database = {
           notes: string | null
           notif_envoyee: boolean
           poids_kg: number | null
+          prix_achat_local: number | null
           prix_fournisseur: number | null
           prix_sourcing: number | null
           soumis_par: string | null
           statut: string
           statut_revue: string
+          type_approvisionnement: string
         }
         Insert: {
           angle_marketing?: string | null
@@ -67,11 +71,13 @@ export type Database = {
           notes?: string | null
           notif_envoyee?: boolean
           poids_kg?: number | null
+          prix_achat_local?: number | null
           prix_fournisseur?: number | null
           prix_sourcing?: number | null
           soumis_par?: string | null
           statut?: string
           statut_revue?: string
+          type_approvisionnement?: string
         }
         Update: {
           angle_marketing?: string | null
@@ -97,11 +103,13 @@ export type Database = {
           notes?: string | null
           notif_envoyee?: boolean
           poids_kg?: number | null
+          prix_achat_local?: number | null
           prix_fournisseur?: number | null
           prix_sourcing?: number | null
           soumis_par?: string | null
           statut?: string
           statut_revue?: string
+          type_approvisionnement?: string
         }
         Relationships: [
           {
@@ -217,11 +225,17 @@ export type Database = {
         ]
       }
     }
-    Views: { [_ in never]: never }
+    Views: {
+      [_ in never]: never
+    }
     Functions: {
       is_admin: { Args: never; Returns: boolean }
     }
-    Enums: { [_ in never]: never }
-    CompositeTypes: { [_ in never]: never }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
 }
