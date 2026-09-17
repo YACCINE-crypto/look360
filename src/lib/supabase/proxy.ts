@@ -29,11 +29,12 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // IMPORTANT : ne rien exécuter entre createServerClient et getUser(),
-  // sous peine de déconnexions aléatoires difficiles à débugger.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims() vérifie le JWT localement (via JWKS) quand le projet utilise
+  // des clés de signature asymétriques → PAS d'appel réseau par navigation
+  // (contrairement à getUser()). Rafraîchit aussi la session si nécessaire.
+  // IMPORTANT : ne rien exécuter entre createServerClient et cet appel.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ?? null;
 
   const { pathname } = request.nextUrl;
 

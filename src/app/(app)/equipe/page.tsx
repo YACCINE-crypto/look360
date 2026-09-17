@@ -5,15 +5,14 @@ import { EquipeForm } from "./EquipeForm";
 
 export default async function EquipePage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub as string | undefined;
+  if (!userId) redirect("/login");
 
   const { data: me } = await supabase
     .from("profiles")
     .select("role")
-    .eq("id", user.id)
+    .eq("id", userId)
     .maybeSingle();
   if (me?.role !== "admin") redirect("/recherche");
 

@@ -28,10 +28,8 @@ export async function saveTest(formData: FormData): Promise<void> {
   if (!produitId) return;
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData?.claims?.sub) redirect("/login");
 
   const input = {
     prix_vente_prevu: num(formData, "prix_vente_prevu"),

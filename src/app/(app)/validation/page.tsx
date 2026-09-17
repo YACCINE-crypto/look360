@@ -25,15 +25,14 @@ type Row = {
 
 export default async function ValidationPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub as string | undefined;
+  if (!userId) redirect("/login");
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("role")
-    .eq("id", user.id)
+    .eq("id", userId)
     .maybeSingle();
   if (profile?.role !== "admin") redirect("/recherche");
 

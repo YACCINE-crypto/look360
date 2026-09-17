@@ -3,10 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub as string | undefined;
+  if (!userId) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
@@ -23,7 +22,7 @@ export async function POST(request: Request) {
 
   const { error } = await supabase.from("push_subscriptions").upsert(
     {
-      user_id: user.id,
+      user_id: userId,
       endpoint: body.endpoint,
       keys: { p256dh: body.keys.p256dh, auth: body.keys.auth },
     },

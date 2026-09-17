@@ -23,10 +23,9 @@ function str(formData: FormData, key: string): string | null {
 /** Création d'un produit (panneau ou page). */
 export async function createProduit(formData: FormData): Promise<void> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub as string | undefined;
+  if (!userId) redirect("/login");
 
   const backTo = String(formData.get("redirect_to") ?? "/recherche");
   const nom = str(formData, "nom");
@@ -38,7 +37,7 @@ export async function createProduit(formData: FormData): Promise<void> {
 
   const payload: ProduitInsert = {
     nom,
-    soumis_par: user.id,
+    soumis_par: userId,
     categorie: str(formData, "categorie"),
     image_url: str(formData, "image_url"),
     lien_source: str(formData, "lien_source"),

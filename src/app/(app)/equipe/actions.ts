@@ -15,15 +15,14 @@ export async function creerAgent(
   formData: FormData,
 ): Promise<string | null> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return "Non connecté.";
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub as string | undefined;
+  if (!userId) return "Non connecté.";
 
   const { data: prof } = await supabase
     .from("profiles")
     .select("role")
-    .eq("id", user.id)
+    .eq("id", userId)
     .maybeSingle();
   if (prof?.role !== "admin") return "Réservé à l'administrateur.";
 

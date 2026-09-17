@@ -8,35 +8,33 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("nom, role")
-    .eq("id", user.id)
-    .maybeSingle();
+  // Identité via getClaims (JWT local, sans round-trip réseau quand possible).
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const claims = claimsData?.claims;
+  if (!claims?.sub) redirect("/login");
+  const userId = claims.sub as string;
 
-  const displayName = profile?.nom ?? user.email ?? "Utilisateur";
-  const initials = displayName.slice(0, 2).toUpperCase();
-
-  // Soumissions en attente (badge nav) — admin uniquement.
-  let pendingCount = 0;
-  if (profile?.role === "admin") {
-    const { count } = await supabase
+  // Profil + compteur de soumissions EN PARALLÈLE (une seule latence DB).
+  const [{ data: profile }, { count }] = await Promise.all([
+    supabase.from("profiles").select("nom, role").eq("id", userId).maybeSingle(),
+    supabase
       .from("produits")
       .select("id", { count: "exact", head: true })
-      .in("statut_revue", ["soumis", "en_analyse"]);
-    pendingCount = count ?? 0;
-  }
+      .in("statut_revue", ["soumis", "en_analyse"]),
+  ]);
+
+  const role = profile?.role ?? "—";
+  const displayName =
+    profile?.nom ?? (claims.email as string | undefined) ?? "Utilisateur";
+  const initials = displayName.slice(0, 2).toUpperCase();
+  const pendingCount = role === "admin" ? (count ?? 0) : 0;
 
   return (
     <AppShell
       displayName={displayName}
       initials={initials}
-      role={profile?.role ?? "—"}
+      role={role}
       pendingCount={pendingCount}
     >
       {children}
