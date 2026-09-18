@@ -27,7 +27,7 @@ export function ProductActions({
 
   return (
     <>
-      <div className="absolute bottom-2 right-2 flex gap-1.5">
+      <div className="absolute bottom-2 right-2 z-20 flex gap-1.5">
         <button
           type="button"
           onClick={() => setPlanOpen(true)}

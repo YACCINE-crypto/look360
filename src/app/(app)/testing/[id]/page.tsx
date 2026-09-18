@@ -40,6 +40,7 @@ export default async function FicheTestPage({
         angle_marketing: produit.angle_marketing,
         lien_source: produit.lien_source,
         lien_concurrent: produit.lien_concurrent,
+        lien_ad_library: produit.lien_ad_library,
         date_lancement_testing: produit.date_lancement_testing,
       }}
       initial={{

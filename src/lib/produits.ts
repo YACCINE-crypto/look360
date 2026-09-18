@@ -161,6 +161,20 @@ export function coutLivreEstime(input: {
   return prix + (input.poidsKg ?? 0) * (input.fraisTransitKilo ?? 0);
 }
 
+/**
+ * Normalise une URL saisie à la main pour un lien externe cliquable.
+ * Ajoute "https://" si le schéma manque (sinon le navigateur la traite comme
+ * un lien interne relatif et le clic « ne fait rien »). Retourne null si vide.
+ */
+export function externalUrl(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const t = raw.trim();
+  if (!t) return null;
+  if (/^https?:\/\//i.test(t)) return t;
+  if (/^\/\//.test(t)) return `https:${t}`;
+  return `https://${t}`;
+}
+
 /** Formatage FCFA (pas de décimales). */
 export function formatFCFA(value: number | null | undefined): string {
   if (value == null) return "—";

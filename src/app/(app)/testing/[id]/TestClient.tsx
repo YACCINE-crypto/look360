@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { computeTest, type ConfirmationTier } from "@/lib/testing";
-import { marcheLabel } from "@/lib/produits";
+import { marcheLabel, externalUrl } from "@/lib/produits";
 import { saveTest, validerProduit, abandonnerProduit } from "../actions";
 
 const CONFIRMATION_SHORT: Record<ConfirmationTier, string> = {
@@ -28,6 +28,7 @@ type Props = {
     angle_marketing: string | null;
     lien_source: string | null;
     lien_concurrent: string | null;
+    lien_ad_library: string | null;
     date_lancement_testing: string | null;
   };
   initial: {
@@ -244,30 +245,21 @@ export function TestClient({ produit, initial }: Props) {
             </div>
           )}
 
-          {(produit.lien_source || produit.lien_concurrent) && (
+          {(externalUrl(produit.lien_source) ||
+            externalUrl(produit.lien_concurrent) ||
+            externalUrl(produit.lien_ad_library)) && (
             <div>
               <h2 className="mb-2 text-sm font-semibold">Liens</h2>
               <div className="space-y-2 text-sm">
-                {produit.lien_source && (
-                  <a
-                    href={produit.lien_source}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-primary flex items-center gap-2 hover:underline"
-                  >
-                    <Icon name="chevronRight" size={14} /> Voir fournisseur
-                  </a>
-                )}
-                {produit.lien_concurrent && (
-                  <a
-                    href={produit.lien_concurrent}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-primary flex items-center gap-2 hover:underline"
-                  >
-                    <Icon name="chevronRight" size={14} /> Voir pub concurrent
-                  </a>
-                )}
+                <ExternalLink href={externalUrl(produit.lien_source)} label="Voir fournisseur" />
+                <ExternalLink
+                  href={externalUrl(produit.lien_concurrent)}
+                  label="Voir boutique concurrent"
+                />
+                <ExternalLink
+                  href={externalUrl(produit.lien_ad_library)}
+                  label="Voir pub concurrent"
+                />
               </div>
             </div>
           )}
@@ -318,6 +310,21 @@ export function TestClient({ produit, initial }: Props) {
         </div>
       </div>
     </div>
+  );
+}
+
+/** Lien externe cliquable (nouvel onglet). Rien si href vide → pas de lien mort. */
+function ExternalLink({ href, label }: { href: string | null; label: string }) {
+  if (!href) return null;
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-primary flex items-center gap-2 hover:underline"
+    >
+      <Icon name="chevronRight" size={14} /> {label}
+    </a>
   );
 }
 

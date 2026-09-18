@@ -36,10 +36,18 @@ export function ProductCard({
 
   return (
     <article
-      className={`bg-surface flex h-full flex-col overflow-hidden rounded-xl border shadow-card ${
+      className={`bg-surface relative flex h-full flex-col overflow-hidden rounded-xl border shadow-card transition-shadow hover:shadow-md ${
         urgent ? "border-warning" : "border-border"
       }`}
     >
+      {/* Toute la carte est cliquable vers la page détail (lien étiré).
+          Les boutons d'action passent au-dessus (z-20) et restent indépendants. */}
+      <Link
+        href={`/produits/${p.id}`}
+        aria-label={`Ouvrir ${p.nom ?? "le produit"}`}
+        className="absolute inset-0 z-10"
+      />
+
       <div className="bg-input relative aspect-[4/3] w-full">
         {p.image_url ? (
           <img
@@ -117,7 +125,7 @@ export function ProductCard({
           )}
         </div>
 
-        <div className="mt-auto pt-0.5">
+        <div className="relative z-20 mt-auto pt-0.5">
           {statut === "en_test" ? (
             <Link
               href={`/testing/${p.id}`}
@@ -140,7 +148,7 @@ export function ProductCard({
               href={`/testing/${p.id}`}
               className="bg-input text-foreground flex min-h-[40px] w-full items-center justify-center rounded-md text-center text-sm font-semibold transition-colors hover:bg-muted"
             >
-              Détails
+              Voir le test
             </Link>
           )}
         </div>
