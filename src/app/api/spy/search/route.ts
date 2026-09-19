@@ -20,6 +20,7 @@ function parseFilters(src: Record<string, unknown>): SpyFilters {
   return {
     q: String(src.q ?? src.keyword ?? "").trim(),
     country: String(src.country ?? "FR").trim().toUpperCase(),
+    pageId: String(src.pageId ?? src.page_id ?? "").trim() || undefined,
     platform: platform === "facebook" || platform === "instagram" ? platform : "",
     statut: statut === "all" ? "all" : "active",
     mediaType: mediaType === "image" || mediaType === "video" ? mediaType : "all",

@@ -1,33 +1,81 @@
 // ============================================================================
-// Look360 — Spy Facebook : construction de l'URL Ad Library, normalisation de
-// la sortie de l'actor Apify (curious_coder/facebook-ads-library-scraper) et
-// score gagnant honnête (§4). Aucun secret ici (logique pure, réutilisable).
+// Look360 — Spy Facebook : URL Ad Library, normalisation actor Apify
+// (curious_coder/facebook-ads-library-scraper), score gagnant honnête (§4).
+// Aucun secret ici (logique pure).
 // ============================================================================
 
-// --- Pays ciblables. flagEU => reach réel dispo (loi DSA). ---
-export type SpyCountry = { code: string; label: string; eu: boolean };
+/** Plafond de concurrents suivis (garde-fou coût Apify). */
+export const MAX_COMPETITORS = 20;
+
+export type SpyRegion = "africa" | "europe" | "other";
+export type SpyCountry = { code: string; label: string; eu: boolean; region: SpyRegion };
+
+export const SPY_REGION_LABELS: Record<SpyRegion, string> = {
+  africa: "Afrique",
+  europe: "Europe",
+  other: "Autres",
+};
+
+// eu:true => reach réel dispo (DSA, UE + EEE).
+const EU_EEA = new Set([
+  "AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IE","IT",
+  "LV","LT","LU","MT","NL","PL","PT","RO","SK","SI","ES","SE","IS","LI","NO",
+]);
+
+function mk(region: SpyRegion, pairs: [string, string][]): SpyCountry[] {
+  return pairs.map(([code, label]) => ({ code, label, region, eu: EU_EEA.has(code) }));
+}
+
+// --- Afrique (couverture large de la Ad Library) ---
+const AFRICA: [string, string][] = [
+  ["DZ", "Algérie"], ["AO", "Angola"], ["BJ", "Bénin"], ["BW", "Botswana"],
+  ["BF", "Burkina Faso"], ["BI", "Burundi"], ["CM", "Cameroun"], ["CV", "Cap-Vert"],
+  ["CF", "Centrafrique"], ["TD", "Tchad"], ["KM", "Comores"], ["CG", "Congo"],
+  ["CD", "RD Congo"], ["CI", "Côte d'Ivoire"], ["DJ", "Djibouti"], ["EG", "Égypte"],
+  ["GQ", "Guinée équatoriale"], ["ER", "Érythrée"], ["SZ", "Eswatini"], ["ET", "Éthiopie"],
+  ["GA", "Gabon"], ["GM", "Gambie"], ["GH", "Ghana"], ["GN", "Guinée"],
+  ["GW", "Guinée-Bissau"], ["KE", "Kenya"], ["LS", "Lesotho"], ["LR", "Libéria"],
+  ["LY", "Libye"], ["MG", "Madagascar"], ["MW", "Malawi"], ["ML", "Mali"],
+  ["MR", "Mauritanie"], ["MU", "Maurice"], ["MA", "Maroc"], ["MZ", "Mozambique"],
+  ["NA", "Namibie"], ["NE", "Niger"], ["NG", "Nigéria"], ["RW", "Rwanda"],
+  ["ST", "Sao Tomé-et-Príncipe"], ["SN", "Sénégal"], ["SC", "Seychelles"], ["SL", "Sierra Leone"],
+  ["SO", "Somalie"], ["ZA", "Afrique du Sud"], ["SS", "Soudan du Sud"], ["SD", "Soudan"],
+  ["TZ", "Tanzanie"], ["TG", "Togo"], ["TN", "Tunisie"], ["UG", "Ouganda"],
+  ["ZM", "Zambie"], ["ZW", "Zimbabwe"],
+];
+
+// --- Europe ---
+const EUROPE: [string, string][] = [
+  ["AL", "Albanie"], ["AD", "Andorre"], ["AT", "Autriche"], ["BE", "Belgique"],
+  ["BA", "Bosnie-Herzégovine"], ["BG", "Bulgarie"], ["HR", "Croatie"], ["CY", "Chypre"],
+  ["CZ", "Tchéquie"], ["DK", "Danemark"], ["EE", "Estonie"], ["FI", "Finlande"],
+  ["FR", "France"], ["DE", "Allemagne"], ["GR", "Grèce"], ["HU", "Hongrie"],
+  ["IS", "Islande"], ["IE", "Irlande"], ["IT", "Italie"], ["LV", "Lettonie"],
+  ["LI", "Liechtenstein"], ["LT", "Lituanie"], ["LU", "Luxembourg"], ["MT", "Malte"],
+  ["MD", "Moldavie"], ["MC", "Monaco"], ["ME", "Monténégro"], ["NL", "Pays-Bas"],
+  ["MK", "Macédoine du Nord"], ["NO", "Norvège"], ["PL", "Pologne"], ["PT", "Portugal"],
+  ["RO", "Roumanie"], ["RS", "Serbie"], ["SK", "Slovaquie"], ["SI", "Slovénie"],
+  ["ES", "Espagne"], ["SE", "Suède"], ["CH", "Suisse"], ["UA", "Ukraine"],
+  ["GB", "Royaume-Uni"],
+];
+
+// --- Autres marchés utiles ---
+const OTHER: [string, string][] = [
+  ["US", "États-Unis"], ["CA", "Canada"], ["AU", "Australie"], ["NZ", "Nouvelle-Zélande"],
+  ["BR", "Brésil"], ["MX", "Mexique"], ["AR", "Argentine"], ["AE", "Émirats arabes unis"],
+  ["SA", "Arabie saoudite"], ["QA", "Qatar"], ["TR", "Turquie"], ["IN", "Inde"],
+  ["ID", "Indonésie"], ["MY", "Malaisie"], ["PH", "Philippines"], ["TH", "Thaïlande"],
+  ["VN", "Viêt Nam"], ["JP", "Japon"], ["KR", "Corée du Sud"],
+];
+
 export const SPY_COUNTRIES: SpyCountry[] = [
-  // Afrique francophone (pas de reach public)
-  { code: "CI", label: "Côte d'Ivoire", eu: false },
-  { code: "SN", label: "Sénégal", eu: false },
-  { code: "GA", label: "Gabon", eu: false },
-  { code: "BF", label: "Burkina Faso", eu: false },
-  { code: "ML", label: "Mali", eu: false },
-  { code: "TG", label: "Togo", eu: false },
-  { code: "BJ", label: "Bénin", eu: false },
-  { code: "CM", label: "Cameroun", eu: false },
-  // Europe / UE (reach réel dispo)
-  { code: "FR", label: "France", eu: true },
-  { code: "BE", label: "Belgique", eu: true },
-  { code: "DE", label: "Allemagne", eu: true },
-  { code: "ES", label: "Espagne", eu: true },
-  { code: "IT", label: "Italie", eu: true },
-  { code: "NL", label: "Pays-Bas", eu: true },
-  { code: "PT", label: "Portugal", eu: true },
+  ...mk("africa", AFRICA),
+  ...mk("europe", EUROPE),
+  ...mk("other", OTHER),
 ];
 
 export function isEUCountry(code: string | null | undefined): boolean {
-  return SPY_COUNTRIES.some((c) => c.code === code && c.eu);
+  return !!code && EU_EEA.has(code);
 }
 export function countryLabel(code: string | null | undefined): string {
   return SPY_COUNTRIES.find((c) => c.code === code)?.label ?? (code ?? "—");
@@ -40,34 +88,66 @@ export type SpyStatut = "active" | "all";
 export type SpyFilters = {
   q: string;
   country: string;
+  pageId?: string; // recherche "annonceur" (view_all_page_id) — prime sur q
   platform?: SpyPlatform;
   statut?: SpyStatut;
   mediaType?: SpyMediaType;
-  ancienneteMin?: number; // jours
-  reachMin?: number; // UE uniquement
+  ancienneteMin?: number;
+  reachMin?: number;
   variantsMin?: number;
   tri?: "score" | "reach" | "anciennete" | "variants";
   limit?: number;
 };
 
-/**
- * Construit l'URL de recherche Facebook Ad Library à partir des filtres app.
- * C'est CETTE url qui est passée en entrée de l'actor Apify.
- */
+/** URL de recherche Facebook Ad Library (entrée de l'actor). */
 export function buildAdLibraryUrl(f: SpyFilters): string {
   const p = new URLSearchParams();
   p.set("active_status", f.statut === "all" ? "all" : "active");
   p.set("ad_type", "all");
   p.set("country", f.country || "FR");
-  if (f.q) p.set("q", f.q);
-  p.set("search_type", "keyword_unordered");
+  if (f.pageId) {
+    // Toutes les pubs d'une page (annonceur).
+    p.set("view_all_page_id", f.pageId);
+  } else {
+    if (f.q) p.set("q", f.q);
+    p.set("search_type", "keyword_unordered");
+  }
   p.set("media_type", f.mediaType && f.mediaType !== "all" ? f.mediaType : "all");
   if (f.platform === "facebook") p.set("publisher_platforms[0]", "facebook");
   if (f.platform === "instagram") p.set("publisher_platforms[0]", "instagram");
   return `https://www.facebook.com/ads/library/?${p.toString()}`;
 }
 
-// --- Sortie normalisée d'une pub ---
+// --- Destination du landing (§ lien boutique intelligent) ---
+export type LandingKind = "whatsapp" | "messenger" | "shop" | "social" | null;
+
+export function domainOf(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+}
+
+export function landingKind(url: string | null | undefined): LandingKind {
+  const h = domainOf(url);
+  if (!h) return null;
+  if (h === "wa.me" || h.endsWith("whatsapp.com")) return "whatsapp";
+  if (h === "m.me" || h.endsWith("messenger.com")) return "messenger";
+  if (h.endsWith("facebook.com") || h === "fb.com" || h.endsWith("instagram.com"))
+    return "social";
+  return "shop";
+}
+
+export const LANDING_LABEL: Record<Exclude<LandingKind, null>, string> = {
+  whatsapp: "Contact WhatsApp",
+  messenger: "Messenger",
+  social: "Page sociale",
+  shop: "Boutique",
+};
+
+// --- Sortie normalisée ---
 export type SpyAd = {
   ad_archive_id: string;
   page_id: string | null;
@@ -81,15 +161,17 @@ export type SpyAd = {
   media_url: string | null;
   thumbnail_url: string | null;
   landing_url: string | null;
+  landing_kind: LandingKind;
+  landing_domain: string | null;
   ad_library_url: string;
-  start_date: string | null; // ISO (yyyy-mm-dd)
+  start_date: string | null;
   jours_actifs: number | null;
   variants_count: number;
   platforms: string[];
   is_active: boolean;
   statut: "active" | "inactive";
   targets_eu: boolean;
-  reach: number | null; // reach total UE (DSA) — null hors UE
+  reach: number | null;
   country: string | null;
   score: number;
   score_label: "Fort potentiel" | "Moyen" | "Faible";
@@ -120,7 +202,6 @@ function bodyText(body: unknown): string | null {
   return null;
 }
 
-/** raw = un item du dataset Apify. country = pays recherché (fallback). */
 export function normalizeApifyItem(raw: Record<string, unknown>, country: string): SpyAd {
   const snap = (raw.snapshot ?? {}) as Record<string, unknown>;
   const aaa = (raw.aaa_info ?? {}) as Record<string, unknown>;
@@ -171,16 +252,16 @@ export function normalizeApifyItem(raw: Record<string, unknown>, country: string
   const ad_library_url =
     (raw.ad_library_url as string) ||
     `https://www.facebook.com/ads/library/?id=${adId}`;
+  const landing_url = (snap.link_url as string) ?? null;
 
-  const partial = {
+  const { score, score_label, score_detail } = computeSpyScore({
     jours_actifs,
     variants_count,
     is_active,
     targets_eu,
     reach,
     page_active_ads_count,
-  };
-  const { score, score_label, score_detail } = computeSpyScore(partial);
+  });
 
   return {
     ad_archive_id: adId,
@@ -195,7 +276,9 @@ export function normalizeApifyItem(raw: Record<string, unknown>, country: string
     media_type,
     media_url,
     thumbnail_url,
-    landing_url: (snap.link_url as string) ?? null,
+    landing_url,
+    landing_kind: landingKind(landing_url),
+    landing_domain: domainOf(landing_url),
     ad_library_url,
     start_date,
     jours_actifs,
@@ -212,7 +295,6 @@ export function normalizeApifyItem(raw: Record<string, unknown>, country: string
   };
 }
 
-// --- Score gagnant honnête (§4) : deux profils selon dispo du reach UE. ---
 export function computeSpyScore(a: {
   jours_actifs: number | null;
   variants_count: number;
@@ -223,22 +305,20 @@ export function computeSpyScore(a: {
 }): { score: number; score_label: SpyAd["score_label"]; score_detail: string[] } {
   const detail: string[] = [];
   const jours = a.jours_actifs ?? 0;
-  const anc = Math.min(1, jours / 90); // 90 j et + = plein
-  const varRatio = Math.min(1, Math.max(0, (a.variants_count - 1) / 9)); // 10+ = plein
+  const anc = Math.min(1, jours / 90);
+  const varRatio = Math.min(1, Math.max(0, (a.variants_count - 1) / 9));
   const act = a.is_active ? 1 : 0;
   const hasReach = a.targets_eu && a.reach != null;
 
   let score = 0;
   if (hasReach) {
-    // Profil UE : ancienneté 40 · reach 35 · variantes 15 · activité 10
-    const reachRatio = Math.min(1, (a.reach as number) / 1_000_000); // 1M = plein
+    const reachRatio = Math.min(1, (a.reach as number) / 1_000_000);
     score = 40 * anc + 35 * reachRatio + 15 * varRatio + 10 * act;
     detail.push(`Tourne depuis ${jours} j (+${Math.round(40 * anc)})`);
     detail.push(`Reach UE ${formatReach(a.reach)} (+${Math.round(35 * reachRatio)})`);
     detail.push(`${a.variants_count} variante${a.variants_count > 1 ? "s" : ""} (+${Math.round(15 * varRatio)})`);
     detail.push(a.is_active ? "Toujours active (+10)" : "Inactive (+0)");
   } else {
-    // Profil Afrique/autres : ancienneté 55 · variantes 30 · activité 15
     score = 55 * anc + 30 * varRatio + 15 * act;
     detail.push(`Tourne depuis ${jours} j (+${Math.round(55 * anc)})`);
     detail.push(`${a.variants_count} variante${a.variants_count > 1 ? "s" : ""} (+${Math.round(30 * varRatio)})`);
@@ -258,14 +338,12 @@ export function formatReach(v: number | null | undefined): string {
   return String(v);
 }
 
-/** Filtres numériques + tri appliqués côté serveur après normalisation (§3). */
 export function applySpyFilters(ads: SpyAd[], f: SpyFilters): SpyAd[] {
   let out = ads.filter((ad) => {
     if (f.statut !== "all" && !ad.is_active) return false;
     if (f.ancienneteMin && (ad.jours_actifs ?? 0) < f.ancienneteMin) return false;
     if (f.variantsMin && ad.variants_count < f.variantsMin) return false;
     if (f.mediaType && f.mediaType !== "all" && ad.media_type !== f.mediaType) return false;
-    // Reach mini : seulement si le pays ciblé est dans l'UE (reach dispo).
     if (f.reachMin && isEUCountry(f.country)) {
       if (ad.reach == null || ad.reach < f.reachMin) return false;
     }

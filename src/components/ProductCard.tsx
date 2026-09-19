@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Icon } from "./Icon";
 import { StatusChip } from "./StatusChip";
 import { ProductActions } from "./ProductActions";
-import { envoyerEnTest } from "@/app/(app)/recherche/actions";
 import { margeColorClass } from "@/lib/testing";
 import { scoreMeta } from "@/lib/score";
 import {
@@ -134,15 +133,12 @@ export function ProductCard({
               Voir le verdict
             </Link>
           ) : statut === "idee" || statut === "a_tester" ? (
-            <form action={envoyerEnTest}>
-              <input type="hidden" name="id" value={p.id} />
-              <button
-                type="submit"
-                className="bg-primary text-primary-foreground flex min-h-[40px] w-full items-center justify-center rounded-md text-center text-sm font-semibold transition-opacity hover:opacity-90"
-              >
-                Envoyer en test
-              </button>
-            </form>
+            <Link
+              href={`/produits/${p.id}/envoyer-test`}
+              className="bg-primary text-primary-foreground flex min-h-[40px] w-full items-center justify-center rounded-md text-center text-sm font-semibold transition-opacity hover:opacity-90"
+            >
+              Envoyer en test
+            </Link>
           ) : (
             <Link
               href={`/testing/${p.id}`}

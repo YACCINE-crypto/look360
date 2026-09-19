@@ -93,6 +93,42 @@ export async function envoyerEnTest(formData: FormData): Promise<void> {
   if (id) await setStatut(id, "en_test");
 }
 
+/**
+ * Envoi en test AVEC saisie des infos de rentabilité (coût livré).
+ * C'est ici — et pas à l'enregistrement — qu'on exige prix/poids/transit.
+ * Met à jour le sourcing puis passe le produit en test.
+ */
+export async function envoyerEnTestAvecSourcing(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+  const supabase = await createClient();
+
+  const typeAppro = str(formData, "type_approvisionnement") === "local" ? "local" : "import";
+  const mode = str(formData, "mode_transit") === "maritime" ? "maritime" : "aerien";
+
+  const { error } = await supabase
+    .from("produits")
+    .update({
+      type_approvisionnement: typeAppro,
+      prix_achat_local: typeAppro === "local" ? num(formData, "prix_achat_local") : null,
+      prix_fournisseur: typeAppro === "local" ? null : num(formData, "prix_fournisseur"),
+      poids_kg: typeAppro === "local" ? null : num(formData, "poids_kg"),
+      mode_transit: mode,
+      frais_transit_kilo: typeAppro === "local" ? null : num(formData, "frais_transit_kilo"),
+      cbm: typeAppro === "local" ? null : num(formData, "cbm"),
+      frais_transit_cbm: typeAppro === "local" ? null : num(formData, "frais_transit_cbm"),
+      statut: "en_test",
+    })
+    .eq("id", id);
+
+  if (error) {
+    redirect(`/produits/${id}/envoyer-test?error=save`);
+  }
+  revalidatePath("/recherche");
+  revalidatePath("/testing");
+  redirect(`/testing/${id}`);
+}
+
 /** Bouton "Production" (Pipeline, colonne Validé). */
 export async function passerEnProduction(formData: FormData): Promise<void> {
   const id = String(formData.get("id") ?? "");

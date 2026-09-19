@@ -20,6 +20,8 @@ type IconName =
   | "trash"
   | "eye"
   | "external"
+  | "play"
+  | "download"
   | "x";
 
 const PATHS: Record<IconName, React.ReactNode> = {
@@ -122,6 +124,14 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="M15 3h6v6" />
       <path d="M10 14 21 3" />
       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+    </>
+  ),
+  play: <path d="M7 4v16l13-8z" />,
+  download: (
+    <>
+      <path d="M12 3v12" />
+      <path d="m7 10 5 5 5-5" />
+      <path d="M5 21h14" />
     </>
   ),
   x: <path d="M18 6 6 18M6 6l12 12" />,

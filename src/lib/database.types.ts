@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      competitors_watch: {
+        Row: {
+          country: string | null
+          created_at: string
+          domaine: string | null
+          id: string
+          known_ad_ids: string[]
+          last_checked_at: string | null
+          page_id: string
+          page_name: string | null
+          user_id: string
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          domaine?: string | null
+          id?: string
+          known_ad_ids?: string[]
+          last_checked_at?: string | null
+          page_id: string
+          page_name?: string | null
+          user_id: string
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          domaine?: string | null
+          id?: string
+          known_ad_ids?: string[]
+          last_checked_at?: string | null
+          page_id?: string
+          page_name?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitors_watch_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       produits: {
         Row: {
           angle_marketing: string | null
