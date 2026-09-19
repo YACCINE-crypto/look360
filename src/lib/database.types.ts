@@ -58,6 +58,47 @@ export type Database = {
           },
         ]
       }
+      spy_searches: {
+        Row: {
+          cache_key: string
+          created_at: string
+          filters: Json | null
+          id: string
+          raw_count: number
+          results: Json
+          url: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string
+          filters?: Json | null
+          id?: string
+          raw_count?: number
+          results?: Json
+          url?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string
+          filters?: Json | null
+          id?: string
+          raw_count?: number
+          results?: Json
+          url?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spy_searches_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       produits: {
         Row: {
           angle_marketing: string | null

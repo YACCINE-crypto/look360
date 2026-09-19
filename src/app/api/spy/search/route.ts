@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { runSpySearch } from "@/lib/apify";
+import { searchSpyWithCache } from "@/lib/spyCache";
 import type { SpyFilters, SpyMediaType, SpyPlatform, SpyStatut } from "@/lib/spy";
 
 export const runtime = "nodejs";
@@ -32,17 +32,24 @@ function parseFilters(src: Record<string, unknown>): SpyFilters {
   };
 }
 
-async function handle(filters: SpyFilters, includeRaw: boolean) {
+async function handle(filters: SpyFilters) {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
-  if (!data?.claims?.sub) {
+  const userId = data?.claims?.sub as string | undefined;
+  if (!userId) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-  if (!filters.q && !filters.country) {
+  if (!filters.q && !filters.country && !filters.pageId) {
     return NextResponse.json({ error: "mot-clé ou pays requis" }, { status: 400 });
   }
   try {
-    const result = await runSpySearch(filters, { includeRaw });
+    const result = await searchSpyWithCache(filters, userId);
+    if (result.capped) {
+      return NextResponse.json(
+        { error: "Plafond de recherches Spy atteint pour aujourd'hui. Réessaie demain." },
+        { status: 429 },
+      );
+    }
     return NextResponse.json(result);
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Erreur inconnue";
@@ -57,12 +64,12 @@ export async function POST(request: Request) {
   } catch {
     /* body vide accepté */
   }
-  return handle(parseFilters(body), body.debug === true || body.debug === "1");
+  return handle(parseFilters(body));
 }
 
 // GET pratique pour un test manuel dans le navigateur (connecté à l'app) :
 //   /api/spy/search?q=montre&country=FR&debug=1
 export async function GET(request: Request) {
   const sp = Object.fromEntries(new URL(request.url).searchParams.entries());
-  return handle(parseFilters(sp), sp.debug === "1");
+  return handle(parseFilters(sp));
 }

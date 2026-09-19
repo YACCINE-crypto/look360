@@ -40,6 +40,7 @@ export function SpyClient() {
 
   const [status, setStatus] = useState<Status>("idle");
   const [ads, setAds] = useState<SpyAd[]>([]);
+  const [cached, setCached] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [advertiser, setAdvertiser] = useState<{ pageId: string; name: string } | null>(() => {
     const pid = params.get("pageId");
@@ -73,6 +74,7 @@ export function SpyClient() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Recherche impossible.");
       setAds(data.ads ?? []);
+      setCached(Boolean(data.cached));
       setStatus("done");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue.");
@@ -282,7 +284,14 @@ export function SpyClient() {
 
       {status === "done" && ads.length > 0 && (
         <>
-          <p className="text-muted-foreground text-sm">{ads.length} pub(s) trouvée(s)</p>
+          <p className="text-muted-foreground flex items-center gap-2 text-sm">
+            {ads.length} pub(s) trouvée(s)
+            {cached && (
+              <span className="bg-input text-muted-foreground rounded-full px-2 py-0.5 text-[11px] font-medium">
+                ⚡ en cache
+              </span>
+            )}
+          </p>
           <div className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {ads.map((ad) => (
               <SpyCard key={ad.ad_archive_id} ad={ad} onAnalyze={analyze} onPlay={setPlaying} />
