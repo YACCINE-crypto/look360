@@ -18,6 +18,8 @@ type IconName =
   | "users"
   | "inbox"
   | "trash"
+  | "eye"
+  | "external"
   | "x";
 
 const PATHS: Record<IconName, React.ReactNode> = {
@@ -107,6 +109,19 @@ const PATHS: Record<IconName, React.ReactNode> = {
     <>
       <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
       <path d="M10 11v6M14 11v6" />
+    </>
+  ),
+  eye: (
+    <>
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+      <circle cx="12" cy="12" r="3" />
+    </>
+  ),
+  external: (
+    <>
+      <path d="M15 3h6v6" />
+      <path d="M10 14 21 3" />
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
     </>
   ),
   x: <path d="M18 6 6 18M6 6l12 12" />,
