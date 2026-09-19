@@ -7,6 +7,18 @@
 /** Plafond de concurrents suivis (garde-fou coût Apify). */
 export const MAX_COMPETITORS = 20;
 
+/** Winner Agent : nb max de recherches Apify par exécution du cron (coût). */
+export const WINNER_SEARCH_CAP = 5;
+/** Valeurs par défaut raisonnables de la config Winner Agent. */
+export const WINNER_DEFAULTS = {
+  keywords: ["montre", "ceinture", "masseur"],
+  countries: ["CI", "FR"],
+  anciennete_min: 30,
+  reach_min: 0,
+  score_min: 60,
+  results_max: 10,
+};
+
 export type SpyRegion = "africa" | "europe" | "other";
 export type SpyCountry = { code: string; label: string; eu: boolean; region: SpyRegion };
 

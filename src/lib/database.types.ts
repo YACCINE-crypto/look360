@@ -342,6 +342,96 @@ export type Database = {
           },
         ]
       }
+      winner_agent_config: {
+        Row: {
+          active: boolean
+          anciennete_min: number
+          countries: string[]
+          created_at: string
+          keywords: string[]
+          reach_min: number
+          results_max: number
+          score_min: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          anciennete_min?: number
+          countries?: string[]
+          created_at?: string
+          keywords?: string[]
+          reach_min?: number
+          results_max?: number
+          score_min?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          anciennete_min?: number
+          countries?: string[]
+          created_at?: string
+          keywords?: string[]
+          reach_min?: number
+          results_max?: number
+          score_min?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      winner_agent_seen: {
+        Row: {
+          ad_archive_id: string
+          id: string
+          seen_at: string
+          user_id: string
+        }
+        Insert: {
+          ad_archive_id: string
+          id?: string
+          seen_at?: string
+          user_id: string
+        }
+        Update: {
+          ad_archive_id?: string
+          id?: string
+          seen_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      winner_daily: {
+        Row: {
+          ad_archive_id: string | null
+          created_at: string
+          day: string
+          id: string
+          payload: Json
+          score: number | null
+          user_id: string
+        }
+        Insert: {
+          ad_archive_id?: string | null
+          created_at?: string
+          day?: string
+          id?: string
+          payload: Json
+          score?: number | null
+          user_id: string
+        }
+        Update: {
+          ad_archive_id?: string | null
+          created_at?: string
+          day?: string
+          id?: string
+          payload?: Json
+          score?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       tests: {
         Row: {
           commandes_confirmees: number | null

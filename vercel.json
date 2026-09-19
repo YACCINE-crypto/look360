@@ -8,6 +8,10 @@
     {
       "path": "/api/cron/competitors",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/winner-agent",
+      "schedule": "0 7 * * *"
     }
   ]
 }

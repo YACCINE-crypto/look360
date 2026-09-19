@@ -1,0 +1,75 @@
+import { createClient } from "@/lib/supabase/server";
+import { PageHeader } from "@/components/ui";
+import { Icon } from "@/components/Icon";
+import { AdGrid } from "@/components/AdGrid";
+import { WinnerConfigForm, type WinnerConfig } from "./WinnerConfigForm";
+import { lancerWinnerMaintenant } from "./actions";
+import { WINNER_DEFAULTS, type SpyAd } from "@/lib/spy";
+
+export const dynamic = "force-dynamic";
+
+export default async function WinnersPage() {
+  const supabase = await createClient();
+  const today = new Date().toISOString().slice(0, 10);
+
+  const [{ data: cfgRow }, { data: winners }] = await Promise.all([
+    supabase.from("winner_agent_config").select("*").maybeSingle(),
+    supabase
+      .from("winner_daily")
+      .select("*")
+      .eq("day", today)
+      .order("score", { ascending: false }),
+  ]);
+
+  const config: WinnerConfig = cfgRow
+    ? {
+        active: cfgRow.active,
+        keywords: cfgRow.keywords,
+        countries: cfgRow.countries,
+        anciennete_min: cfgRow.anciennete_min,
+        reach_min: cfgRow.reach_min,
+        score_min: cfgRow.score_min,
+        results_max: cfgRow.results_max,
+      }
+    : { active: true, ...WINNER_DEFAULTS };
+
+  const ads = (winners ?? []).map((w) => w.payload as unknown as SpyAd);
+
+  return (
+    <div className="space-y-4">
+      <PageHeader
+        title="Winners du jour"
+        subtitle="Les meilleures pubs repérées automatiquement selon tes critères."
+      >
+        <form action={lancerWinnerMaintenant}>
+          <button
+            type="submit"
+            className="bg-primary text-primary-foreground inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
+          >
+            <Icon name="trophy" size={16} /> Lancer maintenant
+          </button>
+        </form>
+      </PageHeader>
+
+      <WinnerConfigForm config={config} />
+
+      {ads.length === 0 ? (
+        <div className="border-border bg-surface rounded-xl border border-dashed p-12 text-center">
+          <span className="bg-warning-bg text-warning mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full">
+            <Icon name="trophy" size={24} />
+          </span>
+          <p className="font-medium">Aucun winner aujourd&apos;hui pour l&apos;instant</p>
+          <p className="text-muted-foreground mx-auto mt-1 max-w-md text-sm">
+            L&apos;agent tourne chaque jour. Ajuste tes critères ci-dessus puis clique
+            « Lancer maintenant » pour un premier repérage immédiat.
+          </p>
+        </div>
+      ) : (
+        <>
+          <p className="text-muted-foreground text-sm">{ads.length} winner(s) aujourd&apos;hui</p>
+          <AdGrid ads={ads} />
+        </>
+      )}
+    </div>
+  );
+}
