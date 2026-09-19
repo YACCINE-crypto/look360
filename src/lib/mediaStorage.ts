@@ -20,7 +20,11 @@ export function mediaStorageConfigured(): boolean {
 }
 
 function storageHost(): string {
-  return REGION ? `${REGION}.storage.bunnycdn.com` : `storage.bunnycdn.com`;
+  // REGION = code court ("", "ny", "la", "sg"…). On tolère aussi le host complet
+  // ("storage.bunnycdn.com") ou vide → région principale (Falkenstein).
+  const r = (REGION || "").trim().toLowerCase();
+  if (!r || r.includes("bunnycdn.com")) return "storage.bunnycdn.com";
+  return `${r}.storage.bunnycdn.com`;
 }
 
 // Anti-SSRF : on n'archive que les CDN Meta.
