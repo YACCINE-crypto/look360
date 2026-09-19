@@ -37,11 +37,11 @@ export default async function SauvegardesPage() {
       ) : (
         <div className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {rows.map((ad) => {
+            // Ne jamais afficher une vidéo (.mp4) comme <img> : miniature d'abord.
             const img =
               ad.thumbnail_cdn_url ||
-              ad.media_cdn_url ||
               ad.thumbnail_source_url ||
-              ad.media_source_url;
+              (ad.media_type !== "video" ? ad.media_cdn_url || ad.media_source_url : null);
             const watchUrl = ad.media_cdn_url || ad.media_source_url;
             const kind = landingKind(ad.landing_url);
             return (

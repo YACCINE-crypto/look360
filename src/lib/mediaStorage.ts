@@ -19,6 +19,13 @@ export function mediaStorageConfigured(): boolean {
   return Boolean(ZONE && API_KEY && CDN_HOST);
 }
 
+// Base CDN nettoyée : accepte "look360-media.b-cdn.net", "http(s)://…" et
+// les "/" en trop → toujours "https://look360-media.b-cdn.net".
+function cdnBase(): string {
+  const h = (CDN_HOST || "").replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+  return `https://${h}`;
+}
+
 function storageHost(): string {
   // REGION = code court ("", "ny", "la", "sg"…). On tolère aussi le host complet
   // ("storage.bunnycdn.com") ou vide → région principale (Falkenstein).
@@ -68,12 +75,12 @@ export async function storeFromUrl(sourceUrl: string, keyPrefix: string): Promis
   });
   if (!put.ok) throw new Error(`bunny_put_${put.status}`);
 
-  return { cdnUrl: `https://${CDN_HOST}/${key}`, key };
+  return { cdnUrl: `${cdnBase()}/${key}`, key };
 }
 
 /** URL CDN à partir d'une clé stockée. */
 export function getUrl(key: string): string {
-  return `https://${CDN_HOST}/${key}`;
+  return `${cdnBase()}/${key}`;
 }
 
 /** Supprime un objet du stockage (best-effort). */
