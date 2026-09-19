@@ -8,6 +8,7 @@ const ITEMS = [
   { href: "/aujourdhui", label: "Aujourd'hui", icon: "today" as const },
   { href: "/recherche", label: "Recherche", icon: "search" as const },
   { href: "/spy", label: "Spy Facebook", icon: "eye" as const },
+  { href: "/sauvegardes", label: "Sauvegardés", icon: "bookmark" as const },
   { href: "/surveillance", label: "Surveillance", icon: "bell" as const },
   { href: "/pipeline", label: "Pipeline", icon: "pipeline" as const },
   { href: "/testing", label: "Testing", icon: "flask" as const },

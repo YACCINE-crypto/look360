@@ -334,8 +334,27 @@ export function SpyCard({
 }) {
   const [pending, startTransition] = useTransition();
   const [followed, setFollowed] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
   const kind = ad.landing_kind ?? landingKind(ad.landing_url);
   const isShop = kind === "shop";
+
+  async function save() {
+    if (saved || saving) return;
+    setSaving(true);
+    try {
+      const r = await fetch("/api/spy/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(ad),
+      });
+      if (r.ok) setSaved(true);
+    } catch {
+      /* ignore */
+    } finally {
+      setSaving(false);
+    }
+  }
 
   function follow() {
     if (!ad.page_id) return;
@@ -383,6 +402,19 @@ export function SpyCard({
             {ad.media_type === "video" ? "Vidéo" : "Image"}
           </span>
         )}
+        <button
+          onClick={save}
+          disabled={saving || saved}
+          title={saved ? "Sauvegardée" : "Sauvegarder la pub"}
+          aria-label={saved ? "Sauvegardée" : "Sauvegarder la pub"}
+          className={`absolute bottom-2 left-2 grid h-9 w-9 place-items-center rounded-full border shadow-sm backdrop-blur transition-colors ${
+            saved
+              ? "bg-success text-primary-foreground border-transparent"
+              : "bg-surface/90 text-foreground border-border hover:bg-muted"
+          }`}
+        >
+          <Icon name={saved ? "check" : "bookmark"} size={16} />
+        </button>
       </div>
 
       <div className="flex flex-1 flex-col gap-2 p-3">

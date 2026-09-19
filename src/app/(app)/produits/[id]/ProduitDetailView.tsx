@@ -110,8 +110,8 @@ export function ProduitDetailView({ p, tests }: { p: Produit; tests: Test[] }) {
       {/* En-tête */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
         <div className="bg-input relative aspect-square w-full shrink-0 overflow-hidden rounded-xl sm:h-40 sm:w-40">
-          {p.image_url ? (
-            <img src={p.image_url} alt={p.nom ?? ""} className="h-full w-full object-cover" />
+          {p.media_cdn_url || p.image_url ? (
+            <img src={p.media_cdn_url ?? p.image_url ?? ""} alt={p.nom ?? ""} className="h-full w-full object-cover" />
           ) : (
             <div className="text-muted-foreground grid h-full w-full place-items-center">
               <Icon name="image" size={32} />

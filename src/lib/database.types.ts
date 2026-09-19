@@ -58,6 +58,89 @@ export type Database = {
           },
         ]
       }
+      spy_saved_ads: {
+        Row: {
+          ad_archive_id: string | null
+          ad_library_url: string | null
+          ad_text: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          landing_url: string | null
+          media_cdn_url: string | null
+          media_source_url: string | null
+          media_stored: boolean
+          media_type: string | null
+          page_id: string | null
+          page_name: string | null
+          pays_cible: string | null
+          platforms: string[] | null
+          reach_estimate: number | null
+          score: number | null
+          start_date: string | null
+          thumbnail_cdn_url: string | null
+          thumbnail_source_url: string | null
+          user_id: string
+          variants_count: number | null
+        }
+        Insert: {
+          ad_archive_id?: string | null
+          ad_library_url?: string | null
+          ad_text?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          landing_url?: string | null
+          media_cdn_url?: string | null
+          media_source_url?: string | null
+          media_stored?: boolean
+          media_type?: string | null
+          page_id?: string | null
+          page_name?: string | null
+          pays_cible?: string | null
+          platforms?: string[] | null
+          reach_estimate?: number | null
+          score?: number | null
+          start_date?: string | null
+          thumbnail_cdn_url?: string | null
+          thumbnail_source_url?: string | null
+          user_id: string
+          variants_count?: number | null
+        }
+        Update: {
+          ad_archive_id?: string | null
+          ad_library_url?: string | null
+          ad_text?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          landing_url?: string | null
+          media_cdn_url?: string | null
+          media_source_url?: string | null
+          media_stored?: boolean
+          media_type?: string | null
+          page_id?: string | null
+          page_name?: string | null
+          pays_cible?: string | null
+          platforms?: string[] | null
+          reach_estimate?: number | null
+          score?: number | null
+          start_date?: string | null
+          thumbnail_cdn_url?: string | null
+          thumbnail_source_url?: string | null
+          user_id?: string
+          variants_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spy_saved_ads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       spy_searches: {
         Row: {
           cache_key: string
@@ -119,6 +202,7 @@ export type Database = {
           lien_concurrent: string | null
           lien_source: string | null
           marche: string | null
+          media_cdn_url: string | null
           mode_transit: string
           nom: string | null
           notes: string | null
@@ -151,6 +235,7 @@ export type Database = {
           lien_concurrent?: string | null
           lien_source?: string | null
           marche?: string | null
+          media_cdn_url?: string | null
           mode_transit?: string
           nom?: string | null
           notes?: string | null
@@ -183,6 +268,7 @@ export type Database = {
           lien_concurrent?: string | null
           lien_source?: string | null
           marche?: string | null
+          media_cdn_url?: string | null
           mode_transit?: string
           nom?: string | null
           notes?: string | null

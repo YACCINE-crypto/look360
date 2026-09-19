@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { MARCHES, type ProduitInsert } from "@/lib/produits";
+import { mediaStorageConfigured, storeFromUrl } from "@/lib/mediaStorage";
 
 function str(formData: FormData, key: string): string | null {
   const raw = String(formData.get(key) ?? "").trim();
@@ -24,10 +25,22 @@ export async function ajouterAuxProduits(formData: FormData): Promise<void> {
   const pays = (str(formData, "marche") ?? "").toUpperCase();
   const marche = MARCHES.some((m) => m.code === pays) ? pays : null;
 
+  // Archivage image sur CDN au moment où la pub devient produit (§3/§5).
+  const imageSource = str(formData, "image_url");
+  let mediaCdn: string | null = null;
+  if (imageSource && mediaStorageConfigured()) {
+    try {
+      mediaCdn = (await storeFromUrl(imageSource, `produits/${userId}`)).cdnUrl;
+    } catch {
+      /* fallback : on garde le lien source */
+    }
+  }
+
   const payload: ProduitInsert = {
     nom: str(formData, "nom") ?? "Produit espionné",
     soumis_par: userId,
-    image_url: str(formData, "image_url"),
+    image_url: imageSource,
+    media_cdn_url: mediaCdn,
     lien_concurrent: str(formData, "landing_url"),
     lien_ad_library: str(formData, "ad_library_url"),
     angle_marketing: str(formData, "ad_text"),
@@ -47,4 +60,13 @@ export async function ajouterAuxProduits(formData: FormData): Promise<void> {
 
   revalidatePath("/recherche");
   redirect(`/produits/${data.id}`);
+}
+
+/** Retire une pub sauvegardée. */
+export async function retirerPub(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+  const supabase = await createClient();
+  await supabase.from("spy_saved_ads").delete().eq("id", id);
+  revalidatePath("/sauvegardes");
 }

@@ -48,9 +48,9 @@ export function ProductCard({
       />
 
       <div className="bg-input relative aspect-[4/3] w-full">
-        {p.image_url ? (
+        {p.media_cdn_url || p.image_url ? (
           <img
-            src={p.image_url}
+            src={p.media_cdn_url ?? p.image_url ?? ""}
             alt={p.nom ?? "Produit"}
             className="h-full w-full object-cover"
           />
