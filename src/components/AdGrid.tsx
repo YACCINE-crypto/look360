@@ -27,7 +27,7 @@ export function AdGrid({ ads, ranked = false }: { ads: SpyAd[]; ranked?: boolean
               ad={ad}
               onAnalyze={(a) =>
                 router.push(
-                  `/spy?pageId=${encodeURIComponent(a.page_id ?? "")}&country=${encodeURIComponent(a.country ?? "FR")}&name=${encodeURIComponent(a.page_name ?? "")}`,
+                  `/analyse/${encodeURIComponent(a.page_id ?? "")}?country=${encodeURIComponent(a.country ?? "FR")}&name=${encodeURIComponent(a.page_name ?? "")}`,
                 )
               }
               onPlay={setPlaying}

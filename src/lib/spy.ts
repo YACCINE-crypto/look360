@@ -343,6 +343,28 @@ export function computeSpyScore(a: {
   return { score: rounded, score_label: label, score_detail: detail };
 }
 
+/** Histogramme d'activité pub par mois (à partir des start_date). */
+export function activityByMonth(
+  ads: { start_date: string | null }[],
+  months = 12,
+): { key: string; label: string; value: number }[] {
+  const now = new Date();
+  const buckets: { key: string; label: string; value: number }[] = [];
+  const idx = new Map<string, number>();
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    idx.set(key, buckets.length);
+    buckets.push({ key, label: d.toLocaleDateString("fr-FR", { month: "short" }), value: 0 });
+  }
+  for (const a of ads) {
+    if (!a.start_date) continue;
+    const j = idx.get(a.start_date.slice(0, 7));
+    if (j !== undefined) buckets[j].value++;
+  }
+  return buckets;
+}
+
 export function formatReach(v: number | null | undefined): string {
   if (v == null) return "—";
   if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1).replace(".0", "")}M`;

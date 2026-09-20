@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/ui";
 import { Icon } from "@/components/Icon";
 import { ajouterAuxProduits } from "./actions";
@@ -42,15 +42,12 @@ export function SpyClient() {
   const [ads, setAds] = useState<SpyAd[]>([]);
   const [cached, setCached] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [advertiser, setAdvertiser] = useState<{ pageId: string; name: string } | null>(() => {
-    const pid = params.get("pageId");
-    return pid ? { pageId: pid, name: params.get("name") || "Annonceur" } : null;
-  });
   const [playing, setPlaying] = useState<string | null>(null);
+  const router = useRouter();
 
   const euDispo = isEUCountry(country);
 
-  async function runSearch(opts?: { pageId?: string; countryOverride?: string }) {
+  async function runSearch() {
     setStatus("loading");
     setError(null);
     try {
@@ -58,9 +55,8 @@ export function SpyClient() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          q: opts?.pageId ? "" : q,
-          country: opts?.countryOverride ?? country,
-          pageId: opts?.pageId,
+          q,
+          country,
           platform,
           statut,
           mediaType,
@@ -82,23 +78,11 @@ export function SpyClient() {
     }
   }
 
-  // Deep-link "Analyser" depuis la page Surveillance : /spy?pageId=...&country=...
-  useEffect(() => {
-    const pid = params.get("pageId");
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (pid) runSearch({ pageId: pid, countryOverride: (params.get("country") || "FR").toUpperCase() });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   function analyze(ad: SpyAd) {
     if (!ad.page_id) return;
-    setAdvertiser({ pageId: ad.page_id, name: ad.page_name ?? "Annonceur" });
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    runSearch({ pageId: ad.page_id });
-  }
-  function backToSearch() {
-    setAdvertiser(null);
-    setAds([]);
-    setStatus("idle");
+    router.push(
+      `/analyse/${ad.page_id}?country=${encodeURIComponent(ad.country ?? "FR")}&name=${encodeURIComponent(ad.page_name ?? "")}`,
+    );
   }
 
   return (
@@ -108,21 +92,7 @@ export function SpyClient() {
         subtitle="Trouve des pubs qui tournent déjà — signaux réels de la bibliothèque Meta."
       />
 
-      {advertiser ? (
-        <div className="border-primary/40 bg-secondary text-secondary-foreground flex flex-wrap items-center gap-3 rounded-xl border p-4">
-          <Icon name="eye" size={18} />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold">Annonceur : {advertiser.name}</p>
-            <p className="text-xs opacity-80">Toutes les pubs actives de cette page.</p>
-          </div>
-          <button
-            onClick={backToSearch}
-            className="bg-surface text-foreground inline-flex min-h-[38px] items-center gap-1.5 rounded-md px-3 text-sm font-medium"
-          >
-            <Icon name="x" size={14} /> Retour à la recherche
-          </button>
-        </div>
-      ) : (
+      {(
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -261,7 +231,7 @@ export function SpyClient() {
         </div>
       )}
 
-      {status === "idle" && !advertiser && (
+      {status === "idle" && (
         <div className="border-border bg-surface rounded-xl border border-dashed p-12 text-center">
           <span className="bg-secondary text-primary mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full">
             <Icon name="eye" size={24} />

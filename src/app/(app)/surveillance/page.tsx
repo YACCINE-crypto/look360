@@ -64,7 +64,7 @@ export default async function SurveillancePage() {
                 </p>
               </div>
               <Link
-                href={`/spy?pageId=${encodeURIComponent(c.page_id)}&country=${encodeURIComponent(c.country ?? "FR")}&name=${encodeURIComponent(c.page_name ?? "")}`}
+                href={`/analyse/${encodeURIComponent(c.page_id)}?country=${encodeURIComponent(c.country ?? "FR")}&name=${encodeURIComponent(c.page_name ?? "")}`}
                 className="bg-input text-foreground inline-flex min-h-[38px] items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors hover:bg-muted"
               >
                 <Icon name="search" size={14} /> Analyser
