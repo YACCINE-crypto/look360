@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createProduit } from "@/app/(app)/recherche/actions";
-import { createClient } from "@/lib/supabase/client";
 import { MARCHES, CATEGORIES } from "@/lib/produits";
 import { Icon } from "./Icon";
 import { Select } from "./Select";
@@ -37,21 +36,14 @@ export function AddProductPanel() {
     setUploadError(null);
     setUploading(true);
     try {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Non connecté");
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage
-        .from("produits")
-        .upload(path, file, { upsert: false, contentType: file.type });
-      if (error) throw error;
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("produits").getPublicUrl(path);
-      setImageUrl(publicUrl);
+      // Le fichier part vers le CDN (b-cdn.net) via /api/upload ; la base ne
+      // garde que l'URL renvoyée.
+      const fd = new FormData();
+      fd.append("file", file);
+      const r = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data?.error || "upload");
+      setImageUrl(data.url);
     } catch {
       setUploadError("Échec de l'upload. Réessaie.");
     } finally {

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Icon } from "./Icon";
+import { CreativeMedia } from "./CreativeMedia";
 import { envoyerEnTest, passerEnProduction } from "@/app/(app)/recherche/actions";
 import { margeColorClass } from "@/lib/testing";
 import {
@@ -9,8 +10,6 @@ import {
   type Produit,
   type Statut,
 } from "@/lib/produits";
-
-/* eslint-disable @next/next/no-img-element */
 
 const COLUMN_ICON: Record<string, Parameters<typeof Icon>[0]["name"]> = {
   idee: "today",
@@ -70,21 +69,9 @@ export function PipelineColumn({
 function PipelineCard({ p, marge }: { p: Produit; marge: number | null }) {
   const statut = p.statut as Statut;
   return (
-    <div className="border-border bg-surface overflow-hidden rounded-lg border">
-      <div className="bg-input aspect-video w-full">
-        {p.image_url ? (
-          <img
-            src={p.image_url}
-            alt={p.nom ?? "Produit"}
-            className="h-full w-full object-contain p-2"
-          />
-        ) : (
-          <div className="text-muted-foreground grid h-full w-full place-items-center">
-            <Icon name="image" size={22} />
-          </div>
-        )}
-      </div>
-      <div className="space-y-2 p-3">
+    <div className="border-border bg-surface flex h-full flex-col overflow-hidden rounded-lg border">
+      <CreativeMedia image={p.media_cdn_url ?? p.image_url} alt={p.nom ?? "Produit"} />
+      <div className="flex flex-1 flex-col space-y-2 p-3">
         <div>
           <p className="truncate text-sm font-semibold">{p.nom ?? "Sans nom"}</p>
           <p className="text-muted-foreground text-xs">

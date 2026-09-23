@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Icon } from "./Icon";
 import { StatusChip } from "./StatusChip";
 import { ProductActions } from "./ProductActions";
+import { CreativeMedia } from "./CreativeMedia";
 import { margeColorClass } from "@/lib/testing";
 import { scoreMeta } from "@/lib/score";
 import {
@@ -16,8 +17,6 @@ import {
   type Statut,
   type StatutRevue,
 } from "@/lib/produits";
-
-/* eslint-disable @next/next/no-img-element */
 
 export function ProductCard({
   p,
@@ -47,24 +46,13 @@ export function ProductCard({
         className="absolute inset-0 z-10"
       />
 
-      <div className="bg-input relative aspect-[4/3] w-full">
-        {p.media_cdn_url || p.image_url ? (
-          <img
-            src={p.media_cdn_url ?? p.image_url ?? ""}
-            alt={p.nom ?? "Produit"}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="text-muted-foreground grid h-full w-full place-items-center">
-            <Icon name="image" size={28} />
-          </div>
-        )}
-        <div className="absolute left-2 top-2">
+      <CreativeMedia image={p.media_cdn_url ?? p.image_url} alt={p.nom ?? "Produit"}>
+        <div className="absolute left-2 top-2 z-20">
           <StatusChip statut={statut} />
         </div>
         {score != null && (
           <span
-            className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-semibold ${scoreMeta(score).badge}`}
+            className={`absolute right-2 top-2 z-20 rounded-full px-2 py-0.5 text-[11px] font-semibold ${scoreMeta(score).badge}`}
             title="Score produit gagnant (0–100)"
           >
             {score} · {scoreMeta(score).label}
@@ -76,7 +64,7 @@ export function ProductCard({
           dateATravailler={p.date_a_travailler}
           dateLancementTesting={p.date_lancement_testing}
         />
-      </div>
+      </CreativeMedia>
 
       <div className="flex flex-1 flex-col gap-2 border-t border-border p-3">
         <div className="min-w-0">

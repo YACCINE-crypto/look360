@@ -73,6 +73,53 @@ export async function createProduit(formData: FormData): Promise<void> {
   redirect(backTo.split("?")[0]);
 }
 
+/**
+ * Modification complète d'un produit enregistré (fiche détail) : infos +
+ * sourcing/coût. Tous les champs coût sont optionnels — on peut compléter plus
+ * tard. RLS : propriétaire ou admin uniquement.
+ */
+export async function updateProduit(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+  const supabase = await createClient();
+
+  const nom = str(formData, "nom");
+  if (!nom) redirect(`/produits/${id}?error=nom`);
+
+  const mode = str(formData, "mode_transit") === "maritime" ? "maritime" : "aerien";
+  const typeAppro = str(formData, "type_approvisionnement") === "local" ? "local" : "import";
+
+  const { error } = await supabase
+    .from("produits")
+    .update({
+      nom,
+      categorie: str(formData, "categorie"),
+      image_url: str(formData, "image_url"),
+      lien_source: str(formData, "lien_source"),
+      lien_concurrent: str(formData, "lien_concurrent"),
+      lien_ad_library: str(formData, "lien_ad_library"),
+      angle_marketing: str(formData, "angle_marketing"),
+      marche: str(formData, "marche"),
+      type_approvisionnement: typeAppro,
+      prix_achat_local: typeAppro === "local" ? num(formData, "prix_achat_local") : null,
+      prix_fournisseur: typeAppro === "local" ? null : num(formData, "prix_fournisseur"),
+      poids_kg: typeAppro === "local" ? null : num(formData, "poids_kg"),
+      mode_transit: mode,
+      frais_transit_kilo: typeAppro === "local" ? null : num(formData, "frais_transit_kilo"),
+      cbm: typeAppro === "local" ? null : num(formData, "cbm"),
+      frais_transit_cbm: typeAppro === "local" ? null : num(formData, "frais_transit_cbm"),
+    })
+    .eq("id", id);
+
+  if (error) redirect(`/produits/${id}?error=save`);
+
+  revalidatePath(`/produits/${id}`);
+  revalidatePath("/recherche");
+  revalidatePath("/pipeline");
+  revalidatePath("/testing");
+  redirect(`/produits/${id}`);
+}
+
 /** Change le statut d'un produit (ex. "Envoyer en test" -> en_test). */
 export async function setStatut(id: string, statut: Statut): Promise<void> {
   if (!STATUTS.includes(statut)) return;

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui";
 import { Icon } from "@/components/Icon";
 import { StatusChip } from "@/components/StatusChip";
+import { EditProductForm } from "./EditProductForm";
 import { computeScore, scoreMeta } from "@/lib/score";
 import { margePctFromTest, margeColorClass, type Test } from "@/lib/testing";
 import {
@@ -88,23 +89,26 @@ export function ProduitDetailView({ p, tests }: { p: Produit; tests: Test[] }) {
           <Icon name="chevronRight" size={14} className="rotate-180" />
           Recherche produit
         </Link>
-        {p.statut === "idee" || p.statut === "a_tester" ? (
-          <Link
-            href={`/produits/${p.id}/envoyer-test`}
-            className="bg-primary text-primary-foreground inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
-          >
-            <Icon name="flask" size={15} />
-            Envoyer en test
-          </Link>
-        ) : (
-          <Link
-            href={`/testing/${p.id}`}
-            className="bg-primary text-primary-foreground inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
-          >
-            <Icon name="flask" size={15} />
-            {p.statut === "en_test" ? "Voir le verdict" : "Ouvrir la fiche test"}
-          </Link>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <EditProductForm produit={p} />
+          {p.statut === "idee" || p.statut === "a_tester" ? (
+            <Link
+              href={`/produits/${p.id}/envoyer-test`}
+              className="bg-primary text-primary-foreground inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
+            >
+              <Icon name="flask" size={15} />
+              Envoyer en test
+            </Link>
+          ) : (
+            <Link
+              href={`/testing/${p.id}`}
+              className="bg-primary text-primary-foreground inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
+            >
+              <Icon name="flask" size={15} />
+              {p.statut === "en_test" ? "Voir le verdict" : "Ouvrir la fiche test"}
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* En-tête */}

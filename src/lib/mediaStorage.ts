@@ -78,6 +78,30 @@ export async function storeFromUrl(sourceUrl: string, keyPrefix: string): Promis
   return { cdnUrl: `${cdnBase()}/${key}`, key };
 }
 
+/**
+ * Archive un buffer déjà en mémoire (upload utilisateur : image/vidéo produit)
+ * sur le stockage CDN. Pas de contrôle de source (le fichier vient du device de
+ * l'utilisateur, pas d'une URL distante → aucun risque SSRF). Retourne l'URL CDN.
+ */
+export async function storeBuffer(
+  buf: Buffer,
+  contentType: string | null,
+  keyPrefix: string,
+): Promise<StoredMedia> {
+  if (!mediaStorageConfigured()) throw new Error("media_storage_not_configured");
+  const ext = extFromContentType(contentType);
+  const key = `${keyPrefix}/${crypto.randomUUID()}.${ext}`;
+
+  const put = await fetch(`https://${storageHost()}/${ZONE}/${key}`, {
+    method: "PUT",
+    headers: { AccessKey: API_KEY as string, "Content-Type": "application/octet-stream" },
+    body: new Uint8Array(buf),
+  });
+  if (!put.ok) throw new Error(`bunny_put_${put.status}`);
+
+  return { cdnUrl: `${cdnBase()}/${key}`, key };
+}
+
 /** URL CDN à partir d'une clé stockée. */
 export function getUrl(key: string): string {
   return `${cdnBase()}/${key}`;

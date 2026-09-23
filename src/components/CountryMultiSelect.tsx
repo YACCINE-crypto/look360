@@ -64,7 +64,7 @@ export function CountryMultiSelect({
       return;
     }
     if (selected.length >= SPY_COUNTRIES_HARD) {
-      setNote(`Maximum ${SPY_COUNTRIES_HARD} pays par recherche (coût Apify).`);
+      setNote(`Maximum ${SPY_COUNTRIES_HARD} pays par recherche (consomme du crédit).`);
       return;
     }
     onChange([...selected, code]);

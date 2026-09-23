@@ -227,7 +227,7 @@ export function SpyClient() {
                 : "bg-input text-muted-foreground"
             }`}
           >
-            Estimation : {nbSearches} recherche{nbSearches > 1 ? "s" : ""} Apify
+            Estimation : {nbSearches} recherche{nbSearches > 1 ? "s" : ""}
           </span>
           <button
             type="submit"
@@ -332,7 +332,7 @@ function ConfirmSearch({
           <h3 className="font-bold">Confirmer la recherche</h3>
         </div>
         <p className="text-muted-foreground text-sm">
-          {countries.length} pays sélectionnés = <b className="text-foreground">{countries.length} recherches Apify</b>{" "}
+          {countries.length} pays sélectionnés = <b className="text-foreground">{countries.length} recherches</b>{" "}
           (une par pays). Ça consomme du crédit. Continuer ?
         </p>
         <div className="mt-3 flex flex-wrap gap-1.5">

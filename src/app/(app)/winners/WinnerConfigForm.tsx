@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Icon } from "@/components/Icon";
 import { Select } from "@/components/Select";
+import { CountryMultiSelect } from "@/components/CountryMultiSelect";
 import { enregistrerConfigWinner } from "./actions";
 
 const inputCls =
@@ -21,6 +22,7 @@ export type WinnerConfig = {
 
 export function WinnerConfigForm({ config }: { config: WinnerConfig }) {
   const [open, setOpen] = useState(false);
+  const [countries, setCountries] = useState<string[]>(config.countries);
   const [anciennete, setAnciennete] = useState(String(config.anciennete_min));
   const [reach, setReach] = useState(String(config.reach_min));
   const [score, setScore] = useState(String(config.score_min));
@@ -58,10 +60,11 @@ export function WinnerConfigForm({ config }: { config: WinnerConfig }) {
             <input name="keywords" defaultValue={config.keywords.join(", ")} placeholder="montre, ceinture, masseur" className={inputCls} />
           </label>
 
-          <label className="block space-y-1.5">
-            <span className={labelCls}>Pays cibles (codes, ex. CI, FR, SN)</span>
-            <input name="countries" defaultValue={config.countries.join(", ")} placeholder="CI, FR" className={inputCls} />
-          </label>
+          <div className="space-y-1.5">
+            <span className={labelCls}>Pays cibles</span>
+            <input type="hidden" name="countries" value={countries.join(",")} />
+            <CountryMultiSelect selected={countries} onChange={setCountries} />
+          </div>
 
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <div className="space-y-1.5">
