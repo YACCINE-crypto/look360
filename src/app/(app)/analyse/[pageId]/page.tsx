@@ -47,7 +47,7 @@ export default async function AnalysePage({
   let failed = false;
   try {
     const res = await searchSpyWithCache(
-      { q: "", country, pageId, statut: "active", tri: "anciennete", limit: 100 },
+      { q: "", country, pageId, statut: "active", tri: "anciennete", limit: 100, details: true },
       userId,
     );
     ads = res.ads;

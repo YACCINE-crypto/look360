@@ -131,6 +131,9 @@ export type SpyFilters = {
   variantsMin?: number;
   tri?: "score" | "reach" | "anciennete" | "variants";
   limit?: number;
+  /** true = scraper le détail complet de chaque pub (plus lent). Réservé à
+   *  l'analyse concurrent ; la liste de recherche reste à false (rapide). */
+  details?: boolean;
 };
 
 /** URL de recherche Facebook Ad Library (entrée de l'actor). */

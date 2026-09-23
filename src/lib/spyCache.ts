@@ -19,6 +19,7 @@ function cacheKey(f: SpyFilters): string {
     statut: f.statut || "active",
     mediaType: f.mediaType || "all",
     limit: f.limit || 50,
+    d: f.details ? 1 : 0,
   });
 }
 
@@ -30,6 +31,61 @@ export type SpyCacheResult = {
   cached: boolean;
   capped?: boolean;
 };
+
+/** Résultat en cache pour ces filtres (ou null). Partagé (données Meta publiques). */
+export async function getCachedSearch(
+  filters: SpyFilters,
+): Promise<{ ads: SpyAd[]; url: string; raw_count: number } | null> {
+  const admin = createAdminClient();
+  const since = new Date(Date.now() - TTL_MS).toISOString();
+  const { data: hit } = await admin
+    .from("spy_searches")
+    .select("results, url, raw_count")
+    .eq("cache_key", cacheKey(filters))
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!hit) return null;
+  return {
+    ads: applySpyFilters((hit.results as SpyAd[]) ?? [], filters),
+    url: hit.url ?? "",
+    raw_count: hit.raw_count ?? 0,
+  };
+}
+
+/** true si l'utilisateur a atteint son plafond d'appels réels du jour. */
+export async function dailyCapReached(userId: string | null): Promise<boolean> {
+  if (!userId) return false;
+  const admin = createAdminClient();
+  const startDay = new Date();
+  startDay.setHours(0, 0, 0, 0);
+  const { count } = await admin
+    .from("spy_searches")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .gte("created_at", startDay.toISOString());
+  return (count ?? 0) >= DAILY_CAP;
+}
+
+/** Enregistre un résultat en cache (après un appel réel). */
+export async function persistSearch(
+  filters: SpyFilters,
+  userId: string | null,
+  url: string,
+  ads: SpyAd[],
+  raw_count: number,
+): Promise<void> {
+  const admin = createAdminClient();
+  await admin.from("spy_searches").insert({
+    user_id: userId,
+    cache_key: cacheKey(filters),
+    filters: filters as unknown as Json,
+    url,
+    results: ads as unknown as Json,
+    raw_count,
+  });
+}
 
 /**
  * Recherche Spy avec cache + plafond. Les critères numériques (ancienneté,

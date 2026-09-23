@@ -53,6 +53,24 @@ const MEDIA_OPTS: SelectOption[] = [
   { value: "image", label: "Image" },
 ];
 
+const DEFAULT_LIMIT = 36;
+
+type StreamMsg =
+  | { type: "ads"; ads: SpyAd[] }
+  | { type: "progress"; found: number }
+  | { type: "done"; cached?: boolean; total?: number; took_ms?: number }
+  | { type: "error"; status?: number; message?: string };
+
+/** Tri client (identique au serveur) pour la fusion progressive des lots. */
+function sortAds(list: SpyAd[], t: string): SpyAd[] {
+  return [...list].sort((x, y) => {
+    if (t === "reach") return (y.reach ?? 0) - (x.reach ?? 0);
+    if (t === "anciennete") return (y.jours_actifs ?? 0) - (x.jours_actifs ?? 0);
+    if (t === "variants") return y.variants_count - x.variants_count;
+    return y.score - x.score;
+  });
+}
+
 type Status = "idle" | "loading" | "done" | "error";
 
 export function SpyClient() {
@@ -76,7 +94,11 @@ export function SpyClient() {
   const [error, setError] = useState<string | null>(null);
   const [playing, setPlaying] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [limit, setLimit] = useState(DEFAULT_LIMIT);
+  const [progress, setProgress] = useState(0);
   const router = useRouter();
+
+  const jsonHeaders = { "Content-Type": "application/json" };
 
   const euDispo = countries.some(isEUCountry);
   const nbSearches = countries.length;
@@ -91,36 +113,118 @@ export function SpyClient() {
     [euDispo],
   );
 
-  async function runSearch() {
-    setConfirmOpen(false);
-    setStatus("loading");
-    setError(null);
+  function payloadFor(searchLimit: number) {
+    return {
+      q,
+      platform,
+      statut,
+      mediaType,
+      ancienneteMin: Number(ancienneteMin) || 0,
+      reachMin: euDispo ? Number(reachMin) || 0 : 0,
+      variantsMin: Number(variantsMin) || 0,
+      tri,
+      limit: searchLimit,
+    };
+  }
+
+  // Repli sans streaming (multi-pays ou si le flux échoue) : JSON classique.
+  async function runSearchJson(searchLimit: number) {
     try {
       const res = await fetch("/api/spy/search", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          q,
-          countries,
-          platform,
-          statut,
-          mediaType,
-          ancienneteMin: Number(ancienneteMin) || 0,
-          reachMin: euDispo ? Number(reachMin) || 0 : 0,
-          variantsMin: Number(variantsMin) || 0,
-          tri,
-          limit: 50,
-        }),
+        headers: jsonHeaders,
+        body: JSON.stringify({ ...payloadFor(searchLimit), countries }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Recherche impossible.");
-      setAds(data.ads ?? []);
+      setAds(sortAds(data.ads ?? [], tri));
       setCached(Boolean(data.cached));
       setStatus("done");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue.");
       setStatus("error");
     }
+  }
+
+  async function runSearch(searchLimit = limit) {
+    setConfirmOpen(false);
+    setStatus("loading");
+    setError(null);
+    setProgress(0);
+    setAds([]);
+    setCached(false);
+
+    // Multi-pays → fan-out JSON (pas de streaming).
+    if (countries.length > 1) {
+      await runSearchJson(searchLimit);
+      return;
+    }
+
+    // Un pays → streaming progressif (cartes affichées au fur et à mesure).
+    try {
+      const res = await fetch("/api/spy/search/stream", {
+        method: "POST",
+        headers: jsonHeaders,
+        body: JSON.stringify({ ...payloadFor(searchLimit), country: countries[0] }),
+      });
+      if (!res.ok || !res.body) {
+        await runSearchJson(searchLimit);
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      const map = new Map<string, SpyAd>();
+      let buf = "";
+      let errored = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split("\n");
+        buf = lines.pop() ?? "";
+        for (const ln of lines) {
+          if (!ln.trim()) continue;
+          let msg: StreamMsg;
+          try {
+            msg = JSON.parse(ln) as StreamMsg;
+          } catch {
+            continue;
+          }
+          if (msg.type === "ads") {
+            for (const a of msg.ads) map.set(a.ad_archive_id, a);
+            setAds(sortAds([...map.values()], tri));
+          } else if (msg.type === "progress") {
+            setProgress(msg.found ?? map.size);
+          } else if (msg.type === "done") {
+            setCached(Boolean(msg.cached));
+          } else if (msg.type === "error") {
+            errored = true;
+            if (msg.status === 429) {
+              setError(msg.message || "Plafond de recherches atteint.");
+              setStatus("error");
+              return;
+            }
+          }
+        }
+      }
+
+      // Flux terminé sans rien renvoyer → repli JSON (robustesse).
+      if (errored && map.size === 0) {
+        await runSearchJson(searchLimit);
+        return;
+      }
+      setStatus("done");
+    } catch {
+      await runSearchJson(searchLimit);
+    }
+  }
+
+  function chargerPlus() {
+    const next = limit < 72 ? 72 : 100;
+    setLimit(next);
+    runSearch(next);
   }
 
   function submit(e: React.FormEvent) {
@@ -246,7 +350,22 @@ export function SpyClient() {
         )}
       </form>
 
-      {status === "loading" && <SkeletonGrid />}
+      {/* Bandeau de progression (streaming) */}
+      {status === "loading" && (
+        <div className="border-border bg-surface flex items-center gap-3 rounded-xl border p-3 text-sm shadow-card">
+          <span className="border-primary/30 border-t-primary h-4 w-4 shrink-0 animate-spin rounded-full border-2" />
+          <span className="text-muted-foreground">
+            {ads.length > 0
+              ? `Recherche en cours — ${ads.length} pub${ads.length > 1 ? "s" : ""} déjà affichée${ads.length > 1 ? "s" : ""}…`
+              : progress > 0
+                ? `Recherche en cours — ${progress} pub${progress > 1 ? "s" : ""} trouvée${progress > 1 ? "s" : ""}…`
+                : "Recherche en cours — premiers résultats dans un instant…"}
+          </span>
+        </div>
+      )}
+
+      {/* Squelettes tant qu'aucune carte n'est encore arrivée */}
+      {status === "loading" && ads.length === 0 && <SkeletonGrid />}
 
       {status === "error" && (
         <div className="bg-danger-bg text-danger rounded-xl p-4 text-sm">
@@ -276,27 +395,45 @@ export function SpyClient() {
         </div>
       )}
 
-      {status === "done" && ads.length > 0 && (
+      {/* Résultats — affichés dès que des cartes arrivent (même en cours) */}
+      {ads.length > 0 && (
         <>
-          <p className="text-muted-foreground flex items-center gap-2 text-sm">
-            {ads.length} pub(s) trouvée(s)
-            {cached && (
-              <span className="bg-input text-muted-foreground rounded-full px-2 py-0.5 text-[11px] font-medium">
-                ⚡ en cache
-              </span>
-            )}
-          </p>
+          {status === "done" && (
+            <p className="text-muted-foreground flex items-center gap-2 text-sm">
+              {ads.length} pub(s) trouvée(s)
+              {cached && (
+                <span className="bg-input text-muted-foreground rounded-full px-2 py-0.5 text-[11px] font-medium">
+                  ⚡ en cache
+                </span>
+              )}
+            </p>
+          )}
           <div className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {ads.map((ad) => (
               <SpyCard key={ad.ad_archive_id} ad={ad} onAnalyze={analyze} onPlay={setPlaying} />
             ))}
           </div>
-          <p className="text-muted-foreground pt-2 text-xs">
-            Données issues de la bibliothèque publicitaire publique de Meta via
-            service tiers. Aucune donnée d&apos;impressions / dépenses / ventes
-            n&apos;est disponible ; les signaux reposent sur l&apos;ancienneté, les
-            variantes, l&apos;activité et le reach UE (loi DSA).
-          </p>
+
+          {status === "done" && limit < 100 && countries.length <= 1 && (
+            <div className="flex justify-center pt-1">
+              <button
+                type="button"
+                onClick={chargerPlus}
+                className="border-border bg-surface hover:bg-input inline-flex min-h-[44px] items-center gap-1.5 rounded-md border px-5 text-sm font-semibold transition-colors"
+              >
+                <Icon name="plus" size={16} /> Charger plus de résultats
+              </button>
+            </div>
+          )}
+
+          {status === "done" && (
+            <p className="text-muted-foreground pt-2 text-xs">
+              Données issues de la bibliothèque publicitaire publique de Meta via
+              service tiers. Aucune donnée d&apos;impressions / dépenses / ventes
+              n&apos;est disponible ; les signaux reposent sur l&apos;ancienneté, les
+              variantes, l&apos;activité et le reach UE (loi DSA).
+            </p>
+          )}
         </>
       )}
 
