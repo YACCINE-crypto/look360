@@ -34,7 +34,7 @@ export default async function ValidationPage() {
     .select("role")
     .eq("id", userId)
     .maybeSingle();
-  if (profile?.role !== "admin") redirect("/recherche");
+  if (profile?.role !== "superadmin") redirect("/recherche");
 
   const { data } = await supabase
     .from("produits")

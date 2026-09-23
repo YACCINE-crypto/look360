@@ -104,7 +104,7 @@ export function AppShell({
   pendingCount?: number;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const isAdmin = role === "admin";
+  const isAdmin = role === "superadmin";
 
   return (
     <div className="bg-background flex h-screen overflow-hidden">

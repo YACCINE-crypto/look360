@@ -1,10 +1,23 @@
 "use client";
 
-import { useActionState } from "react";
+import Link from "next/link";
+import { Suspense, useActionState } from "react";
+import { useSearchParams } from "next/navigation";
 import { login } from "./actions";
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const [error, formAction, pending] = useActionState(login, null);
+  const params = useSearchParams();
+  const reset = params.get("reset") === "1";
+  const authError = params.get("error") === "auth";
 
   return (
     <main className="bg-background flex min-h-screen items-center justify-center px-4 py-16">
@@ -20,6 +33,17 @@ export default function LoginPage() {
             Recherche &amp; testing produit COD
           </p>
         </div>
+
+        {reset && (
+          <div className="bg-success-bg text-success mb-4 rounded-md p-3 text-sm">
+            Mot de passe mis à jour. Connecte-toi.
+          </div>
+        )}
+        {authError && (
+          <div className="bg-danger-bg text-danger mb-4 rounded-md p-3 text-sm">
+            Lien invalide ou expiré. Réessaie de te connecter ou de réinitialiser.
+          </div>
+        )}
 
         <form
           action={formAction}
@@ -62,6 +86,15 @@ export default function LoginPage() {
           >
             {pending ? "Connexion…" : "Se connecter"}
           </button>
+
+          <div className="flex items-center justify-between text-sm">
+            <Link href="/forgot-password" className="text-muted-foreground hover:text-foreground">
+              Mot de passe oublié ?
+            </Link>
+            <Link href="/signup" className="text-primary font-semibold hover:underline">
+              Créer un compte
+            </Link>
+          </div>
         </form>
       </div>
     </main>

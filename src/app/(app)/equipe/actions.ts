@@ -24,7 +24,7 @@ export async function creerAgent(
     .select("role")
     .eq("id", userId)
     .maybeSingle();
-  if (prof?.role !== "admin") return "Réservé à l'administrateur.";
+  if (prof?.role !== "superadmin") return "Réservé à l'administrateur.";
 
   const nom = String(formData.get("nom") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
@@ -33,13 +33,20 @@ export async function creerAgent(
   if (password.length < 6) return "Mot de passe : 6 caractères minimum.";
 
   const admin = createAdminClient();
-  const { error } = await admin.auth.admin.createUser({
+  const { data: created, error } = await admin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
     user_metadata: { nom: nom || email.split("@")[0] },
   });
   if (error) return error.message;
+
+  // Le trigger crée le profil en 'owner' par défaut ; un compte créé ici est un
+  // MEMBER (agent). Le rôle n'est JAMAIS pris des métadonnées (anti-élévation),
+  // on le fixe explicitement côté service_role.
+  if (created?.user?.id) {
+    await admin.from("profiles").update({ role: "member" }).eq("id", created.user.id);
+  }
 
   revalidatePath("/equipe");
   return null;

@@ -28,7 +28,7 @@ export default async function AppLayout({
   const displayName =
     profile?.nom ?? (claims.email as string | undefined) ?? "Utilisateur";
   const initials = displayName.slice(0, 2).toUpperCase();
-  const pendingCount = role === "admin" ? (count ?? 0) : 0;
+  const pendingCount = role === "superadmin" ? (count ?? 0) : 0;
 
   return (
     <AppShell

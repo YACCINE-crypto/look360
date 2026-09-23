@@ -14,7 +14,7 @@ export default async function EquipePage() {
     .select("role")
     .eq("id", userId)
     .maybeSingle();
-  if (me?.role !== "admin") redirect("/recherche");
+  if (me?.role !== "superadmin") redirect("/recherche");
 
   // Membres (agents + admin) + nombre de produits soumis par chacun.
   const [{ data: profiles }, { data: produits }] = await Promise.all([
@@ -64,7 +64,7 @@ export default async function EquipePage() {
                 </div>
                 <span
                   className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
-                    m.role === "admin"
+                    m.role === "superadmin"
                       ? "bg-primary text-primary-foreground"
                       : "bg-input text-muted-foreground"
                   }`}
