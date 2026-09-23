@@ -9,6 +9,8 @@ type IconName =
   | "logout"
   | "image"
   | "chevronRight"
+  | "chevronDown"
+  | "calendar"
   | "clock"
   | "check"
   | "menu"
@@ -69,6 +71,13 @@ const PATHS: Record<IconName, React.ReactNode> = {
     </>
   ),
   chevronRight: <path d="m9 18 6-6-6-6" />,
+  chevronDown: <path d="m6 9 6 6 6-6" />,
+  calendar: (
+    <>
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
+    </>
+  ),
   clock: (
     <>
       <circle cx="12" cy="12" r="9" />

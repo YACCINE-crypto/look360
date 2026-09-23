@@ -1,7 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { fetchSpyAds } from "@/lib/apify";
-import { applySpyFilters, type SpyFilters, type SpyAd } from "@/lib/spy";
+import { applySpyFilters, SPY_COUNTRIES_HARD, type SpyFilters, type SpyAd } from "@/lib/spy";
 import type { Json } from "@/lib/database.types";
 
 /** Durée de validité d'une recherche en cache (§7 — éviter de re-payer Apify). */
@@ -86,4 +86,81 @@ export async function searchSpyWithCache(
 
   const ads = applySpyFilters(res.ads, filters);
   return { url: res.url, raw_count: res.raw_count, count: ads.length, ads, cached: false };
+}
+
+export type SpyMultiResult = SpyCacheResult & {
+  countries: string[];
+  countries_ok: string[];
+};
+
+/** Comparateur de tri (identique à applySpyFilters, réutilisé après fusion). */
+function sortAds(ads: SpyAd[], tri: SpyFilters["tri"]): SpyAd[] {
+  const t = tri ?? "score";
+  return [...ads].sort((x, y) => {
+    if (t === "reach") return (y.reach ?? 0) - (x.reach ?? 0);
+    if (t === "anciennete") return (y.jours_actifs ?? 0) - (x.jours_actifs ?? 0);
+    if (t === "variants") return y.variants_count - x.variants_count;
+    return y.score - x.score;
+  });
+}
+
+/**
+ * Recherche multi-pays : l'actor Apify ne prend qu'UN pays par appel, donc on
+ * lance une recherche par pays (en parallèle, chacune passant par le cache et
+ * le plafond journalier) puis on FUSIONNE en dédupliquant par ad_archive_id.
+ * Plafonné à SPY_COUNTRIES_HARD pour maîtriser le coût et tenir dans le temps
+ * serverless. Chaque pays déjà connu de l'actor est instantané (cache 12 h).
+ */
+export async function searchSpyManyCountries(
+  base: SpyFilters,
+  countries: string[],
+  userId: string | null,
+): Promise<SpyMultiResult> {
+  const uniq = Array.from(
+    new Set(countries.map((c) => c.trim().toUpperCase()).filter(Boolean)),
+  ).slice(0, SPY_COUNTRIES_HARD);
+
+  if (uniq.length === 0) {
+    return {
+      url: "", raw_count: 0, count: 0, ads: [], cached: false,
+      countries: [], countries_ok: [],
+    };
+  }
+
+  const settled = await Promise.allSettled(
+    uniq.map((country) => searchSpyWithCache({ ...base, country }, userId)),
+  );
+
+  const ok: SpyCacheResult[] = [];
+  for (const s of settled) if (s.status === "fulfilled") ok.push(s.value);
+
+  const capped = ok.length > 0 && ok.every((r) => r.capped);
+  const cached = ok.length > 0 && ok.every((r) => r.cached);
+  const countries_ok = uniq.filter((_, i) => settled[i].status === "fulfilled");
+
+  // Fusion + déduplication par ad_archive_id (on garde la 1re occurrence).
+  const seen = new Set<string>();
+  const merged: SpyAd[] = [];
+  let raw_count = 0;
+  for (const r of ok) {
+    raw_count += r.raw_count;
+    for (const ad of r.ads) {
+      const id = ad.ad_archive_id;
+      if (id && seen.has(id)) continue;
+      if (id) seen.add(id);
+      merged.push(ad);
+    }
+  }
+
+  const ads = sortAds(merged, base.tri).slice(0, base.limit ?? 50);
+  return {
+    url: ok[0]?.url ?? "",
+    raw_count,
+    count: ads.length,
+    ads,
+    cached,
+    capped: capped || undefined,
+    countries: uniq,
+    countries_ok,
+  };
 }

@@ -2,9 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@/components/Icon";
-
-const inputCls =
-  "min-h-[40px] rounded-md border border-border bg-input px-3 text-sm outline-none focus:border-primary";
+import { Select } from "@/components/Select";
 
 export function TopTrendFilters() {
   const router = useRouter();
@@ -31,21 +29,31 @@ export function TopTrendFilters() {
       }}
       className="flex flex-wrap items-end gap-3"
     >
-      <label className="flex flex-col gap-1.5">
+      <div className="flex w-36 flex-col gap-1.5">
         <span className="text-muted-foreground text-xs font-medium">Région</span>
-        <select value={region} onChange={(e) => update({ region: e.target.value })} className={inputCls}>
-          <option value="all">Toutes</option>
-          <option value="africa">Afrique</option>
-          <option value="europe">Europe</option>
-        </select>
-      </label>
-      <label className="flex flex-col gap-1.5">
+        <Select
+          value={region}
+          onChange={(v) => update({ region: v })}
+          ariaLabel="Région"
+          options={[
+            { value: "all", label: "Toutes" },
+            { value: "africa", label: "Afrique" },
+            { value: "europe", label: "Europe" },
+          ]}
+        />
+      </div>
+      <div className="flex w-44 flex-col gap-1.5">
         <span className="text-muted-foreground text-xs font-medium">Période</span>
-        <select value={days} onChange={(e) => update({ days: e.target.value })} className={inputCls}>
-          <option value="7">7 derniers jours</option>
-          <option value="30">30 derniers jours</option>
-        </select>
-      </label>
+        <Select
+          value={days}
+          onChange={(v) => update({ days: v })}
+          ariaLabel="Période"
+          options={[
+            { value: "7", label: "7 derniers jours" },
+            { value: "30", label: "30 derniers jours" },
+          ]}
+        />
+      </div>
       <label className="flex flex-1 flex-col gap-1.5">
         <span className="text-muted-foreground text-xs font-medium">Niche / mot-clé</span>
         <div className="border-border bg-input flex min-h-[40px] items-center gap-2 rounded-md border px-3">

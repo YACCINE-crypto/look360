@@ -1,12 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/ui";
 import { Icon } from "@/components/Icon";
+import { CreativeMedia } from "@/components/CreativeMedia";
 import { ajouterAuxProduits, retirerPub } from "../spy/actions";
-import { landingKind, LANDING_LABEL, formatReach, countryLabel } from "@/lib/spy";
+import { landingKind, LANDING_LABEL, formatReach, countryLabel, cleanField } from "@/lib/spy";
 
 export const dynamic = "force-dynamic";
-
-/* eslint-disable @next/next/no-img-element */
 
 export default async function SauvegardesPage() {
   const supabase = await createClient();
@@ -44,19 +43,14 @@ export default async function SauvegardesPage() {
               (ad.media_type !== "video" ? ad.media_cdn_url || ad.media_source_url : null);
             const watchUrl = ad.media_cdn_url || ad.media_source_url;
             const kind = landingKind(ad.landing_url);
+            const pageName = cleanField(ad.page_name);
+            const adText = cleanField(ad.ad_text);
             return (
               <article
                 key={ad.id}
                 className="bg-surface border-border shadow-card flex h-full flex-col overflow-hidden rounded-xl border"
               >
-                <div className="bg-input relative aspect-[4/3] w-full">
-                  {img ? (
-                    <img src={img} alt={ad.page_name ?? ""} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="text-muted-foreground grid h-full w-full place-items-center">
-                      <Icon name="image" size={26} />
-                    </div>
-                  )}
+                <CreativeMedia image={img} alt={pageName ?? ""} isVideo={ad.media_type === "video"}>
                   {ad.media_type === "video" && (
                     <span className="bg-black/55 absolute left-2 top-2 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase text-white">
                       Vidéo
@@ -72,15 +66,15 @@ export default async function SauvegardesPage() {
                   >
                     {ad.media_stored ? "Archivé" : "Lien Meta"}
                   </span>
-                </div>
+                </CreativeMedia>
 
                 <div className="flex flex-1 flex-col gap-2 p-3">
                   <div className="min-w-0">
-                    <h3 className="truncate text-sm font-semibold" title={ad.page_name ?? ""}>
-                      {ad.page_name ?? "Page inconnue"}
+                    <h3 className="truncate text-sm font-semibold" title={pageName ?? ""}>
+                      {pageName ?? "Page inconnue"}
                     </h3>
-                    {ad.ad_text && (
-                      <p className="text-muted-foreground line-clamp-2 text-xs">{ad.ad_text}</p>
+                    {adText && (
+                      <p className="text-muted-foreground line-clamp-2 text-xs">{adText}</p>
                     )}
                   </div>
 
@@ -142,11 +136,11 @@ export default async function SauvegardesPage() {
                     </div>
 
                     <form action={ajouterAuxProduits}>
-                      <input type="hidden" name="nom" value={ad.page_name ?? ""} />
+                      <input type="hidden" name="nom" value={pageName ?? ""} />
                       <input type="hidden" name="image_url" value={ad.media_cdn_url ?? ad.thumbnail_cdn_url ?? ad.thumbnail_source_url ?? ""} />
                       <input type="hidden" name="landing_url" value={ad.landing_url ?? ""} />
                       <input type="hidden" name="ad_library_url" value={ad.ad_library_url ?? ""} />
-                      <input type="hidden" name="ad_text" value={ad.ad_text ?? ""} />
+                      <input type="hidden" name="ad_text" value={adText ?? ""} />
                       <input type="hidden" name="marche" value={ad.pays_cible ?? ""} />
                       <button
                         type="submit"

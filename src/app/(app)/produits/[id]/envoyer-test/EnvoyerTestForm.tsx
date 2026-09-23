@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Icon } from "@/components/Icon";
+import { Select } from "@/components/Select";
 import { envoyerEnTestAvecSourcing } from "../../../recherche/actions";
 import {
   MODES_TRANSIT,
@@ -146,20 +147,15 @@ export function EnvoyerTestForm({ produit }: { produit: Produit }) {
                 />
               </label>
             </div>
-            <label className="block space-y-1.5">
+            <div className="space-y-1.5">
               <span className={labelCls}>Mode de transit</span>
-              <select
+              <Select
                 value={mode}
-                onChange={(e) => setMode(e.target.value as ModeTransit)}
-                className={inputCls}
-              >
-                {MODES_TRANSIT.map((m) => (
-                  <option key={m.code} value={m.code}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+                onChange={(v) => setMode(v as ModeTransit)}
+                ariaLabel="Mode de transit"
+                options={MODES_TRANSIT.map((m) => ({ value: m.code, label: m.label }))}
+              />
+            </div>
             {mode === "aerien" ? (
               <label className="block space-y-1.5">
                 <span className={labelCls}>Frais transit / kg (FCFA)</span>

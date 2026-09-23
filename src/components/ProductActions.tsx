@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Icon } from "./Icon";
+import { DatePicker } from "./DatePicker";
 import { deleteProduit, updatePlanning } from "@/app/(app)/recherche/actions";
 
 const iconBtn =
@@ -85,28 +86,18 @@ export function ProductActions({
             </p>
             <form action={updatePlanning} className="space-y-3">
               <input type="hidden" name="id" value={id} />
-              <label className="block space-y-1.5">
+              <div className="space-y-1.5">
                 <span className="text-muted-foreground text-xs font-medium">
                   Date à travailler
                 </span>
-                <input
-                  type="date"
-                  name="date_a_travailler"
-                  defaultValue={dateATravailler ?? ""}
-                  className="border-border bg-input focus:border-primary min-h-[44px] w-full rounded-md border px-3 py-2 text-sm outline-none"
-                />
-              </label>
-              <label className="block space-y-1.5">
+                <DatePicker name="date_a_travailler" defaultValue={dateATravailler ?? ""} placeholder="Date" />
+              </div>
+              <div className="space-y-1.5">
                 <span className="text-muted-foreground text-xs font-medium">
                   Date de lancement testing
                 </span>
-                <input
-                  type="date"
-                  name="date_lancement_testing"
-                  defaultValue={dateLancementTesting ?? ""}
-                  className="border-border bg-input focus:border-primary min-h-[44px] w-full rounded-md border px-3 py-2 text-sm outline-none"
-                />
-              </label>
+                <DatePicker name="date_lancement_testing" defaultValue={dateLancementTesting ?? ""} placeholder="Date" />
+              </div>
               <div className="flex items-center gap-2 pt-1">
                 <button
                   type="submit"

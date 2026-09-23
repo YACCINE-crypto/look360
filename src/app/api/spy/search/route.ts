@@ -1,7 +1,20 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { searchSpyWithCache } from "@/lib/spyCache";
+import { searchSpyWithCache, searchSpyManyCountries } from "@/lib/spyCache";
 import type { SpyFilters, SpyMediaType, SpyPlatform, SpyStatut } from "@/lib/spy";
+
+/** Extrait la liste de pays (multi-sélection) ; retombe sur `country` unique. */
+function parseCountries(src: Record<string, unknown>): string[] {
+  const raw = src.countries;
+  let list: string[] = [];
+  if (Array.isArray(raw)) list = raw.map((c) => String(c));
+  else if (typeof raw === "string" && raw.trim())
+    list = raw.split(",").map((c) => c.trim());
+  if (list.length === 0 && src.country) list = [String(src.country)];
+  return Array.from(
+    new Set(list.map((c) => c.trim().toUpperCase()).filter(Boolean)),
+  );
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,18 +45,22 @@ function parseFilters(src: Record<string, unknown>): SpyFilters {
   };
 }
 
-async function handle(filters: SpyFilters) {
+async function handle(filters: SpyFilters, countries: string[]) {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const userId = data?.claims?.sub as string | undefined;
   if (!userId) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-  if (!filters.q && !filters.country && !filters.pageId) {
+  if (!filters.q && countries.length === 0 && !filters.pageId) {
     return NextResponse.json({ error: "mot-clé ou pays requis" }, { status: 400 });
   }
   try {
-    const result = await searchSpyWithCache(filters, userId);
+    // Un seul pays (ou recherche annonceur) → chemin simple ; sinon fan-out.
+    const result =
+      countries.length <= 1
+        ? await searchSpyWithCache({ ...filters, country: countries[0] ?? filters.country }, userId)
+        : await searchSpyManyCountries(filters, countries, userId);
     if (result.capped) {
       return NextResponse.json(
         { error: "Plafond de recherches Spy atteint pour aujourd'hui. Réessaie demain." },
@@ -64,12 +81,12 @@ export async function POST(request: Request) {
   } catch {
     /* body vide accepté */
   }
-  return handle(parseFilters(body));
+  return handle(parseFilters(body), parseCountries(body));
 }
 
 // GET pratique pour un test manuel dans le navigateur (connecté à l'app) :
 //   /api/spy/search?q=montre&country=FR&debug=1
 export async function GET(request: Request) {
   const sp = Object.fromEntries(new URL(request.url).searchParams.entries());
-  return handle(parseFilters(sp));
+  return handle(parseFilters(sp), parseCountries(sp));
 }

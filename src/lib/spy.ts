@@ -7,6 +7,28 @@
 /** Plafond de concurrents suivis (garde-fou coût Apify). */
 export const MAX_COMPETITORS = 20;
 
+/**
+ * Sélecteur multi-pays (page Spy). Chaque pays coché = 1 recherche Apify de
+ * plus → contrôle du coût :
+ *  - SPY_COUNTRIES_SOFT : au-delà, on prévient et on demande confirmation.
+ *  - SPY_COUNTRIES_HARD : plafond absolu par recherche (tient dans les ~60s
+ *    serverless en parallèle, borne la consommation de crédit).
+ */
+export const SPY_COUNTRIES_SOFT = 5;
+export const SPY_COUNTRIES_HARD = 8;
+
+/**
+ * Neutralise un placeholder de maquette non résolu (ex. "{{product.brand}}"
+ * hérité d'un export Banani) pour qu'il ne fuite jamais dans l'affichage.
+ */
+export function cleanField(v: string | null | undefined): string | null {
+  if (v == null) return null;
+  const t = String(v).trim();
+  if (!t) return null;
+  if (/\{\{[^}]*\}\}/.test(t)) return null;
+  return t;
+}
+
 /** Winner Agent : nb max de recherches Apify par exécution du cron (coût). */
 export const WINNER_SEARCH_CAP = 5;
 /** Valeurs par défaut raisonnables de la config Winner Agent. */
@@ -278,13 +300,13 @@ export function normalizeApifyItem(raw: Record<string, unknown>, country: string
   return {
     ad_archive_id: adId,
     page_id: (raw.page_id as string) ?? null,
-    page_name: (raw.page_name as string) ?? (snap.page_name as string) ?? null,
+    page_name: cleanField((raw.page_name as string) ?? (snap.page_name as string)),
     page_like_count:
       typeof snap.page_like_count === "number" ? (snap.page_like_count as number) : null,
     page_active_ads_count,
-    ad_text: bodyText(snap.body),
-    title: (snap.title as string) ?? null,
-    cta_text: (snap.cta_text as string) ?? null,
+    ad_text: cleanField(bodyText(snap.body)),
+    title: cleanField(snap.title as string),
+    cta_text: cleanField(snap.cta_text as string),
     media_type,
     media_url,
     thumbnail_url,

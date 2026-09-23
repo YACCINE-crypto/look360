@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Icon } from "@/components/Icon";
+import { Select } from "@/components/Select";
 import { enregistrerConfigWinner } from "./actions";
 
 const inputCls =
@@ -20,6 +21,10 @@ export type WinnerConfig = {
 
 export function WinnerConfigForm({ config }: { config: WinnerConfig }) {
   const [open, setOpen] = useState(false);
+  const [anciennete, setAnciennete] = useState(String(config.anciennete_min));
+  const [reach, setReach] = useState(String(config.reach_min));
+  const [score, setScore] = useState(String(config.score_min));
+  const [resultsMax, setResultsMax] = useState(String(config.results_max));
 
   return (
     <div className="border-border bg-surface rounded-xl border shadow-card">
@@ -59,38 +64,52 @@ export function WinnerConfigForm({ config }: { config: WinnerConfig }) {
           </label>
 
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <label className="block space-y-1.5">
+            <div className="space-y-1.5">
               <span className={labelCls}>Ancienneté min. (j)</span>
-              <select name="anciennete_min" defaultValue={String(config.anciennete_min)} className={inputCls}>
-                {[0, 15, 30, 60, 90].map((v) => (
-                  <option key={v} value={v}>{v === 0 ? "Toutes" : `${v} j`}</option>
-                ))}
-              </select>
-            </label>
-            <label className="block space-y-1.5">
+              <Select
+                name="anciennete_min"
+                value={anciennete}
+                onChange={setAnciennete}
+                ariaLabel="Ancienneté minimum"
+                options={[0, 15, 30, 60, 90].map((v) => ({
+                  value: String(v),
+                  label: v === 0 ? "Toutes" : `${v} j`,
+                }))}
+              />
+            </div>
+            <div className="space-y-1.5">
               <span className={labelCls}>Reach min. UE</span>
-              <select name="reach_min" defaultValue={String(config.reach_min)} className={inputCls}>
-                {[0, 50000, 100000, 500000, 1000000].map((v) => (
-                  <option key={v} value={v}>{v === 0 ? "Aucun" : v.toLocaleString("fr-FR")}</option>
-                ))}
-              </select>
-            </label>
-            <label className="block space-y-1.5">
+              <Select
+                name="reach_min"
+                value={reach}
+                onChange={setReach}
+                ariaLabel="Reach minimum UE"
+                options={[0, 50000, 100000, 500000, 1000000].map((v) => ({
+                  value: String(v),
+                  label: v === 0 ? "Aucun" : v.toLocaleString("fr-FR"),
+                }))}
+              />
+            </div>
+            <div className="space-y-1.5">
               <span className={labelCls}>Score min.</span>
-              <select name="score_min" defaultValue={String(config.score_min)} className={inputCls}>
-                {[40, 50, 60, 70, 80].map((v) => (
-                  <option key={v} value={v}>{v}</option>
-                ))}
-              </select>
-            </label>
-            <label className="block space-y-1.5">
+              <Select
+                name="score_min"
+                value={score}
+                onChange={setScore}
+                ariaLabel="Score minimum"
+                options={[40, 50, 60, 70, 80].map((v) => ({ value: String(v), label: String(v) }))}
+              />
+            </div>
+            <div className="space-y-1.5">
               <span className={labelCls}>Nb max de winners</span>
-              <select name="results_max" defaultValue={String(config.results_max)} className={inputCls}>
-                {[5, 10, 15, 20].map((v) => (
-                  <option key={v} value={v}>{v}</option>
-                ))}
-              </select>
-            </label>
+              <Select
+                name="results_max"
+                value={resultsMax}
+                onChange={setResultsMax}
+                ariaLabel="Nombre max de winners"
+                options={[5, 10, 15, 20].map((v) => ({ value: String(v), label: String(v) }))}
+              />
+            </div>
           </div>
 
           <button

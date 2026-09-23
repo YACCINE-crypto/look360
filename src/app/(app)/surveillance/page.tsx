@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader, Card } from "@/components/ui";
 import { Icon } from "@/components/Icon";
-import { countryLabel, MAX_COMPETITORS } from "@/lib/spy";
+import { countryLabel, cleanField, MAX_COMPETITORS } from "@/lib/spy";
 import { retirerConcurrent } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -65,6 +65,7 @@ export default async function SurveillancePage() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {rows.map((c) => {
             const nouvelles = c.new_ads_count ?? 0;
+            const pageName = cleanField(c.page_name) ?? "Page Facebook";
             return (
               <Card
                 key={c.id}
@@ -86,12 +87,10 @@ export default async function SurveillancePage() {
                 <div className="flex items-start gap-3">
                   {/* Avatar initiales */}
                   <span className="bg-secondary text-primary grid h-11 w-11 shrink-0 place-items-center rounded-full text-sm font-bold">
-                    {initials(c.page_name)}
+                    {initials(pageName)}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold leading-snug">
-                      {c.page_name ?? "Page Facebook"}
-                    </p>
+                    <p className="truncate font-semibold leading-snug">{pageName}</p>
                     {c.domaine && (
                       <p className="text-muted-foreground flex items-center gap-1 truncate text-xs">
                         <Icon name="external" size={12} /> {c.domaine}

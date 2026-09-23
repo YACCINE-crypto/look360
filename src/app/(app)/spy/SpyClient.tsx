@@ -1,35 +1,67 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/ui";
 import { Icon } from "@/components/Icon";
+import { Select, type SelectOption } from "@/components/Select";
+import { CountryMultiSelect } from "@/components/CountryMultiSelect";
+import { CreativeMedia } from "@/components/CreativeMedia";
 import { ajouterAuxProduits } from "./actions";
 import { suivreConcurrent } from "../surveillance/actions";
 import {
-  SPY_COUNTRIES,
-  SPY_REGION_LABELS,
   isEUCountry,
   formatReach,
   landingKind,
   LANDING_LABEL,
+  cleanField,
+  countryLabel,
+  SPY_COUNTRIES_SOFT,
   type SpyAd,
-  type SpyRegion,
 } from "@/lib/spy";
 
-/* eslint-disable @next/next/no-img-element */
-
-const inputCls =
-  "min-h-[40px] rounded-md border border-border bg-input px-3 text-sm outline-none focus:border-primary";
 const labelCls = "text-xs font-medium text-muted-foreground";
-const REGIONS: SpyRegion[] = ["africa", "europe", "other"];
+
+const PLATFORM_OPTS: SelectOption[] = [
+  { value: "", label: "Toutes" },
+  { value: "facebook", label: "Facebook" },
+  { value: "instagram", label: "Instagram" },
+];
+const ANCIENNETE_OPTS: SelectOption[] = [
+  { value: "0", label: "Toutes" },
+  { value: "15", label: "+ de 15 j" },
+  { value: "30", label: "+ de 30 j" },
+  { value: "60", label: "+ de 60 j" },
+  { value: "90", label: "+ de 90 j" },
+];
+const REACH_OPTS: SelectOption[] = [
+  { value: "0", label: "Tous" },
+  { value: "50000", label: "+ 50 000" },
+  { value: "100000", label: "+ 100 000" },
+  { value: "500000", label: "+ 500 000" },
+  { value: "1000000", label: "+ 1 000 000" },
+];
+const VARIANTS_OPTS: SelectOption[] = [
+  { value: "0", label: "Toutes" },
+  { value: "2", label: "≥ 2" },
+  { value: "3", label: "≥ 3" },
+  { value: "5", label: "≥ 5" },
+];
+const MEDIA_OPTS: SelectOption[] = [
+  { value: "all", label: "Tout" },
+  { value: "video", label: "Vidéo" },
+  { value: "image", label: "Image" },
+];
 
 type Status = "idle" | "loading" | "done" | "error";
 
 export function SpyClient() {
   const params = useSearchParams();
   const [q, setQ] = useState("");
-  const [country, setCountry] = useState(() => (params.get("country") || "FR").toUpperCase());
+  const [countries, setCountries] = useState<string[]>(() => {
+    const c = (params.get("country") || "FR").toUpperCase();
+    return [c];
+  });
   const [platform, setPlatform] = useState("");
   const [statut, setStatut] = useState("active");
   const [mediaType, setMediaType] = useState("all");
@@ -43,11 +75,24 @@ export function SpyClient() {
   const [cached, setCached] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [playing, setPlaying] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const router = useRouter();
 
-  const euDispo = isEUCountry(country);
+  const euDispo = countries.some(isEUCountry);
+  const nbSearches = countries.length;
+
+  const triOpts: SelectOption[] = useMemo(
+    () => [
+      { value: "score", label: "Score gagnant" },
+      ...(euDispo ? [{ value: "reach", label: "Reach" }] : []),
+      { value: "anciennete", label: "Ancienneté" },
+      { value: "variants", label: "Nb variantes" },
+    ],
+    [euDispo],
+  );
 
   async function runSearch() {
+    setConfirmOpen(false);
     setStatus("loading");
     setError(null);
     try {
@@ -56,7 +101,7 @@ export function SpyClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           q,
-          country,
+          countries,
           platform,
           statut,
           mediaType,
@@ -78,6 +123,21 @@ export function SpyClient() {
     }
   }
 
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (countries.length === 0) {
+      setError("Choisis au moins un pays.");
+      setStatus("error");
+      return;
+    }
+    // Au-delà du seuil doux → confirmation (coût : 1 recherche Apify / pays).
+    if (countries.length > SPY_COUNTRIES_SOFT) {
+      setConfirmOpen(true);
+      return;
+    }
+    runSearch();
+  }
+
   function analyze(ad: SpyAd) {
     if (!ad.page_id) return;
     router.push(
@@ -92,135 +152,99 @@ export function SpyClient() {
         subtitle="Trouve des pubs qui tournent déjà — signaux réels de la bibliothèque Meta."
       />
 
-      {(
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            runSearch();
-          }}
-          className="border-border bg-surface space-y-3 rounded-xl border p-4 shadow-card"
-        >
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <label className="flex flex-col gap-1.5 sm:col-span-2">
-              <span className={labelCls}>Mot-clé (produit / niche)</span>
-              <div className="border-border bg-input flex min-h-[40px] items-center gap-2 rounded-md border px-3">
-                <Icon name="search" size={16} className="text-muted-foreground" />
-                <input
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder="ex. montre, ceinture, masseur…"
-                  className="w-full bg-transparent text-sm outline-none"
-                />
-              </div>
-            </label>
-            <label className="flex flex-col gap-1.5">
-              <span className={labelCls}>Pays cible</span>
-              <select value={country} onChange={(e) => setCountry(e.target.value)} className={inputCls}>
-                {REGIONS.map((r) => (
-                  <optgroup key={r} label={SPY_REGION_LABELS[r]}>
-                    {SPY_COUNTRIES.filter((c) => c.region === r).map((c) => (
-                      <option key={c.code} value={c.code}>
-                        {c.label}
-                        {c.eu ? " · reach" : ""}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1.5">
-              <span className={labelCls}>Plateforme</span>
-              <select value={platform} onChange={(e) => setPlatform(e.target.value)} className={inputCls}>
-                <option value="">Toutes</option>
-                <option value="facebook">Facebook</option>
-                <option value="instagram">Instagram</option>
-              </select>
-            </label>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-            <label className="flex flex-col gap-1.5">
-              <span className={labelCls}>Ancienneté min.</span>
-              <select value={ancienneteMin} onChange={(e) => setAncienneteMin(e.target.value)} className={inputCls}>
-                <option value="0">Toutes</option>
-                <option value="15">+ de 15 j</option>
-                <option value="30">+ de 30 j</option>
-                <option value="60">+ de 60 j</option>
-                <option value="90">+ de 90 j</option>
-              </select>
-            </label>
-            <label className="flex flex-col gap-1.5">
-              <span className={labelCls}>
-                Reach min. {!euDispo && <span className="text-warning">(UE only)</span>}
-              </span>
-              <select
-                value={reachMin}
-                onChange={(e) => setReachMin(e.target.value)}
-                disabled={!euDispo}
-                className={`${inputCls} disabled:opacity-50`}
-                title={euDispo ? "" : "Reach non disponible pour ce pays"}
-              >
-                <option value="0">Tous</option>
-                <option value="50000">+ 50 000</option>
-                <option value="100000">+ 100 000</option>
-                <option value="500000">+ 500 000</option>
-                <option value="1000000">+ 1 000 000</option>
-              </select>
-            </label>
-            <label className="flex flex-col gap-1.5">
-              <span className={labelCls}>Variantes min.</span>
-              <select value={variantsMin} onChange={(e) => setVariantsMin(e.target.value)} className={inputCls}>
-                <option value="0">Toutes</option>
-                <option value="2">≥ 2</option>
-                <option value="3">≥ 3</option>
-                <option value="5">≥ 5</option>
-              </select>
-            </label>
-            <label className="flex flex-col gap-1.5">
-              <span className={labelCls}>Créative</span>
-              <select value={mediaType} onChange={(e) => setMediaType(e.target.value)} className={inputCls}>
-                <option value="all">Tout</option>
-                <option value="video">Vidéo</option>
-                <option value="image">Image</option>
-              </select>
-            </label>
-            <label className="flex flex-col gap-1.5">
-              <span className={labelCls}>Tri</span>
-              <select value={tri} onChange={(e) => setTri(e.target.value)} className={inputCls}>
-                <option value="score">Score gagnant</option>
-                {euDispo && <option value="reach">Reach</option>}
-                <option value="anciennete">Ancienneté</option>
-                <option value="variants">Nb variantes</option>
-              </select>
-            </label>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="flex items-center gap-2 text-sm">
+      <form
+        onSubmit={submit}
+        className="border-border bg-surface space-y-3 rounded-xl border p-4 shadow-card"
+      >
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <label className="flex flex-col gap-1.5 sm:col-span-2">
+            <span className={labelCls}>Mot-clé (produit / niche)</span>
+            <div className="border-border bg-input flex min-h-[44px] items-center gap-2 rounded-md border px-3">
+              <Icon name="search" size={16} className="text-muted-foreground" />
               <input
-                type="checkbox"
-                checked={statut === "all"}
-                onChange={(e) => setStatut(e.target.checked ? "all" : "active")}
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="ex. montre, ceinture, masseur…"
+                className="w-full bg-transparent text-sm outline-none"
               />
-              Inclure les pubs inactives
-            </label>
-            <button
-              type="submit"
-              disabled={status === "loading"}
-              className="bg-primary text-primary-foreground ml-auto inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-5 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
-            >
-              <Icon name="search" size={16} />
-              {status === "loading" ? "Recherche…" : "Rechercher"}
-            </button>
+            </div>
+          </label>
+          <div className="flex flex-col gap-1.5 sm:col-span-2">
+            <span className={labelCls}>Pays cibles (plusieurs possibles)</span>
+            <CountryMultiSelect selected={countries} onChange={setCountries} />
           </div>
-          {!euDispo && (
-            <p className="text-muted-foreground text-xs">
-              Reach non disponible pour ce pays — on s&apos;appuie sur l&apos;ancienneté,
-              les variantes et l&apos;activité.
-            </p>
-          )}
-        </form>
-      )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+          <label className="flex flex-col gap-1.5">
+            <span className={labelCls}>Plateforme</span>
+            <Select value={platform} onChange={setPlatform} options={PLATFORM_OPTS} ariaLabel="Plateforme" />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className={labelCls}>Ancienneté min.</span>
+            <Select value={ancienneteMin} onChange={setAncienneteMin} options={ANCIENNETE_OPTS} ariaLabel="Ancienneté minimum" />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className={labelCls}>
+              Reach min. {!euDispo && <span className="text-warning">(UE only)</span>}
+            </span>
+            <Select
+              value={reachMin}
+              onChange={setReachMin}
+              options={REACH_OPTS}
+              disabled={!euDispo}
+              ariaLabel="Reach minimum"
+            />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className={labelCls}>Variantes min.</span>
+            <Select value={variantsMin} onChange={setVariantsMin} options={VARIANTS_OPTS} ariaLabel="Variantes minimum" />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className={labelCls}>Créative</span>
+            <Select value={mediaType} onChange={setMediaType} options={MEDIA_OPTS} ariaLabel="Type de créative" />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className={labelCls}>Tri</span>
+            <Select value={tri} onChange={setTri} options={triOpts} ariaLabel="Tri" />
+          </label>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={statut === "all"}
+              onChange={(e) => setStatut(e.target.checked ? "all" : "active")}
+              className="accent-primary h-4 w-4"
+            />
+            Inclure les pubs inactives
+          </label>
+          <span
+            className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+              nbSearches > SPY_COUNTRIES_SOFT
+                ? "bg-warning-bg text-warning"
+                : "bg-input text-muted-foreground"
+            }`}
+          >
+            Estimation : {nbSearches} recherche{nbSearches > 1 ? "s" : ""} Apify
+          </span>
+          <button
+            type="submit"
+            disabled={status === "loading"}
+            className="bg-primary text-primary-foreground ml-auto inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-5 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
+          >
+            <Icon name="search" size={16} />
+            {status === "loading" ? "Recherche…" : "Rechercher"}
+          </button>
+        </div>
+        {!euDispo && (
+          <p className="text-muted-foreground text-xs">
+            Reach non disponible pour ces pays — on s&apos;appuie sur l&apos;ancienneté,
+            les variantes et l&apos;activité.
+          </p>
+        )}
+      </form>
 
       {status === "loading" && <SkeletonGrid />}
 
@@ -238,8 +262,8 @@ export function SpyClient() {
           </span>
           <p className="font-medium">Lance une recherche</p>
           <p className="text-muted-foreground mx-auto mt-1 max-w-md text-sm">
-            Choisis un mot-clé et un pays. Les pubs qui tournent depuis longtemps
-            (et à fort reach en UE) sont les meilleurs signaux.
+            Choisis un mot-clé et un ou plusieurs pays. Les pubs qui tournent depuis
+            longtemps (et à fort reach en UE) sont les meilleurs signaux.
           </p>
         </div>
       )}
@@ -276,7 +300,63 @@ export function SpyClient() {
         </>
       )}
 
+      {confirmOpen && (
+        <ConfirmSearch
+          countries={countries}
+          onConfirm={runSearch}
+          onCancel={() => setConfirmOpen(false)}
+        />
+      )}
       {playing && <VideoModal url={playing} onClose={() => setPlaying(null)} />}
+    </div>
+  );
+}
+
+function ConfirmSearch({
+  countries,
+  onConfirm,
+  onCancel,
+}: {
+  countries: string[];
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40" onClick={onCancel} aria-hidden="true" />
+      <div className="bg-surface border-border relative z-10 w-full max-w-sm rounded-xl border p-5 shadow-xl">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="bg-warning-bg text-warning grid h-9 w-9 place-items-center rounded-full">
+            <Icon name="eye" size={18} />
+          </span>
+          <h3 className="font-bold">Confirmer la recherche</h3>
+        </div>
+        <p className="text-muted-foreground text-sm">
+          {countries.length} pays sélectionnés = <b className="text-foreground">{countries.length} recherches Apify</b>{" "}
+          (une par pays). Ça consomme du crédit. Continuer ?
+        </p>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {countries.map((c) => (
+            <span key={c} className="bg-input text-muted-foreground rounded-full px-2 py-0.5 text-[11px] font-medium">
+              {countryLabel(c)}
+            </span>
+          ))}
+        </div>
+        <div className="mt-5 flex gap-2">
+          <button
+            onClick={onConfirm}
+            className="bg-primary text-primary-foreground inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
+          >
+            <Icon name="search" size={16} /> Lancer ({countries.length})
+          </button>
+          <button
+            onClick={onCancel}
+            className="bg-input text-foreground inline-flex min-h-[44px] items-center justify-center rounded-md px-4 text-sm font-semibold"
+          >
+            Annuler
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -308,6 +388,8 @@ export function SpyCard({
   const [saving, setSaving] = useState(false);
   const kind = ad.landing_kind ?? landingKind(ad.landing_url);
   const isShop = kind === "shop";
+  const pageName = cleanField(ad.page_name);
+  const adText = cleanField(ad.ad_text);
 
   async function save() {
     if (saved || saving) return;
@@ -331,7 +413,7 @@ export function SpyCard({
     startTransition(async () => {
       const r = await suivreConcurrent({
         page_id: ad.page_id!,
-        page_name: ad.page_name,
+        page_name: pageName,
         domaine: ad.landing_domain,
         country: ad.country,
       });
@@ -342,25 +424,13 @@ export function SpyCard({
 
   return (
     <article className="bg-surface border-border shadow-card flex h-full flex-col overflow-hidden rounded-xl border">
-      <div className="bg-input relative aspect-[4/3] w-full">
-        {ad.thumbnail_url ? (
-          <img src={ad.thumbnail_url} alt={ad.page_name ?? ""} className="h-full w-full object-cover" />
-        ) : (
-          <div className="text-muted-foreground grid h-full w-full place-items-center">
-            <Icon name="image" size={26} />
-          </div>
-        )}
-        {ad.media_type === "video" && ad.media_url && onPlay && (
-          <button
-            onClick={() => onPlay(ad.media_url!)}
-            className="absolute inset-0 grid place-items-center bg-black/10 transition-colors hover:bg-black/25"
-            aria-label="Regarder la vidéo"
-          >
-            <span className="bg-surface/90 text-foreground grid h-12 w-12 place-items-center rounded-full shadow">
-              <Icon name="play" size={20} />
-            </span>
-          </button>
-        )}
+      <CreativeMedia
+        image={ad.thumbnail_url}
+        alt={pageName ?? ""}
+        isVideo={ad.media_type === "video"}
+        playUrl={ad.media_url}
+        onPlay={onPlay}
+      >
         <span
           className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-semibold ${scoreBadge(ad.score_label)}`}
           title={ad.score_detail.join(" · ")}
@@ -385,14 +455,14 @@ export function SpyCard({
         >
           <Icon name={saved ? "check" : "bookmark"} size={16} />
         </button>
-      </div>
+      </CreativeMedia>
 
       <div className="flex flex-1 flex-col gap-2 p-3">
         <div className="min-w-0">
-          <h3 className="truncate text-sm font-semibold" title={ad.page_name ?? ""}>
-            {ad.page_name ?? "Page inconnue"}
+          <h3 className="truncate text-sm font-semibold" title={pageName ?? ""}>
+            {pageName ?? "Page inconnue"}
           </h3>
-          {ad.ad_text && <p className="text-muted-foreground line-clamp-2 text-xs">{ad.ad_text}</p>}
+          {adText && <p className="text-muted-foreground line-clamp-2 text-xs">{adText}</p>}
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
@@ -484,11 +554,11 @@ export function SpyCard({
           )}
 
           <form action={ajouterAuxProduits}>
-            <input type="hidden" name="nom" value={ad.page_name ?? ad.title ?? ""} />
+            <input type="hidden" name="nom" value={pageName ?? ad.title ?? ""} />
             <input type="hidden" name="image_url" value={ad.thumbnail_url ?? ad.media_url ?? ""} />
             <input type="hidden" name="landing_url" value={ad.landing_url ?? ""} />
             <input type="hidden" name="ad_library_url" value={ad.ad_library_url} />
-            <input type="hidden" name="ad_text" value={ad.ad_text ?? ""} />
+            <input type="hidden" name="ad_text" value={adText ?? ""} />
             <input type="hidden" name="marche" value={ad.country ?? ""} />
             <AddButton />
           </form>
@@ -535,10 +605,10 @@ export function VideoModal({ url, onClose }: { url: string; onClose: () => void 
 
 function SkeletonGrid() {
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {Array.from({ length: 8 }).map((_, i) => (
         <div key={i} className="bg-surface border-border animate-pulse overflow-hidden rounded-xl border">
-          <div className="bg-input aspect-[4/3] w-full" />
+          <div className="bg-input aspect-square w-full" />
           <div className="space-y-2 p-3">
             <div className="bg-input h-4 w-2/3 rounded" />
             <div className="bg-input h-3 w-full rounded" />

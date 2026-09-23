@@ -1,6 +1,7 @@
 "use client";
 
 import { STATUTS, STATUT_LABELS, MARCHES, TRIS, type Statut, type Tri } from "@/lib/produits";
+import { Select } from "./Select";
 
 export function FilterBar({
   statut,
@@ -46,32 +47,23 @@ export function FilterBar({
       </div>
 
       <div className="flex shrink-0 gap-2">
-        <select
+        <Select
+          className="min-w-[9rem]"
           value={marche}
-          onChange={(e) => onMarche(e.target.value)}
-          className="border-border bg-surface min-h-[44px] rounded-md border px-2.5 text-sm"
-          aria-label="Marché"
-        >
-          <option value="">Tous marchés</option>
-          {MARCHES.map((m) => (
-            <option key={m.code} value={m.code}>
-              {m.label}
-            </option>
-          ))}
-        </select>
-
-        <select
+          onChange={onMarche}
+          ariaLabel="Marché"
+          options={[
+            { value: "", label: "Tous marchés" },
+            ...MARCHES.map((m) => ({ value: m.code, label: m.label })),
+          ]}
+        />
+        <Select
+          className="min-w-[9rem]"
           value={tri}
-          onChange={(e) => onTri(e.target.value as Tri)}
-          className="border-border bg-surface min-h-[44px] rounded-md border px-2.5 text-sm"
-          aria-label="Trier"
-        >
-          {(Object.keys(TRIS) as Tri[]).map((t) => (
-            <option key={t} value={t}>
-              {TRIS[t]}
-            </option>
-          ))}
-        </select>
+          onChange={(v) => onTri(v as Tri)}
+          ariaLabel="Trier"
+          options={(Object.keys(TRIS) as Tri[]).map((t) => ({ value: t, label: TRIS[t] }))}
+        />
       </div>
     </div>
   );

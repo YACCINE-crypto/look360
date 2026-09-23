@@ -6,6 +6,8 @@ import { createProduit } from "@/app/(app)/recherche/actions";
 import { createClient } from "@/lib/supabase/client";
 import { MARCHES, CATEGORIES } from "@/lib/produits";
 import { Icon } from "./Icon";
+import { Select } from "./Select";
+import { DatePicker } from "./DatePicker";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -24,6 +26,10 @@ export function AddProductPanel() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Sélecteurs maison (contrôlés → hidden inputs pour l'action serveur).
+  const [categorie, setCategorie] = useState("");
+  const [marche, setMarche] = useState("CI");
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -137,27 +143,27 @@ export function AddProductPanel() {
               </label>
 
               <div className="grid grid-cols-2 gap-3">
-                <label className="block space-y-1.5">
+                <div className="space-y-1.5">
                   <span className={labelCls}>Catégorie</span>
-                  <select name="categorie" defaultValue="" className={inputCls}>
-                    <option value="">Sélectionner…</option>
-                    {CATEGORIES.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="block space-y-1.5">
+                  <Select
+                    name="categorie"
+                    value={categorie}
+                    onChange={setCategorie}
+                    placeholder="Sélectionner…"
+                    ariaLabel="Catégorie"
+                    options={CATEGORIES.map((c) => ({ value: c, label: c }))}
+                  />
+                </div>
+                <div className="space-y-1.5">
                   <span className={labelCls}>Marché</span>
-                  <select name="marche" defaultValue="CI" className={inputCls}>
-                    {MARCHES.map((m) => (
-                      <option key={m.code} value={m.code}>
-                        {m.code}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                  <Select
+                    name="marche"
+                    value={marche}
+                    onChange={setMarche}
+                    ariaLabel="Marché"
+                    options={MARCHES.map((m) => ({ value: m.code, label: m.code }))}
+                  />
+                </div>
               </div>
 
               <label className="block space-y-1.5">
@@ -187,14 +193,14 @@ export function AddProductPanel() {
 
               {/* Planning (optionnel) — rappel push le jour J et 2 jours avant */}
               <div className="grid grid-cols-2 gap-3">
-                <label className="block space-y-1.5">
+                <div className="space-y-1.5">
                   <span className={labelCls}>À travailler le</span>
-                  <input type="date" name="date_a_travailler" className={inputCls} />
-                </label>
-                <label className="block space-y-1.5">
+                  <DatePicker name="date_a_travailler" placeholder="Date" />
+                </div>
+                <div className="space-y-1.5">
                   <span className={labelCls}>Lancement testing</span>
-                  <input type="date" name="date_lancement_testing" className={inputCls} />
-                </label>
+                  <DatePicker name="date_lancement_testing" placeholder="Date" />
+                </div>
               </div>
 
               <div className="flex items-center gap-3 pt-1">

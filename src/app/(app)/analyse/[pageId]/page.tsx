@@ -7,7 +7,7 @@ import { AdGrid } from "@/components/AdGrid";
 import { AdActivityChart } from "./AdActivityChart";
 import { SuivreButton } from "./SuivreButton";
 import { ajouterAuxProduits } from "../../spy/actions";
-import { activityByMonth, countryLabel, formatReach, type SpyAd } from "@/lib/spy";
+import { activityByMonth, countryLabel, formatReach, cleanField, type SpyAd } from "@/lib/spy";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -55,7 +55,7 @@ export default async function AnalysePage({
     failed = true;
   }
 
-  const pageName = sp.name || ads[0]?.page_name || "Annonceur";
+  const pageName = cleanField(sp.name) ?? cleanField(ads[0]?.page_name) ?? "Annonceur";
   const likes = ads.find((a) => a.page_like_count != null)?.page_like_count ?? null;
   const domaine = mostFrequent(ads.map((a) => a.landing_domain));
   const platforms = Array.from(new Set(ads.flatMap((a) => a.platforms)));
