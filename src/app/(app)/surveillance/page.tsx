@@ -7,13 +7,23 @@ import { retirerConcurrent } from "./actions";
 
 export const dynamic = "force-dynamic";
 
-function formatDate(iso: string | null): string {
-  if (!iso) return "jamais";
+// Initiales pour l'avatar (pas de logo stocké — fallback honnête).
+function initials(name: string | null): string {
+  const n = (name ?? "").trim();
+  if (!n) return "FB";
+  return n
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+function formatAdded(iso: string | null): string {
+  if (!iso) return "—";
   return new Date(iso).toLocaleDateString("fr-FR", {
     day: "numeric",
     month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
+    year: "numeric",
   });
 }
 
@@ -22,6 +32,7 @@ export default async function SurveillancePage() {
   const { data } = await supabase
     .from("competitors_watch")
     .select("*")
+    .order("new_ads_count", { ascending: false })
     .order("created_at", { ascending: false });
   const rows = data ?? [];
 
@@ -51,35 +62,83 @@ export default async function SurveillancePage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {rows.map((c) => (
-            <Card key={c.id} className="flex flex-wrap items-center gap-3 p-4">
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold">{c.page_name ?? "Page Facebook"}</p>
-                <p className="text-muted-foreground truncate text-xs">
-                  {c.domaine ? `${c.domaine} · ` : ""}
-                  {c.country ? `${countryLabel(c.country)} · ` : ""}
-                  {c.known_ad_ids?.length ?? 0} pub(s) connues · vérifié{" "}
-                  {formatDate(c.last_checked_at)}
-                </p>
-              </div>
-              <Link
-                href={`/analyse/${encodeURIComponent(c.page_id)}?country=${encodeURIComponent(c.country ?? "FR")}&name=${encodeURIComponent(c.page_name ?? "")}`}
-                className="bg-input text-foreground inline-flex min-h-[38px] items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors hover:bg-muted"
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {rows.map((c) => {
+            const nouvelles = c.new_ads_count ?? 0;
+            return (
+              <Card
+                key={c.id}
+                className={`relative flex flex-col gap-3 p-4 ${
+                  nouvelles > 0 ? "ring-primary/40 ring-1" : ""
+                }`}
               >
-                <Icon name="search" size={14} /> Analyser
-              </Link>
-              <form action={retirerConcurrent}>
-                <input type="hidden" name="id" value={c.id} />
-                <button
-                  type="submit"
-                  className="text-danger hover:bg-danger-bg inline-flex min-h-[38px] items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors"
-                >
-                  <Icon name="trash" size={14} /> Retirer
-                </button>
-              </form>
-            </Card>
-          ))}
+                {/* Badge "nouvelle pub détectée" */}
+                {nouvelles > 0 && (
+                  <span className="bg-primary text-primary-foreground absolute -top-2 right-3 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold shadow-sm">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="bg-primary-foreground absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" />
+                      <span className="bg-primary-foreground relative inline-flex h-1.5 w-1.5 rounded-full" />
+                    </span>
+                    {nouvelles > 1 ? `${nouvelles} nouvelles pubs` : "Nouvelle pub"}
+                  </span>
+                )}
+
+                <div className="flex items-start gap-3">
+                  {/* Avatar initiales */}
+                  <span className="bg-secondary text-primary grid h-11 w-11 shrink-0 place-items-center rounded-full text-sm font-bold">
+                    {initials(c.page_name)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold leading-snug">
+                      {c.page_name ?? "Page Facebook"}
+                    </p>
+                    {c.domaine && (
+                      <p className="text-muted-foreground flex items-center gap-1 truncate text-xs">
+                        <Icon name="external" size={12} /> {c.domaine}
+                      </p>
+                    )}
+                    {c.country && (
+                      <p className="text-muted-foreground mt-0.5 text-xs">
+                        {countryLabel(c.country)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Méta */}
+                <div className="border-border grid grid-cols-2 gap-2 border-t pt-3 text-xs">
+                  <div>
+                    <p className="text-muted-foreground">Pubs repérées</p>
+                    <p className="font-semibold tabular-nums">{c.known_ad_ids?.length ?? 0}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Ajouté le</p>
+                    <p className="font-semibold">{formatAdded(c.created_at)}</p>
+                  </div>
+                </div>
+
+                {/* Actions intégrées */}
+                <div className="flex items-center gap-2 pt-1">
+                  <Link
+                    href={`/analyse/${encodeURIComponent(c.page_id)}?country=${encodeURIComponent(c.country ?? "FR")}&name=${encodeURIComponent(c.page_name ?? "")}`}
+                    className="bg-primary text-primary-foreground inline-flex min-h-[38px] flex-1 items-center justify-center gap-1.5 rounded-md px-3 text-sm font-semibold transition-opacity hover:opacity-90"
+                  >
+                    <Icon name="search" size={14} /> Analyser
+                  </Link>
+                  <form action={retirerConcurrent}>
+                    <input type="hidden" name="id" value={c.id} />
+                    <button
+                      type="submit"
+                      aria-label="Retirer de la surveillance"
+                      className="text-muted-foreground hover:text-danger hover:bg-danger-bg border-border inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-md border px-3 text-sm font-medium transition-colors"
+                    >
+                      <Icon name="trash" size={14} /> Retirer
+                    </button>
+                  </form>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

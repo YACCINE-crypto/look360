@@ -22,6 +22,7 @@ export type Database = {
           id: string
           known_ad_ids: string[]
           last_checked_at: string | null
+          new_ads_count: number
           page_id: string
           page_name: string | null
           user_id: string
@@ -33,6 +34,7 @@ export type Database = {
           id?: string
           known_ad_ids?: string[]
           last_checked_at?: string | null
+          new_ads_count?: number
           page_id: string
           page_name?: string | null
           user_id: string
@@ -44,6 +46,7 @@ export type Database = {
           id?: string
           known_ad_ids?: string[]
           last_checked_at?: string | null
+          new_ads_count?: number
           page_id?: string
           page_name?: string | null
           user_id?: string

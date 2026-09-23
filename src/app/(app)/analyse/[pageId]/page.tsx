@@ -7,7 +7,7 @@ import { AdGrid } from "@/components/AdGrid";
 import { AdActivityChart } from "./AdActivityChart";
 import { SuivreButton } from "./SuivreButton";
 import { ajouterAuxProduits } from "../../spy/actions";
-import { activityByMonth, countryLabel, type SpyAd } from "@/lib/spy";
+import { activityByMonth, countryLabel, formatReach, type SpyAd } from "@/lib/spy";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -62,6 +62,21 @@ export default async function AnalysePage({
   const firstDate = ads.map((a) => a.start_date).filter(Boolean).sort()[0] ?? null;
   const chart = activityByMonth(ads, 12);
   const top = [...ads].sort((a, b) => b.score - a.score)[0] ?? null;
+
+  // Audience cumulée = somme des reach (portée UE réelle, via DSA) de toutes
+  // ses pubs. Donnée réelle Apify — null hors UE, donc on n'affiche un chiffre
+  // que s'il existe au moins une pub avec un reach.
+  const audience = ads.reduce((s, a) => s + (a.reach ?? 0), 0);
+  const hasAudience = ads.some((a) => a.reach != null);
+
+  // Ouvrir la fiche = "j'ai vu" → on remet le badge "nouvelle pub" à zéro.
+  if (userId) {
+    await supabase
+      .from("competitors_watch")
+      .update({ new_ads_count: 0 })
+      .eq("user_id", userId)
+      .eq("page_id", pageId);
+  }
 
   return (
     <div className="space-y-5">
@@ -118,8 +133,8 @@ export default async function AnalysePage({
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {/* Stats — uniquement des données réelles issues d'Apify */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Card className="flex flex-col gap-1 px-4 py-3">
           <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
             Pubs actives
@@ -127,16 +142,17 @@ export default async function AnalysePage({
           <span className="text-primary text-2xl font-bold tabular-nums">{ads.length}</span>
           <span className="text-muted-foreground text-xs">créatives en diffusion</span>
         </Card>
-        {/* Emplacements "à venir" — pas de données publiques dispo, aucun chiffre inventé */}
-        {["Trafic boutique", "Followers réseaux", "Avis Trustpilot"].map((label) => (
-          <Card key={label} className="flex flex-col gap-1 px-4 py-3 opacity-70">
-            <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-              {label}
-            </span>
-            <span className="text-muted-foreground text-2xl font-bold">—</span>
-            <span className="text-muted-foreground text-xs">à venir</span>
-          </Card>
-        ))}
+        <Card className="flex flex-col gap-1 px-4 py-3">
+          <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+            Audience cumulée
+          </span>
+          <span className="text-primary text-2xl font-bold tabular-nums">
+            {hasAudience ? formatReach(audience) : "—"}
+          </span>
+          <span className="text-muted-foreground text-xs">
+            {hasAudience ? "portée de l'ensemble de ses pubs (UE)" : "portée non publiée hors UE"}
+          </span>
+        </Card>
       </div>
 
       {/* Graphe activité */}

@@ -58,9 +58,16 @@ export async function GET(request: Request) {
       // On garde l'union (borne à 500 ids pour éviter une croissance infinie).
       const union = Array.from(new Set([...(c.known_ad_ids ?? []), ...ids])).slice(-500);
 
+      // On n'incrémente le badge que s'il y avait déjà une baseline (sinon la
+      // 1re vérification compterait toutes les pubs existantes comme nouvelles).
+      const badge =
+        nouvelles.length > 0 && known.size > 0
+          ? (c.new_ads_count ?? 0) + nouvelles.length
+          : c.new_ads_count ?? 0;
+
       await supabase
         .from("competitors_watch")
-        .update({ known_ad_ids: union, last_checked_at: nowIso })
+        .update({ known_ad_ids: union, last_checked_at: nowIso, new_ads_count: badge })
         .eq("id", c.id);
       checked++;
 
