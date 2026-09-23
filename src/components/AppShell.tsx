@@ -1,10 +1,26 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { SidebarNav } from "./Nav";
 import { Icon } from "./Icon";
 import { NotifBell } from "./NotifBell";
 import { logout } from "@/app/login/actions";
+import { formatCredits, planLabel } from "@/lib/billing";
+
+/** Pastille solde de crédits + offre — cliquable vers la page d'offres. */
+function CreditsBadge({ credits, plan, compact = false }: { credits: number; plan: string; compact?: boolean }) {
+  return (
+    <Link
+      href="/offres"
+      className="bg-secondary text-secondary-foreground inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-opacity hover:opacity-90"
+      title={`${formatCredits(credits)} crédits · offre ${planLabel(plan)}`}
+    >
+      <span>⚡ {formatCredits(credits)}</span>
+      {!compact && <span className="opacity-70">· {planLabel(plan)}</span>}
+    </Link>
+  );
+}
 
 /**
  * Coquille d'application — système de layout Kimba.
@@ -30,6 +46,8 @@ function Sidebar({
   role,
   isAdmin,
   pendingCount,
+  credits,
+  plan,
   onClose,
 }: {
   displayName: string;
@@ -37,6 +55,8 @@ function Sidebar({
   role: string;
   isAdmin: boolean;
   pendingCount: number;
+  credits: number;
+  plan: string;
   onClose?: () => void;
 }) {
   return (
@@ -75,6 +95,9 @@ function Sidebar({
             <p className="text-muted-foreground text-xs capitalize">{role}</p>
           </div>
         </div>
+        <div className="mb-2">
+          <CreditsBadge credits={credits} plan={plan} />
+        </div>
         <NotifBell />
         <form action={logout}>
           <button
@@ -96,12 +119,16 @@ export function AppShell({
   initials,
   role,
   pendingCount = 0,
+  credits = 0,
+  plan = "free",
 }: {
   children: React.ReactNode;
   displayName: string;
   initials: string;
   role: string;
   pendingCount?: number;
+  credits?: number;
+  plan?: string;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const isAdmin = role === "superadmin";
@@ -116,6 +143,8 @@ export function AppShell({
           role={role}
           isAdmin={isAdmin}
           pendingCount={pendingCount}
+          credits={credits}
+          plan={plan}
         />
       </div>
 
@@ -134,6 +163,8 @@ export function AppShell({
               role={role}
               isAdmin={isAdmin}
               pendingCount={pendingCount}
+              credits={credits}
+              plan={plan}
               onClose={() => setMobileOpen(false)}
             />
           </div>
@@ -152,7 +183,7 @@ export function AppShell({
             <Icon name="menu" size={22} />
           </button>
           <Brand compact />
-          <div className="h-11 w-11" aria-hidden="true" />
+          <CreditsBadge credits={credits} plan={plan} compact />
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>

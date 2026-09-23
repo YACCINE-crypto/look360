@@ -1,8 +1,12 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { fetchSpyAds } from "@/lib/apify";
+import { consumeCredits, refundCredits } from "@/lib/credits";
 import { applySpyFilters, SPY_COUNTRIES_HARD, type SpyFilters, type SpyAd } from "@/lib/spy";
 import type { Json } from "@/lib/database.types";
+
+/** Facturation optionnelle d'une recherche réelle (débit sur cache-miss). */
+export type Bill = { amount: number; reason: string };
 
 /** Durée de validité d'une recherche en cache (§7 — éviter de re-payer Apify). */
 const TTL_MS = 12 * 60 * 60 * 1000; // 12 h
@@ -95,12 +99,14 @@ export async function persistSearch(
 export async function searchSpyWithCache(
   filters: SpyFilters,
   userId: string | null,
+  bill?: Bill,
 ): Promise<SpyCacheResult> {
   const admin = createAdminClient();
   const key = cacheKey(filters);
   const since = new Date(Date.now() - TTL_MS).toISOString();
 
   // 1) Cache récent pour cette clé (partagé entre utilisateurs — données Meta publiques).
+  //    Un cache-hit ne consomme PAS de crédits (aucun coût réel, refresh gratuit).
   const { data: hit } = await admin
     .from("spy_searches")
     .select("results, url, raw_count")
@@ -129,8 +135,19 @@ export async function searchSpyWithCache(
     }
   }
 
-  // 3) Appel réel + mise en cache.
-  const res = await fetchSpyAds(filters);
+  // 3) Débit crédits AVANT l'appel réel (cache-miss). Remboursé si l'appel échoue.
+  if (bill && userId) {
+    await consumeCredits(userId, bill.amount, bill.reason); // lève InsufficientCreditsError
+  }
+
+  let res;
+  try {
+    res = await fetchSpyAds(filters);
+  } catch (e) {
+    if (bill && userId) await refundCredits(userId, bill.amount, `Remboursement — ${bill.reason} (échec)`);
+    throw e;
+  }
+
   await admin.from("spy_searches").insert({
     user_id: userId,
     cache_key: key,
@@ -171,6 +188,7 @@ export async function searchSpyManyCountries(
   base: SpyFilters,
   countries: string[],
   userId: string | null,
+  bill?: Bill,
 ): Promise<SpyMultiResult> {
   const uniq = Array.from(
     new Set(countries.map((c) => c.trim().toUpperCase()).filter(Boolean)),
@@ -183,8 +201,9 @@ export async function searchSpyManyCountries(
     };
   }
 
+  // Facturation par pays réellement appelé (cache-miss) : bill.amount / pays.
   const settled = await Promise.allSettled(
-    uniq.map((country) => searchSpyWithCache({ ...base, country }, userId)),
+    uniq.map((country) => searchSpyWithCache({ ...base, country }, userId, bill)),
   );
 
   const ok: SpyCacheResult[] = [];

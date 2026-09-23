@@ -488,12 +488,90 @@ export type Database = {
           },
         ]
       }
+      subscriptions: {
+        Row: {
+          user_id: string
+          plan: string
+          status: string
+          monthly_credits: number
+          pack_credits: number
+          credits_balance: number
+          current_period_start: string
+          current_period_end: string | null
+          has_ever_paid: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          plan?: string
+          status?: string
+          monthly_credits?: number
+          pack_credits?: number
+          current_period_start?: string
+          current_period_end?: string | null
+          has_ever_paid?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          plan?: string
+          status?: string
+          monthly_credits?: number
+          pack_credits?: number
+          current_period_start?: string
+          current_period_end?: string | null
+          has_ever_paid?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      credit_ledger: {
+        Row: {
+          id: string
+          user_id: string
+          type: string
+          amount: number
+          balance_after: number
+          reason: string | null
+          reference: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: string
+          amount: number
+          balance_after: number
+          reason?: string | null
+          reference?: string | null
+          created_at?: string
+        }
+        Update: {
+          reason?: string | null
+          reference?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       is_admin: { Args: never; Returns: boolean }
+      is_superadmin: { Args: never; Returns: boolean }
+      apply_credits: {
+        Args: {
+          p_user: string
+          p_delta: number
+          p_type: string
+          p_reason?: string | null
+          p_reference?: string | null
+        }
+        Returns: number
+      }
+      set_plan: { Args: { p_user: string; p_plan: string }; Returns: number }
+      renew_monthly: { Args: { p_user: string }; Returns: number }
     }
     Enums: {
       [_ in never]: never

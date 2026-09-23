@@ -8,6 +8,8 @@ import { AdActivityChart } from "./AdActivityChart";
 import { SuivreButton } from "./SuivreButton";
 import { ajouterAuxProduits } from "../../spy/actions";
 import { activityByMonth, countryLabel, formatReach, cleanField, type SpyAd } from "@/lib/spy";
+import { getSubscription, InsufficientCreditsError } from "@/lib/credits";
+import { ANALYZE_COST, formatCredits } from "@/lib/billing";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -33,26 +35,59 @@ export default async function AnalysePage({
   searchParams,
 }: {
   params: Promise<{ pageId: string }>;
-  searchParams: Promise<{ country?: string; name?: string }>;
+  searchParams: Promise<{ country?: string; name?: string; confirm?: string }>;
 }) {
   const { pageId } = await params;
   const sp = await searchParams;
   const country = (sp.country || "FR").toUpperCase();
+  const confirmName = cleanField(sp.name) ?? "cet annonceur";
 
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
   const userId = (claims?.claims?.sub as string | undefined) ?? null;
 
+  // Interstitiel de confirmation du coût (20 crédits) AVANT de payer/analyser.
+  // Débit réel uniquement sur cache-miss (rafraîchir une analyse récente = gratuit).
+  const sub = userId ? await getSubscription(userId) : null;
+  const balance = sub?.credits_balance ?? 0;
+  if (sp.confirm !== "1") {
+    return (
+      <AnalyseGate
+        pageId={pageId}
+        country={country}
+        name={sp.name ?? ""}
+        confirmName={confirmName}
+        balance={balance}
+      />
+    );
+  }
+
   let ads: SpyAd[] = [];
   let failed = false;
+  let insufficient = false;
   try {
     const res = await searchSpyWithCache(
       { q: "", country, pageId, statut: "active", tri: "anciennete", limit: 100, details: true },
       userId,
+      { amount: ANALYZE_COST, reason: "Analyse concurrent" },
     );
     ads = res.ads;
-  } catch {
-    failed = true;
+  } catch (e) {
+    if (e instanceof InsufficientCreditsError) insufficient = true;
+    else failed = true;
+  }
+
+  if (insufficient) {
+    return (
+      <AnalyseGate
+        pageId={pageId}
+        country={country}
+        name={sp.name ?? ""}
+        confirmName={confirmName}
+        balance={balance}
+        insufficient
+      />
+    );
   }
 
   const pageName = cleanField(sp.name) ?? cleanField(ads[0]?.page_name) ?? "Annonceur";
@@ -182,6 +217,75 @@ export default async function AnalysePage({
           <AdGrid ads={ads} />
         </div>
       )}
+    </div>
+  );
+}
+
+/** Interstitiel : confirme le coût (20 crédits) avant d'analyser un concurrent. */
+function AnalyseGate({
+  pageId,
+  country,
+  name,
+  confirmName,
+  balance,
+  insufficient = false,
+}: {
+  pageId: string;
+  country: string;
+  name: string;
+  confirmName: string;
+  balance: number;
+  insufficient?: boolean;
+}) {
+  const go = `/analyse/${encodeURIComponent(pageId)}?confirm=1&country=${encodeURIComponent(country)}&name=${encodeURIComponent(name)}`;
+  const enough = balance >= ANALYZE_COST && !insufficient;
+
+  return (
+    <div className="mx-auto max-w-md space-y-4 py-8">
+      <Link href="/spy" className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm">
+        <Icon name="chevronRight" size={14} className="rotate-180" />
+        Spy Facebook
+      </Link>
+      <Card className="space-y-4 p-6">
+        <div className="flex items-center gap-3">
+          <span className="bg-secondary text-secondary-foreground grid h-11 w-11 place-items-center rounded-full">
+            <Icon name="search" size={20} />
+          </span>
+          <div>
+            <h1 className="text-lg font-bold">Analyser un concurrent</h1>
+            <p className="text-muted-foreground text-sm">{confirmName}</p>
+          </div>
+        </div>
+
+        <p className="text-sm">
+          Cette analyse coûtera <b>{ANALYZE_COST} crédits</b> — toutes ses pubs actives,
+          son activité et son audience cumulée.
+        </p>
+        <p className="text-muted-foreground text-xs">
+          Solde actuel : {formatCredits(balance)} crédits. Gratuit si tu l&apos;as déjà analysé récemment.
+        </p>
+
+        {enough ? (
+          <Link
+            href={go}
+            className="bg-primary text-primary-foreground inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
+          >
+            <Icon name="search" size={16} /> Analyser ({ANALYZE_COST} crédits)
+          </Link>
+        ) : (
+          <div className="space-y-3">
+            <div className="bg-danger-bg text-danger rounded-md p-3 text-sm">
+              Crédits insuffisants — recharge des crédits ou passe à une offre supérieure.
+            </div>
+            <Link
+              href="/offres"
+              className="bg-primary text-primary-foreground inline-flex min-h-[44px] w-full items-center justify-center rounded-md px-4 text-sm font-semibold"
+            >
+              Recharger
+            </Link>
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

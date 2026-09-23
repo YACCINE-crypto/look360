@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { runWinnerForConfig } from "@/lib/winnerAgent";
 import { WINNER_DEFAULTS } from "@/lib/spy";
+import { getSubscription } from "@/lib/credits";
+import { planConfig } from "@/lib/billing";
 
 function list(formData: FormData, key: string, upper = false): string[] {
   return String(formData.get(key) ?? "")
@@ -24,12 +26,16 @@ export async function enregistrerConfigWinner(formData: FormData): Promise<void>
   const userId = claims?.claims?.sub as string | undefined;
   if (!userId) return;
 
+  // Limites de l'offre : Winner Agent (activation + nb mots-clés × pays).
+  const sub = await getSubscription(userId);
+  const cfg = planConfig(sub?.plan);
+
   await supabase.from("winner_agent_config").upsert(
     {
       user_id: userId,
-      active: formData.get("active") === "on",
-      keywords: list(formData, "keywords"),
-      countries: list(formData, "countries", true),
+      active: cfg.winnerEnabled && formData.get("active") === "on",
+      keywords: list(formData, "keywords").slice(0, cfg.winnerKeywords),
+      countries: list(formData, "countries", true).slice(0, cfg.winnerCountries),
       anciennete_min: int(formData, "anciennete_min", WINNER_DEFAULTS.anciennete_min),
       reach_min: int(formData, "reach_min", 0),
       score_min: int(formData, "score_min", WINNER_DEFAULTS.score_min),

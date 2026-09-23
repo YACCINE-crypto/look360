@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/ui";
@@ -19,6 +20,7 @@ import {
   SPY_COUNTRIES_SOFT,
   type SpyAd,
 } from "@/lib/spy";
+import { searchCost, formatCredits, SEARCH_COST_PER_COUNTRY } from "@/lib/billing";
 
 const labelCls = "text-xs font-medium text-muted-foreground";
 
@@ -73,8 +75,9 @@ function sortAds(list: SpyAd[], t: string): SpyAd[] {
 
 type Status = "idle" | "loading" | "done" | "error";
 
-export function SpyClient() {
+export function SpyClient({ balance }: { balance: number; plan?: string }) {
   const params = useSearchParams();
+  const [bal, setBal] = useState(balance);
   const [q, setQ] = useState("");
   const [countries, setCountries] = useState<string[]>(() => {
     const c = (params.get("country") || "FR").toUpperCase();
@@ -102,6 +105,7 @@ export function SpyClient() {
 
   const euDispo = countries.some(isEUCountry);
   const nbSearches = countries.length;
+  const cost = searchCost(countries.length);
 
   const triOpts: SelectOption[] = useMemo(
     () => [
@@ -136,9 +140,15 @@ export function SpyClient() {
         body: JSON.stringify({ ...payloadFor(searchLimit), countries }),
       });
       const data = await res.json();
+      if (res.status === 402) {
+        setError(data?.error || "Crédits insuffisants.");
+        setStatus("error");
+        return;
+      }
       if (!res.ok) throw new Error(data?.error || "Recherche impossible.");
       setAds(sortAds(data.ads ?? [], tri));
       setCached(Boolean(data.cached));
+      if (!data.cached) setBal((b) => Math.max(0, b - searchCost(countries.length)));
       setStatus("done");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue.");
@@ -199,10 +209,12 @@ export function SpyClient() {
             setProgress(msg.found ?? map.size);
           } else if (msg.type === "done") {
             setCached(Boolean(msg.cached));
+            if (!msg.cached) setBal((b) => Math.max(0, b - SEARCH_COST_PER_COUNTRY));
           } else if (msg.type === "error") {
             errored = true;
-            if (msg.status === 429) {
-              setError(msg.message || "Plafond de recherches atteint.");
+            // Plafond (429) ou crédits insuffisants (402) → on s'arrête, pas de repli.
+            if (msg.status === 429 || msg.status === 402) {
+              setError(msg.message || "Recherche indisponible.");
               setStatus("error");
               return;
             }
@@ -234,12 +246,8 @@ export function SpyClient() {
       setStatus("error");
       return;
     }
-    // Au-delà du seuil doux → confirmation (coût : 1 recherche Apify / pays).
-    if (countries.length > SPY_COUNTRIES_SOFT) {
-      setConfirmOpen(true);
-      return;
-    }
-    runSearch();
+    // Confirmation du coût AVANT toute recherche payante.
+    setConfirmOpen(true);
   }
 
   function analyze(ad: SpyAd) {
@@ -330,8 +338,12 @@ export function SpyClient() {
                 ? "bg-warning-bg text-warning"
                 : "bg-input text-muted-foreground"
             }`}
+            title="Coût débité uniquement si la recherche n'est pas déjà en cache"
           >
-            Estimation : {nbSearches} recherche{nbSearches > 1 ? "s" : ""}
+            ≈ {cost} crédit{cost > 1 ? "s" : ""}
+          </span>
+          <span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 text-xs font-semibold">
+            Solde : {formatCredits(bal)}
           </span>
           <button
             type="submit"
@@ -440,7 +452,9 @@ export function SpyClient() {
       {confirmOpen && (
         <ConfirmSearch
           countries={countries}
-          onConfirm={runSearch}
+          cost={cost}
+          balance={bal}
+          onConfirm={() => runSearch()}
           onCancel={() => setConfirmOpen(false)}
         />
       )}
@@ -451,26 +465,34 @@ export function SpyClient() {
 
 function ConfirmSearch({
   countries,
+  cost,
+  balance,
   onConfirm,
   onCancel,
 }: {
   countries: string[];
+  cost: number;
+  balance: number;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const enough = balance >= cost;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onCancel} aria-hidden="true" />
       <div className="bg-surface border-border relative z-10 w-full max-w-sm rounded-xl border p-5 shadow-xl">
         <div className="mb-3 flex items-center gap-2">
-          <span className="bg-warning-bg text-warning grid h-9 w-9 place-items-center rounded-full">
-            <Icon name="eye" size={18} />
+          <span className="bg-secondary text-secondary-foreground grid h-9 w-9 place-items-center rounded-full text-sm font-bold">
+            ⚡
           </span>
           <h3 className="font-bold">Confirmer la recherche</h3>
         </div>
         <p className="text-muted-foreground text-sm">
-          {countries.length} pays sélectionnés = <b className="text-foreground">{countries.length} recherches</b>{" "}
-          (une par pays). Ça consomme du crédit. Continuer ?
+          Cette recherche coûtera <b className="text-foreground">{cost} crédit{cost > 1 ? "s" : ""}</b>
+          {countries.length > 1 ? ` (${countries.length} pays × 10)` : ""} — continuer ?
+        </p>
+        <p className="text-muted-foreground mt-1 text-xs">
+          Solde actuel : {formatCredits(balance)} crédits. Gratuit si la recherche est déjà en cache.
         </p>
         <div className="mt-3 flex flex-wrap gap-1.5">
           {countries.map((c) => (
@@ -479,20 +501,43 @@ function ConfirmSearch({
             </span>
           ))}
         </div>
-        <div className="mt-5 flex gap-2">
-          <button
-            onClick={onConfirm}
-            className="bg-primary text-primary-foreground inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
-          >
-            <Icon name="search" size={16} /> Lancer ({countries.length})
-          </button>
-          <button
-            onClick={onCancel}
-            className="bg-input text-foreground inline-flex min-h-[44px] items-center justify-center rounded-md px-4 text-sm font-semibold"
-          >
-            Annuler
-          </button>
-        </div>
+
+        {!enough ? (
+          <div className="mt-4 space-y-3">
+            <div className="bg-danger-bg text-danger rounded-md p-3 text-sm">
+              Crédits insuffisants — recharge des crédits ou passe à une offre supérieure.
+            </div>
+            <div className="flex gap-2">
+              <Link
+                href="/offres"
+                className="bg-primary text-primary-foreground inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-md px-4 text-sm font-semibold"
+              >
+                Recharger
+              </Link>
+              <button
+                onClick={onCancel}
+                className="bg-input text-foreground inline-flex min-h-[44px] items-center justify-center rounded-md px-4 text-sm font-semibold"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-5 flex gap-2">
+            <button
+              onClick={onConfirm}
+              className="bg-primary text-primary-foreground inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
+            >
+              <Icon name="search" size={16} /> Continuer
+            </button>
+            <button
+              onClick={onCancel}
+              className="bg-input text-foreground inline-flex min-h-[44px] items-center justify-center rounded-md px-4 text-sm font-semibold"
+            >
+              Annuler
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -555,7 +600,12 @@ export function SpyCard({
         country: ad.country,
       });
       if (r.ok) setFollowed(true);
-      else if (r.reason === "limit") alert("Limite de 20 concurrents suivis atteinte.");
+      else if (r.reason === "limit")
+        alert(
+          (r.slots ?? 0) === 0
+            ? "Le suivi de concurrents est réservé aux offres payantes."
+            : `Limite de ${r.slots} concurrent(s) atteinte — passe à une offre supérieure.`,
+        );
     });
   }
 

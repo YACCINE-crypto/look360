@@ -7,7 +7,11 @@ import {
   fetchDatasetItems,
 } from "@/lib/apify";
 import { normalizeApifyItem, applySpyFilters } from "@/lib/spy";
+import { getSubscription, consumeCredits, refundCredits, InsufficientCreditsError } from "@/lib/credits";
+import { SEARCH_COST_PER_COUNTRY } from "@/lib/billing";
 import type { SpyFilters, SpyMediaType, SpyPlatform, SpyStatut } from "@/lib/spy";
+
+const INSUFFICIENT = "Crédits insuffisants — recharge des crédits ou passe à une offre supérieure.";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -95,8 +99,33 @@ export async function POST(request: Request) {
           return;
         }
 
-        // 3) Run asynchrone + lecture progressive du dataset.
-        const { runId, datasetId, url } = await startSpyRun(filters);
+        // 3) Débit crédits (recherche 1 pays = 10). Cache-miss uniquement (on est ici).
+        const sub = await getSubscription(userId);
+        if ((sub?.credits_balance ?? 0) < SEARCH_COST_PER_COUNTRY) {
+          send({ type: "error", status: 402, message: INSUFFICIENT });
+          controller.close();
+          return;
+        }
+        try {
+          await consumeCredits(userId, SEARCH_COST_PER_COUNTRY, "Recherche Spy");
+        } catch (e) {
+          if (e instanceof InsufficientCreditsError) {
+            send({ type: "error", status: 402, message: INSUFFICIENT });
+            controller.close();
+            return;
+          }
+          throw e;
+        }
+
+        // 4) Run asynchrone + lecture progressive du dataset.
+        let runInfo;
+        try {
+          runInfo = await startSpyRun(filters);
+        } catch (e) {
+          await refundCredits(userId, SEARCH_COST_PER_COUNTRY, "Remboursement — recherche (échec)");
+          throw e;
+        }
+        const { runId, datasetId, url } = runInfo;
         const accumulator: ReturnType<typeof normalizeApifyItem>[] = [];
         let offset = 0;
         let streamed = 0;
@@ -123,11 +152,14 @@ export async function POST(request: Request) {
           if (items.length === 0) await sleep(POLL_MS);
         }
 
-        // 4) Cache (jeu complet non filtré, comme le chemin classique).
+        // 5) Cache (jeu complet non filtré, comme le chemin classique).
         //    On ne met PAS en cache un résultat vide (throttling Meta transitoire
-        //    → sinon on servirait "0 pub" pendant 12 h).
+        //    → sinon on servirait "0 pub" pendant 12 h) et on REMBOURSE le crédit
+        //    (recherche sans résultat = pas la faute de l'utilisateur).
         if (accumulator.length > 0) {
           await persistSearch(filters, userId, url, accumulator, accumulator.length);
+        } else {
+          await refundCredits(userId, SEARCH_COST_PER_COUNTRY, "Remboursement — recherche sans résultat");
         }
 
         const total = applySpyFilters(accumulator, filters).length;

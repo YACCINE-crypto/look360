@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { searchSpyWithCache, searchSpyManyCountries } from "@/lib/spyCache";
+import { getSubscription, InsufficientCreditsError } from "@/lib/credits";
+import { SEARCH_COST_PER_COUNTRY } from "@/lib/billing";
 import type { SpyFilters, SpyMediaType, SpyPlatform, SpyStatut } from "@/lib/spy";
+
+const INSUFFICIENT = "Crédits insuffisants — recharge des crédits ou passe à une offre supérieure.";
 
 /** Extrait la liste de pays (multi-sélection) ; retombe sur `country` unique. */
 function parseCountries(src: Record<string, unknown>): string[] {
@@ -55,12 +59,21 @@ async function handle(filters: SpyFilters, countries: string[]) {
   if (!filters.q && countries.length === 0 && !filters.pageId) {
     return NextResponse.json({ error: "mot-clé ou pays requis" }, { status: 400 });
   }
+
+  // Coût = 10 crédits × nb de pays (débité par pays sur cache-miss). Pré-contrôle
+  // du solde pour un message clair avant de lancer quoi que ce soit.
+  const bill = { amount: SEARCH_COST_PER_COUNTRY, reason: "Recherche Spy" };
+  const sub = await getSubscription(userId);
+  if ((sub?.credits_balance ?? 0) < SEARCH_COST_PER_COUNTRY) {
+    return NextResponse.json({ error: INSUFFICIENT, code: "insufficient_credits" }, { status: 402 });
+  }
+
   try {
     // Un seul pays (ou recherche annonceur) → chemin simple ; sinon fan-out.
     const result =
       countries.length <= 1
-        ? await searchSpyWithCache({ ...filters, country: countries[0] ?? filters.country }, userId)
-        : await searchSpyManyCountries(filters, countries, userId);
+        ? await searchSpyWithCache({ ...filters, country: countries[0] ?? filters.country }, userId, bill)
+        : await searchSpyManyCountries(filters, countries, userId, bill);
     if (result.capped) {
       return NextResponse.json(
         { error: "Plafond de recherches Spy atteint pour aujourd'hui. Réessaie demain." },
@@ -69,6 +82,9 @@ async function handle(filters: SpyFilters, countries: string[]) {
     }
     return NextResponse.json(result);
   } catch (e) {
+    if (e instanceof InsufficientCreditsError) {
+      return NextResponse.json({ error: INSUFFICIENT, code: "insufficient_credits" }, { status: 402 });
+    }
     const msg = e instanceof Error ? e.message : "Erreur inconnue";
     return NextResponse.json({ error: msg }, { status: 502 });
   }

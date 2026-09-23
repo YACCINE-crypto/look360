@@ -2,7 +2,9 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader, Card } from "@/components/ui";
 import { Icon } from "@/components/Icon";
-import { countryLabel, cleanField, MAX_COMPETITORS } from "@/lib/spy";
+import { countryLabel, cleanField } from "@/lib/spy";
+import { getSubscription } from "@/lib/credits";
+import { planConfig } from "@/lib/billing";
 import { retirerConcurrent } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +31,11 @@ function formatAdded(iso: string | null): string {
 
 export default async function SurveillancePage() {
   const supabase = await createClient();
+  const { data: claims } = await supabase.auth.getClaims();
+  const userId = claims?.claims?.sub as string | undefined;
+  const sub = userId ? await getSubscription(userId) : null;
+  const slots = planConfig(sub?.plan).competitorSlots;
+
   const { data } = await supabase
     .from("competitors_watch")
     .select("*")
@@ -40,7 +47,7 @@ export default async function SurveillancePage() {
     <div className="space-y-4">
       <PageHeader
         title="Surveillance"
-        subtitle={`Concurrents suivis (${rows.length}/${MAX_COMPETITORS}) — un rappel push quand ils lancent une nouvelle pub.`}
+        subtitle={`Concurrents suivis (${rows.length}/${slots}) — un rappel push quand ils lancent une nouvelle pub.`}
       >
         <Link
           href="/spy"

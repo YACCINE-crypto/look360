@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getSubscription } from "@/lib/credits";
 import { AppShell } from "@/components/AppShell";
 
 export default async function AppLayout({
@@ -30,12 +31,16 @@ export default async function AppLayout({
   const initials = displayName.slice(0, 2).toUpperCase();
   const pendingCount = role === "superadmin" ? (count ?? 0) : 0;
 
+  const sub = await getSubscription(userId);
+
   return (
     <AppShell
       displayName={displayName}
       initials={initials}
       role={role}
       pendingCount={pendingCount}
+      credits={sub?.credits_balance ?? 0}
+      plan={sub?.plan ?? "free"}
     >
       {children}
     </AppShell>
