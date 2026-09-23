@@ -22,7 +22,7 @@ export async function signup(
 
   const supabase = await createClient();
   const origin = await getOrigin();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -37,5 +37,8 @@ export async function signup(
     return error.message;
   }
 
+  // Confirmation email désactivée → session déjà active : on entre directement.
+  // Sinon → écran "vérifie ta boîte mail".
+  if (data.session) redirect("/");
   redirect("/signup?sent=1");
 }
