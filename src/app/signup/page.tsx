@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Suspense, useActionState } from "react";
 import { useSearchParams } from "next/navigation";
+import { PasswordInput } from "@/components/PasswordInput";
 import { signup } from "./actions";
 
 const inputCls =
@@ -52,7 +53,7 @@ function SignupForm() {
             </div>
             <div className="space-y-1.5">
               <label htmlFor="password" className="text-sm font-medium">Mot de passe</label>
-              <input id="password" name="password" type="password" autoComplete="new-password" required minLength={8} className={inputCls} />
+              <PasswordInput id="password" name="password" autoComplete="new-password" minLength={8} />
               <p className="text-muted-foreground text-xs">8 caractères minimum.</p>
             </div>
 
