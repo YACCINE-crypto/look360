@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { motion, type Variants } from "motion/react";
 import NumberFlow from "@number-flow/react";
-import { Zap, Check, X, Sparkles, Crown, ArrowUpRight } from "lucide-react";
+import { Zap, Check, X, Sparkles, Crown, ArrowUpRight, Loader2 } from "lucide-react";
 import {
   PLANS,
   CREDIT_PACKS,
@@ -11,6 +12,7 @@ import {
   planLabel,
   type Plan,
 } from "@/lib/billing";
+import { startPayment } from "@/lib/pay";
 
 const fcfa = (n: number) => new Intl.NumberFormat("fr-FR").format(n) + " FCFA";
 const discountPct = (normal: number, first: number) =>
@@ -111,10 +113,14 @@ const reveal: Variants = {
 export default function OffresClient({
   current,
   balance,
+  payReturnRef,
 }: {
   current: Plan;
   balance: number;
+  payReturnRef?: string | null;
 }) {
+  const router = useRouter();
+
   // Démarre les prix à 0 puis anime vers la vraie valeur (compteur fluide).
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -122,8 +128,88 @@ export default function OffresClient({
     return () => cancelAnimationFrame(t);
   }, []);
 
+  // Bouton en cours (clé = plan ou "pack:<credits>"), + message d'erreur.
+  const [busy, setBusy] = useState<string | null>(null);
+  const [payError, setPayError] = useState(false);
+
+  const pay = useCallback(
+    async (key: string, body: Parameters<typeof startPayment>[0]) => {
+      setBusy(key);
+      setPayError(false);
+      const res = await startPayment(body);
+      if (!res.ok) {
+        setPayError(true);
+        setBusy(null);
+      }
+      // Si ok : redirection vers le checkout (la page se décharge).
+    },
+    [],
+  );
+
+  // Retour de paiement : sonde le statut jusqu'à confirmation du webhook.
+  const [payReturn, setPayReturn] = useState<
+    "idle" | "pending" | "success" | "failed"
+  >(payReturnRef ? "pending" : "idle");
+
+  useEffect(() => {
+    if (!payReturnRef) return;
+    let tries = 0;
+    let stop = false;
+    const tick = async () => {
+      tries++;
+      try {
+        const r = await fetch(
+          `/api/payments/status?ref=${encodeURIComponent(payReturnRef)}`,
+        );
+        const d = (await r.json()) as { status?: string };
+        if (d.status === "success") {
+          setPayReturn("success");
+          router.refresh(); // rafraîchit solde + offre (server components)
+          return;
+        }
+        if (d.status === "failed") {
+          setPayReturn("failed");
+          return;
+        }
+      } catch {
+        /* réseau — on réessaie */
+      }
+      if (!stop && tries < 20) setTimeout(tick, 3000);
+      else if (!stop) setPayReturn("failed");
+    };
+    tick();
+    return () => {
+      stop = true;
+    };
+  }, [payReturnRef, router]);
+
   return (
     <div className="space-y-7">
+      {payReturn !== "idle" && (
+        <div
+          className={`flex items-center gap-2 rounded-xl border p-3 text-sm ${
+            payReturn === "success"
+              ? "bg-success-bg text-success border-success/30"
+              : payReturn === "failed"
+                ? "bg-danger-bg text-danger border-danger/30"
+                : "bg-secondary text-secondary-foreground border-primary/20"
+          }`}
+        >
+          {payReturn === "pending" && <Loader2 size={16} className="animate-spin" />}
+          {payReturn === "success" && <Check size={16} />}
+          {payReturn === "pending" &&
+            "Paiement reçu — validation en cours, ton solde se met à jour…"}
+          {payReturn === "success" &&
+            "Paiement confirmé ! Ton offre et ton solde sont à jour."}
+          {payReturn === "failed" &&
+            "On n'a pas encore pu confirmer ce paiement. S'il a été débité, ton solde se mettra à jour dès réception — sinon réessaie."}
+        </div>
+      )}
+      {payError && (
+        <div className="bg-danger-bg text-danger border-danger/30 rounded-xl border p-3 text-sm">
+          Le paiement n&apos;a pas pu démarrer. Réessaie dans un instant.
+        </div>
+      )}
       {/* En-tête */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">
@@ -238,7 +324,17 @@ export default function OffresClient({
               </div>
 
               {/* CTA */}
-              <PlanButton isCurrent={isCurrent} isPopular={isPopular} />
+              <PlanButton
+                isCurrent={isCurrent}
+                isPopular={isPopular}
+                busy={busy === p}
+                onClick={() =>
+                  pay(p, {
+                    purpose: "subscription",
+                    plan: p as "starter" | "pro" | "business",
+                  })
+                }
+              />
 
               {/* Comparatif complet des fonctionnalités */}
               <ul className="border-border mt-6 space-y-2.5 border-t pt-5">
@@ -304,11 +400,22 @@ export default function OffresClient({
               <p className="text-lg font-bold">{fcfa(pack.price)}</p>
               <button
                 type="button"
-                disabled
-                title="Paiement bientôt disponible"
-                className="bg-input text-muted-foreground inline-flex min-h-[40px] w-full cursor-not-allowed items-center justify-center rounded-full px-4 text-sm font-semibold"
+                onClick={() =>
+                  pay(`pack:${pack.credits}`, {
+                    purpose: "credit_pack",
+                    packCredits: pack.credits,
+                  })
+                }
+                disabled={busy === `pack:${pack.credits}`}
+                className="bg-primary text-primary-foreground inline-flex min-h-[40px] w-full items-center justify-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
               >
-                Bientôt disponible
+                {busy === `pack:${pack.credits}` ? (
+                  <>
+                    <Loader2 size={15} className="animate-spin" /> Redirection…
+                  </>
+                ) : (
+                  "Recharger"
+                )}
               </button>
             </motion.div>
           ))}
@@ -321,9 +428,13 @@ export default function OffresClient({
 function PlanButton({
   isCurrent,
   isPopular,
+  busy,
+  onClick,
 }: {
   isCurrent: boolean;
   isPopular: boolean;
+  busy: boolean;
+  onClick: () => void;
 }) {
   if (isCurrent) {
     return (
@@ -339,15 +450,23 @@ function PlanButton({
   return (
     <button
       type="button"
-      disabled
-      title="Paiement bientôt disponible"
-      className={`mt-5 inline-flex min-h-[46px] w-full cursor-not-allowed items-center justify-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-opacity ${
+      onClick={onClick}
+      disabled={busy}
+      className={`mt-5 inline-flex min-h-[46px] w-full items-center justify-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-70 ${
         isPopular
-          ? "from-primary bg-gradient-to-t to-blue-500 text-white opacity-90 shadow-lg shadow-primary/25"
-          : "bg-foreground/90 text-background opacity-85"
+          ? "from-primary bg-gradient-to-t to-blue-500 text-white shadow-lg shadow-primary/25"
+          : "bg-foreground text-background"
       }`}
     >
-      Bientôt disponible <ArrowUpRight size={15} />
+      {busy ? (
+        <>
+          <Loader2 size={15} className="animate-spin" /> Redirection…
+        </>
+      ) : (
+        <>
+          Choisir cette offre <ArrowUpRight size={15} />
+        </>
+      )}
     </button>
   );
 }

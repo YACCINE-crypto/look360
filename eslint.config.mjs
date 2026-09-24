@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Edge Functions Supabase = Deno (globals/imports différents) — lint Deno à part.
+    "supabase/functions/**",
   ]),
 ]);
 

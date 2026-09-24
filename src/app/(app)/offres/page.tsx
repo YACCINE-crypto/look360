@@ -5,7 +5,11 @@ import OffresClient from "./OffresClient";
 
 export const dynamic = "force-dynamic";
 
-export default async function OffresPage() {
+export default async function OffresPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
   const userId = claims?.claims?.sub as string | undefined;
@@ -13,5 +17,11 @@ export default async function OffresPage() {
   const current = (sub?.plan ?? "free") as Plan;
   const balance = sub?.credits_balance ?? 0;
 
-  return <OffresClient current={current} balance={balance} />;
+  const sp = await searchParams;
+  const payReturnRef =
+    sp.pay === "return" && typeof sp.ref === "string" ? sp.ref : null;
+
+  return (
+    <OffresClient current={current} balance={balance} payReturnRef={payReturnRef} />
+  );
 }

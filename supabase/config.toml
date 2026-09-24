@@ -6,3 +6,16 @@ project_id = "look360"
 [db]
 # Version majeure de Postgres du projet distant.
 major_version = 17
+
+# --- Edge Functions (paiement) ---
+# create-payment : appelée par l'app avec le JWT de l'utilisateur → JWT requis.
+[functions.geniuspay-create-payment]
+verify_jwt = true
+
+# webhook : appelé par le prestataire (serveur→serveur), auth = HMAC → PAS de JWT.
+[functions.geniuspay-webhook]
+verify_jwt = false
+
+# relances : appelée par un cron, protégée par x-cron-secret → PAS de JWT.
+[functions.subscription-reminders]
+verify_jwt = false
