@@ -62,6 +62,10 @@
   color-scheme: light;
 }
 
+html {
+  overflow-x: clip;
+}
+
 /* Défilement fluide vers les ancres de la landing — désactivé si l'utilisateur
    préfère moins d'animations. */
 @media (prefers-reduced-motion: no-preference) {
@@ -76,6 +80,10 @@
 }
 body {
   font-family: var(--font-sans);
+  /* Empêche tout débordement horizontal sur mobile (landing).
+     `clip` (et non `hidden`) n'introduit pas de conteneur de défilement →
+     la nav `sticky` continue de fonctionner. */
+  overflow-x: clip;
 }
 
 /* Scrollbars fines (couleur dérivée du thème, pas d'ajout de teinte) */

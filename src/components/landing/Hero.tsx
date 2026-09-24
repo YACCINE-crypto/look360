@@ -39,9 +39,9 @@ export async function Hero() {
         <RevealOnScroll>
           <div className="mx-auto max-w-3xl text-center">
             {/* Eyebrow pill */}
-            <span className="border-border bg-surface/80 text-primary shadow-card inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-bold tracking-wide backdrop-blur">
-              <span className="bg-primary inline-block h-1.5 w-1.5 rounded-full" />
-              SPY FACEBOOK · TESTING COD · WINNERS
+            <span className="border-border bg-surface/80 text-primary shadow-card inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-bold tracking-wide backdrop-blur sm:px-3.5 sm:text-xs">
+              <span className="bg-primary inline-block h-1.5 w-1.5 shrink-0 rounded-full" />
+              <span className="whitespace-nowrap">SPY FACEBOOK · TESTING COD · WINNERS</span>
             </span>
 
             {/* Titre avec accent bleu */}
