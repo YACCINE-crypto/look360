@@ -167,15 +167,6 @@ export async function PreuveSection() {
           </p>
         </RevealOnScroll>
 
-        {/* Témoignages — mot du fondateur (réel) + avis en cours de collecte.
-            Aucun faux avis nommé (risque légal Omnibus/DGCCRF + Meta). */}
-        <RevealOnScroll delay={200}>
-          <div className="mt-12 grid gap-4 sm:grid-cols-3">
-            <FounderCard />
-            <UpcomingCard />
-            <UpcomingCard />
-          </div>
-        </RevealOnScroll>
       </div>
     </section>
   );
@@ -201,49 +192,6 @@ function TeaserCard({ t }: { t: Teaser }) {
           </span>
         </div>
       </div>
-    </div>
-  );
-}
-
-/** Mot du fondateur (réel) — remplacer le texte par la citation de Yaccine. */
-function FounderCard() {
-  return (
-    <div className="border-primary/25 bg-secondary/30 rounded-2xl border p-5">
-      <div className="flex items-center gap-3">
-        <span className="bg-primary text-primary-foreground grid h-11 w-11 place-items-center rounded-full text-sm font-bold">
-          Y
-        </span>
-        <div>
-          <p className="text-foreground text-sm font-bold">Yaccine</p>
-          <p className="text-muted-foreground text-xs">
-            Fondateur · dropshipper COD
-          </p>
-        </div>
-      </div>
-      <p className="text-foreground/90 mt-4 text-sm italic leading-relaxed">
-        « [Le mot du fondateur — 3-4 phrases : pourquoi j&apos;ai créé Look360,
-        le problème que je vivais, ce que ça change.] »
-      </p>
-    </div>
-  );
-}
-
-/** Emplacement « avis en cours de collecte » — à remplacer par un VRAI avis. */
-function UpcomingCard() {
-  return (
-    <div className="border-border bg-surface rounded-2xl border border-dashed p-5">
-      <div className="flex items-center gap-3">
-        <span className="bg-input text-muted-foreground/50 grid h-11 w-11 place-items-center rounded-full">
-          <Icon name="users" size={18} />
-        </span>
-        <div>
-          <div className="bg-muted h-2.5 w-24 rounded-full" />
-          <div className="bg-muted/60 mt-1.5 h-2 w-16 rounded-full" />
-        </div>
-      </div>
-      <p className="text-muted-foreground mt-4 text-sm">
-        Avis en cours de collecte auprès de nos premiers commerçants.
-      </p>
     </div>
   );
 }
