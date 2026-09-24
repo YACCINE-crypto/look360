@@ -100,6 +100,16 @@ function Sidebar({
           <CreditsBadge credits={credits} plan={plan} />
         </div>
         <NotifBell />
+        {role === "superadmin" && (
+          <Link
+            href="/admin"
+            onClick={onClose}
+            className="text-primary hover:bg-secondary flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-colors"
+          >
+            <Icon name="trending" size={16} />
+            Panneau admin
+          </Link>
+        )}
         <Link
           href="/parametres"
           onClick={onClose}
