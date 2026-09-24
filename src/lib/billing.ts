@@ -15,6 +15,7 @@ export type PlanConfig = {
   winnerKeywords: number; // nb max de mots-clés
   winnerCountries: number; // nb max de pays
   whatsapp: boolean;
+  vitrineEnabled: boolean; // vitrine des winners validés (donnée premium) — Business seulement
   priceNormal: number; // FCFA
   priceFirst: number | null; // tarif de bienvenue (1er mois), null = pas de tarif réduit
 };
@@ -28,6 +29,7 @@ export const PLANS: Record<Plan, PlanConfig> = {
     winnerKeywords: 0,
     winnerCountries: 0,
     whatsapp: false,
+    vitrineEnabled: false,
     priceNormal: 0,
     priceFirst: null,
   },
@@ -39,6 +41,7 @@ export const PLANS: Record<Plan, PlanConfig> = {
     winnerKeywords: 0,
     winnerCountries: 0,
     whatsapp: false,
+    vitrineEnabled: false,
     priceNormal: 7500,
     priceFirst: 5000,
   },
@@ -50,6 +53,7 @@ export const PLANS: Record<Plan, PlanConfig> = {
     winnerKeywords: 2,
     winnerCountries: 1,
     whatsapp: true,
+    vitrineEnabled: false,
     priceNormal: 15000,
     priceFirst: 10000,
   },
@@ -61,6 +65,7 @@ export const PLANS: Record<Plan, PlanConfig> = {
     winnerKeywords: 5,
     winnerCountries: 2,
     whatsapp: true,
+    vitrineEnabled: true,
     priceNormal: 25000,
     priceFirst: 17500,
   },

@@ -29,6 +29,7 @@ type IconName =
   | "bookmark"
   | "trophy"
   | "trending"
+  | "store"
   | "x";
 
 const PATHS: Record<IconName, React.ReactNode> = {
@@ -176,6 +177,14 @@ const PATHS: Record<IconName, React.ReactNode> = {
     <>
       <path d="M3 17l6-6 4 4 8-8" />
       <path d="M17 7h4v4" />
+    </>
+  ),
+  store: (
+    <>
+      <path d="M3 9l1.5-5h15L21 9" />
+      <path d="M3 9a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0 3 0" />
+      <path d="M5 9v11h14V9" />
+      <path d="M9 20v-6h6v6" />
     </>
   ),
   x: <path d="M18 6 6 18M6 6l12 12" />,

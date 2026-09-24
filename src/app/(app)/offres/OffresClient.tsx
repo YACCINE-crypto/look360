@@ -58,6 +58,15 @@ function features(p: Plan): Feat[] {
     { label: "Spy Facebook — recherche de pubs", on: true },
     { label: "Top Trend — classement produits", on: true },
     { label: "Analyse de concurrent", on: true },
+    {
+      label: (
+        <>
+          <b className="text-foreground font-semibold">Testing &amp; validation produit</b>{" "}
+          — taux de closing, marge nette, verdict
+        </>
+      ),
+      on: true,
+    },
     { label: "Téléchargement des vidéos de pub", on: true },
     {
       label: (
@@ -84,7 +93,7 @@ function features(p: Plan): Feat[] {
       on: c.winnerEnabled,
     },
     { label: "Winners du jour sur WhatsApp", on: c.whatsapp },
-    { label: "Vitrine des winners validés", on: true },
+    { label: "Vitrine des winners validés", on: c.vitrineEnabled },
     {
       label: (
         <>
