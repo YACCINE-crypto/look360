@@ -81,6 +81,7 @@ function Sidebar({
           onNavigate={onClose}
           isAdmin={isAdmin}
           pendingCount={pendingCount}
+          plan={plan}
         />
       </nav>
 

@@ -2,6 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/ui";
 import { Icon } from "@/components/Icon";
 import { AdGrid } from "@/components/AdGrid";
+import { FeatureLock } from "@/components/FeatureLock";
+import { getSubscription } from "@/lib/credits";
+import { planConfig } from "@/lib/billing";
 import { WinnerConfigForm, type WinnerConfig } from "./WinnerConfigForm";
 import { lancerWinnerMaintenant } from "./actions";
 import { WINNER_DEFAULTS, type SpyAd } from "@/lib/spy";
@@ -11,6 +14,26 @@ export const dynamic = "force-dynamic";
 export default async function WinnersPage() {
   const supabase = await createClient();
   const today = new Date().toISOString().slice(0, 10);
+
+  // Winner Agent = réservé aux offres qui l'incluent (Pro et plus).
+  const { data: claims } = await supabase.auth.getClaims();
+  const userId = claims?.claims?.sub as string | undefined;
+  const sub = userId ? await getSubscription(userId) : null;
+  if (!planConfig(sub?.plan).winnerEnabled) {
+    return (
+      <div className="space-y-4">
+        <PageHeader
+          title="Winners du jour"
+          subtitle="Les meilleures pubs repérées automatiquement selon tes critères."
+        />
+        <FeatureLock
+          title="Winner Agent automatique"
+          minPlan="Pro"
+          description="L'agent scanne le marché chaque jour et te sort les meilleures pubs selon tes mots-clés et tes pays. Disponible avec les offres Pro et Business."
+        />
+      </div>
+    );
+  }
 
   const [{ data: cfgRow }, { data: winners }] = await Promise.all([
     supabase.from("winner_agent_config").select("*").maybeSingle(),

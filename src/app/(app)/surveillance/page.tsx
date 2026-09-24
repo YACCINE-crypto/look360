@@ -5,6 +5,7 @@ import { Icon } from "@/components/Icon";
 import { countryLabel, cleanField } from "@/lib/spy";
 import { getSubscription } from "@/lib/credits";
 import { planConfig } from "@/lib/billing";
+import { FeatureLock } from "@/components/FeatureLock";
 import { retirerConcurrent } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +36,23 @@ export default async function SurveillancePage() {
   const userId = claims?.claims?.sub as string | undefined;
   const sub = userId ? await getSubscription(userId) : null;
   const slots = planConfig(sub?.plan).competitorSlots;
+
+  // Suivi de concurrents = réservé aux offres qui l'incluent (Starter et plus).
+  if (slots === 0) {
+    return (
+      <div className="space-y-4">
+        <PageHeader
+          title="Surveillance"
+          subtitle="Sois alerté dès qu'un concurrent lance une nouvelle pub."
+        />
+        <FeatureLock
+          title="Surveillance des concurrents"
+          minPlan="Starter"
+          description="Suis les pages de tes concurrents et reçois un rappel dès qu'ils lancent une nouvelle pub. Disponible à partir de l'offre Starter (1 concurrent), Pro (3) et Business (10)."
+        />
+      </div>
+    );
+  }
 
   const { data } = await supabase
     .from("competitors_watch")

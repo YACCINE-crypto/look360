@@ -22,6 +22,7 @@ type IconName =
   | "trash"
   | "eye"
   | "eyeOff"
+  | "lock"
   | "external"
   | "play"
   | "download"
@@ -137,6 +138,12 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19M6.61 6.61A18.5 18.5 0 0 0 2 12s3.5 8 10 8a9.12 9.12 0 0 0 5.39-1.61" />
       <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
       <path d="m2 2 20 20" />
+    </>
+  ),
+  lock: (
+    <>
+      <rect x="4" y="11" width="16" height="10" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
     </>
   ),
   external: (

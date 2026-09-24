@@ -54,6 +54,10 @@ export async function lancerWinnerMaintenant(): Promise<void> {
   const userId = claims?.claims?.sub as string | undefined;
   if (!userId) return;
 
+  // Winner Agent réservé aux offres qui l'incluent (Pro et plus).
+  const sub = await getSubscription(userId);
+  if (!planConfig(sub?.plan).winnerEnabled) return;
+
   // Charge la config, ou crée-la avec des valeurs par défaut.
   let { data: cfg } = await supabase
     .from("winner_agent_config")
