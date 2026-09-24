@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { RevealOnScroll } from "@/components/landing/RevealOnScroll";
+import { Hero } from "@/components/landing/Hero";
 
 export const dynamic = "force-dynamic";
 
@@ -19,25 +20,12 @@ export default async function LandingPage() {
 
   return (
     <div>
-      {/* HERO — [STEP 1] */}
-      <section className="mx-auto max-w-6xl px-4 pb-16 pt-20 text-center sm:px-6">
-        <RevealOnScroll>
-          <p className="text-primary text-xs font-bold tracking-[0.15em] uppercase">
-            Spy Facebook · Testing COD · Winners
-          </p>
-          <h1 className="text-foreground mx-auto mt-4 max-w-3xl text-4xl font-extrabold tracking-tight sm:text-5xl">
-            Trouver un produit gagnant ne suffit pas.
-          </h1>
-          <p className="text-muted-foreground mx-auto mt-5 max-w-2xl text-base sm:text-lg">
-            Fondations de la nouvelle landing en place. Les sections (hero
-            complet, comparatif, testing, offres, FAQ…) arrivent aux étapes
-            suivantes.
-          </p>
-        </RevealOnScroll>
-      </section>
+      {/* HERO — STEP 1 */}
+      <Hero />
 
       {/* Sections ancrées — remplies aux STEP suivants */}
       {[
+        { id: "etapes", label: "Comment ça marche", step: "STEP 2" },
         { id: "fonctions", label: "Fonctions", step: "STEP 3" },
         { id: "comparatif", label: "Comparatif", step: "STEP 3" },
         { id: "tarifs", label: "Tarifs", step: "STEP 6" },
