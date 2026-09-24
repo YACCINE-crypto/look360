@@ -509,24 +509,27 @@ function VitrineMini() {
   return (
     <div className="relative">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {["Masseur cervical", "Sérum visage", "Lampe LED", "Montre connectée"].map(
-          (name, i) => (
-            <div
-              key={i}
-              className="border-border bg-surface overflow-hidden rounded-xl border"
-            >
-              <MediaFrame ratio="aspect-square" />
-              <div className="flex items-center gap-1 p-2">
-                <span className="bg-success-bg text-success inline-flex items-center gap-0.5 rounded px-1 text-[9px] font-bold">
-                  <Icon name="check" size={9} strokeWidth={3} /> Validé
-                </span>
-                <span className="text-muted-foreground truncate text-[9px]">
-                  {name}
-                </span>
-              </div>
+        {[
+          { name: "Tablette enfant", img: "/landing/vitrine-1.jpg" },
+          { name: "Antivol moto alarme", img: "/landing/vitrine-2.jpg" },
+          { name: "Power bank 60000mAh", img: "/landing/vitrine-3.jpg" },
+          { name: "Magnésium Complex", img: "/landing/vitrine-4.jpg" },
+        ].map((p, i) => (
+          <div
+            key={i}
+            className="border-border bg-surface overflow-hidden rounded-xl border"
+          >
+            <MediaFrame ratio="aspect-square" img={p.img} />
+            <div className="flex items-center gap-1 p-2">
+              <span className="bg-success-bg text-success inline-flex items-center gap-0.5 rounded px-1 text-[9px] font-bold">
+                <Icon name="check" size={9} strokeWidth={3} /> Validé
+              </span>
+              <span className="text-muted-foreground truncate text-[9px]">
+                {p.name}
+              </span>
             </div>
-          ),
-        )}
+          </div>
+        ))}
       </div>
       {/* Cadenas Business */}
       <div className="absolute inset-0 grid place-items-center rounded-xl bg-surface/60 backdrop-blur-[2px]">
