@@ -113,10 +113,12 @@ const reveal: Variants = {
 export default function OffresClient({
   current,
   balance,
+  payReturn: payReturnFlag,
   payReturnRef,
 }: {
   current: Plan;
   balance: number;
+  payReturn?: boolean;
   payReturnRef?: string | null;
 }) {
   const router = useRouter();
@@ -149,17 +151,19 @@ export default function OffresClient({
   // Retour de paiement : sonde le statut jusqu'à confirmation du webhook.
   const [payReturn, setPayReturn] = useState<
     "idle" | "pending" | "success" | "failed"
-  >(payReturnRef ? "pending" : "idle");
+  >(payReturnFlag ? "pending" : "idle");
 
   useEffect(() => {
-    if (!payReturnRef) return;
+    if (!payReturnFlag) return;
     let tries = 0;
     let stop = false;
     const tick = async () => {
       tries++;
       try {
         const r = await fetch(
-          `/api/payments/status?ref=${encodeURIComponent(payReturnRef)}`,
+          payReturnRef
+            ? `/api/payments/status?ref=${encodeURIComponent(payReturnRef)}`
+            : `/api/payments/status`,
         );
         const d = (await r.json()) as { status?: string };
         if (d.status === "success") {
@@ -181,7 +185,7 @@ export default function OffresClient({
     return () => {
       stop = true;
     };
-  }, [payReturnRef, router]);
+  }, [payReturnFlag, payReturnRef, router]);
 
   return (
     <div className="space-y-7">

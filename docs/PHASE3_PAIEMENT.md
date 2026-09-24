@@ -57,16 +57,19 @@ Navigateur (app)                Edge Functions (Deno)              Base (RPC SEC
 
 | Secret | Rôle |
 |--------|------|
-| `GENIUSPAY_ENV` | `sandbox` (puis `live` après validation) |
-| `GENIUSPAY_API_KEY` | clé publique API GeniusPay |
-| `GENIUSPAY_API_SECRET` | clé secrète API GeniusPay |
+| `GENIUSPAY_ENV` | `sandbox` (puis `live` après validation) — simple label |
+| `GENIUSPAY_API_KEY` | en-tête `X-API-Key` |
+| `GENIUSPAY_API_SECRET` | en-tête `X-API-Secret` |
 | `GENIUSPAY_WEBHOOK_SECRET` | secret de signature du webhook (HMAC-SHA256) |
-| `SITE_URL` | ex. `https://look360.io` — `return_url` + liens emails |
+| `SITE_URL` | ex. `https://look360.io` — liens des emails de relance |
 | `CRON_SECRET` | protège la fonction de relances (`x-cron-secret`) |
 | `RESEND_API_KEY` | envoi des emails de relance |
 | `EMAIL_FROM` | ex. `Look360 <no-reply@look360.io>` (optionnel) |
-| `GENIUSPAY_API_BASE` | *optionnel* — override de l'URL API si le sandbox diffère |
+| `GENIUSPAY_API_URL` | *optionnel* — défaut `https://geniuspay.ci/api/v1/merchant/payments` |
 | `PAYMENT_PROVIDER` | *optionnel* — défaut `geniuspay` |
+
+> Ce sont les **mêmes noms** que l'intégration GeniusPay qui tourne déjà en prod
+> (mêmes en-têtes `X-API-Key` / `X-API-Secret`). Montant **minimum 200 XOF**.
 
 `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` sont **injectés
 automatiquement** dans les Edge Functions — ne pas les recréer.
@@ -85,8 +88,12 @@ https://rgmaisiggksjnkxdhytv.supabase.co/functions/v1/geniuspay-webhook
 
 - Événement : *paiement réussi* (et échec/annulation si proposé).
 - Récupérer le **secret de signature** du webhook → `GENIUSPAY_WEBHOOK_SECRET`.
-- L'`return_url` n'a pas à être configuré : il est fourni dynamiquement par
-  `geniuspay-create-payment` (`SITE_URL/offres?pay=return&ref=…`).
+- **Signature attendue** : `HMAC-SHA256( ${X-Webhook-Timestamp}.${corps_brut} )`,
+  en-têtes `X-Webhook-Signature` (hex) + `X-Webhook-Timestamp` ; rejet si > 5 min.
+- **Return URL** : GeniusPay ne prend pas la return_url dans la requête — la
+  configurer dans le dashboard GeniusPay sur `https://look360.io/offres?pay=return`.
+  La page de retour sonde ensuite le dernier paiement de l'utilisateur (elle n'a
+  pas besoin de la référence dans l'URL).
 
 ## Procédure de test en SANDBOX
 
@@ -116,15 +123,17 @@ https://rgmaisiggksjnkxdhytv.supabase.co/functions/v1/geniuspay-webhook
 
 ```bash
 SECRET='<GENIUSPAY_WEBHOOK_SECRET de test>'
-REF='<provider_ref d''un paiement pending existant>'
-BODY='{"event":"payment.success","reference":"'"$REF"'","transaction_id":"txn_test_1","timestamp":'"$(date +%s)"'}'
-SIG=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$SECRET" | awk '{print $2}')
+REF='<provider_ref d''un paiement pending existant (= référence GeniusPay)>'
+TS=$(date +%s)
+BODY='{"event":"payment.success","data":{"reference":"'"$REF"'","status":"completed","id":"txn_test_1"}}'
+SIG=$(printf '%s' "$TS.$BODY" | openssl dgst -sha256 -hmac "$SECRET" | awk '{print $2}')
 curl -sS -X POST \
   https://rgmaisiggksjnkxdhytv.supabase.co/functions/v1/geniuspay-webhook \
   -H "Content-Type: application/json" \
-  -H "x-geniuspay-signature: $SIG" \
+  -H "X-Webhook-Timestamp: $TS" \
+  -H "X-Webhook-Signature: $SIG" \
   -d "$BODY"
-# → {"ok":true,"result":"applied"} puis {"ok":true,"result":"duplicate"} au rejeu
+# → {"received":true,"result":"applied"} puis {"received":true,"result":"duplicate"} au rejeu
 ```
 
 ## Relances mensuelles (J-7 / J-3 / J0 + expiration)
@@ -161,12 +170,18 @@ curl -sS -X POST \
 ## Note d'intégration GeniusPay
 
 Le mapping requête/réponse HTTP est centralisé dans
-`supabase/functions/_shared/geniuspay.ts` :
-- requête : `amount`, `currency:'XOF'`, `description`, `reference`,
-  `callback_url`, `return_url`, `metadata`, `customer{ id,email,name,country }` —
-  **jamais** `payment_method:'pawapay'`, **jamais** une autre devise que XOF.
-- réponse : l'URL de checkout est extraite de façon tolérante
-  (`checkout_url` / `payment_url` / `data.link`…).
+`supabase/functions/_shared/geniuspay.ts`, aligné sur l'intégration GeniusPay
+déjà en prod :
+- **endpoint** : `POST https://geniuspay.ci/api/v1/merchant/payments`.
+- **en-têtes** : `X-API-Key`, `X-API-Secret` (pas de Bearer).
+- **requête** : `{ amount, currency:'XOF', description, metadata, [mmo_provider],
+  customer:{ country } }`. **Pas** de `reference`/`callback_url`/`return_url`
+  (GeniusPay génère la référence). **Jamais** `payment_method:'pawapay'`,
+  **jamais** une autre devise que XOF, montant **≥ 200**.
+- **réponse** : `data.reference` (ou `data.id`) + `data.checkout_url`,
+  `success !== false`, HTTP 200/201.
+- **webhook** : signature `HMAC-SHA256(${timestamp}.${body})`,
+  en-têtes `X-Webhook-Signature` / `X-Webhook-Timestamp`.
 
-Si le sandbox renvoie des noms de champs différents (endpoint, en-tête de
-signature, clé d'URL), c'est **le seul fichier à ajuster**.
+Validé en sandbox : `POST` → `201 { success:true, data:{ reference, checkout_url } }`
+(« Sandbox payment initiated successfully »).

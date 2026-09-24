@@ -1,44 +1,30 @@
 // ===========================================================================
 // Edge Function : geniuspay-create-payment
-// Crée une intention de paiement et renvoie l'URL de checkout.
-//   body : { purpose: 'subscription', plan: 'starter'|'pro'|'business',
-//            country?: 'CI' }
-//        | { purpose: 'credit_pack', packCredits: 500|1200|3000, country?: 'CI' }
+// Crée une intention de paiement chez le prestataire et renvoie l'URL de checkout.
+//   body : { purpose: 'subscription', plan, country? }
+//        | { purpose: 'credit_pack', packCredits, country? }
 //
-// Le MONTANT est calculé CÔTÉ SERVEUR (jamais fourni par le client) :
-//   • subscription → tarif de bienvenue si has_ever_paid=false, sinon normal.
-//   • credit_pack  → prix du pack correspondant.
-// L'appelant est identifié par son JWT (verify_jwt=true). org_id = user_id.
+// Flux (aligné sur le contrat prestataire) : on appelle D'ABORD le prestataire
+// (qui génère la référence), PUIS on enregistre le paiement en base avec cette
+// référence (clé d'idempotence pour le webhook). Le MONTANT est calculé côté
+// serveur (jamais fourni par le client). org_id = user_id.
 // ===========================================================================
 
 import { json, preflight } from "../_shared/http.ts";
 import { adminClient, userClientFrom } from "../_shared/supabase.ts";
 import { getProvider } from "../_shared/provider.ts";
-import {
-  findPack,
-  isPaidPlan,
-  subscriptionPrice,
-} from "../_shared/plans.ts";
-
-function siteUrl(req: Request): string {
-  const env = Deno.env.get("SITE_URL");
-  if (env) return env.replace(/\/+$/, "");
-  const origin = req.headers.get("origin");
-  if (origin) return origin.replace(/\/+$/, "");
-  return "https://look360.io";
-}
+import { findPack, isPaidPlan, subscriptionPrice } from "../_shared/plans.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return preflight();
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
-  // 1) Authentifier l'appelant.
-  const { data: userData, error: userErr } = await userClientFrom(req).auth
-    .getUser();
+  // 1) Authentifier l'appelant (aucune restriction de rôle : tout compte paie).
+  const { data: userData, error: userErr } = await userClientFrom(req).auth.getUser();
   const user = userData?.user;
   if (userErr || !user) return json({ error: "unauthorized" }, 401);
 
-  // 2) Lire et valider le corps.
+  // 2) Corps + validation.
   let body: Record<string, unknown>;
   try {
     body = await req.json();
@@ -46,14 +32,14 @@ Deno.serve(async (req) => {
     return json({ error: "bad_request" }, 400);
   }
   const purpose = body.purpose;
-  const country = typeof body.country === "string" &&
-      /^[A-Za-z]{2}$/.test(body.country)
-    ? body.country.toUpperCase()
-    : undefined;
+  const country =
+    typeof body.country === "string" && /^[A-Za-z]{2}$/.test(body.country)
+      ? body.country.toUpperCase()
+      : undefined;
 
   const admin = adminClient();
 
-  // 3) Déterminer montant + crédits (SOURCE DE VÉRITÉ SERVEUR).
+  // 3) Montant + crédits — SOURCE DE VÉRITÉ SERVEUR.
   let amount: number;
   let plan: string | null = null;
   let credits: number | null = null;
@@ -66,34 +52,42 @@ Deno.serve(async (req) => {
       .select("has_ever_paid")
       .eq("user_id", user.id)
       .maybeSingle();
-    const hasEverPaid = Boolean(sub?.has_ever_paid);
-    amount = subscriptionPrice(body.plan, hasEverPaid);
+    amount = subscriptionPrice(body.plan, Boolean(sub?.has_ever_paid));
     plan = body.plan;
-    description = `Abonnement ${body.plan}`;
+    description = `Look360 — abonnement ${body.plan}`;
   } else if (purpose === "credit_pack") {
-    const pc = Number(body.packCredits);
-    const pack = findPack(pc);
+    const pack = findPack(Number(body.packCredits));
     if (!pack) return json({ error: "invalid_pack" }, 400);
     amount = pack.price;
     credits = pack.credits;
-    description = "Recharge de crédits";
+    description = "Look360 — recharge de crédits";
   } else {
     return json({ error: "invalid_purpose" }, 400);
   }
 
-  // 4) Coordonnées client (email = auth.users ; nom = profiles.nom).
-  const { data: profile } = await admin
-    .from("profiles")
-    .select("nom")
-    .eq("id", user.id)
-    .maybeSingle();
+  // 4) Créer le paiement chez le prestataire (il génère la référence).
+  const provider = getProvider();
+  let checkoutUrl: string;
+  let reference: string;
+  try {
+    const result = await provider.createPayment({
+      amount,
+      currency: "XOF",
+      description,
+      purpose,
+      metadata: { org_id: user.id, purpose, plan, credits },
+      customer: { id: user.id, email: user.email ?? undefined, country },
+    });
+    checkoutUrl = result.checkoutUrl;
+    reference = result.providerRef;
+  } catch (e) {
+    // Log l'erreur EXACTE (visible dans les logs de la fonction) — le client
+    // ne voit qu'un message générique (aucun nom de prestataire exposé).
+    console.error("create-payment failed:", e instanceof Error ? e.message : String(e));
+    return json({ error: "payment_init_failed" }, 502);
+  }
 
-  // 5) Référence marchande unique = clé d'idempotence.
-  const reference = `l360_${purpose === "subscription" ? "sub" : "pack"}_${
-    crypto.randomUUID()
-  }`;
-
-  // 6) Enregistrer le paiement en 'pending' AVANT d'appeler le prestataire.
+  // 5) Enregistrer le paiement (clé = référence prestataire) pour le webhook.
   const { error: insErr } = await admin.from("payments").insert({
     user_id: user.id,
     provider: "geniuspay",
@@ -106,42 +100,10 @@ Deno.serve(async (req) => {
     status: "pending",
     metadata: { org_id: user.id, purpose, plan, credits },
   });
-  if (insErr) return json({ error: "db_error" }, 500);
-
-  // 7) Créer le paiement chez le prestataire.
-  const provider = getProvider();
-  try {
-    const result = await provider.createPayment({
-      amount,
-      currency: "XOF",
-      description,
-      reference,
-      returnUrl: `${siteUrl(req)}/offres?pay=return&ref=${reference}`,
-      callbackUrl: `${Deno.env.get("SUPABASE_URL")}/functions/v1/geniuspay-webhook`,
-      purpose,
-      metadata: { org_id: user.id, plan, credits, purpose },
-      customer: {
-        id: user.id,
-        email: user.email ?? undefined,
-        name: (profile?.nom as string | undefined) ?? undefined,
-        country,
-      },
-    });
-
-    await admin
-      .from("payments")
-      .update({ provider_txn: result.providerRef, updated_at: new Date().toISOString() })
-      .eq("provider", "geniuspay")
-      .eq("provider_ref", reference);
-
-    return json({ checkoutUrl: result.checkoutUrl, reference });
-  } catch (_e) {
-    await admin
-      .from("payments")
-      .update({ status: "failed", updated_at: new Date().toISOString() })
-      .eq("provider", "geniuspay")
-      .eq("provider_ref", reference);
-    // Message générique — aucun nom de prestataire exposé au client.
-    return json({ error: "payment_init_failed" }, 502);
+  if (insErr) {
+    console.error("create-payment insert failed:", insErr.message);
+    return json({ error: "db_error" }, 500);
   }
+
+  return json({ checkoutUrl, reference });
 });

@@ -18,10 +18,15 @@ export default async function OffresPage({
   const balance = sub?.credits_balance ?? 0;
 
   const sp = await searchParams;
-  const payReturnRef =
-    sp.pay === "return" && typeof sp.ref === "string" ? sp.ref : null;
+  const payReturn = sp.pay === "return";
+  const payReturnRef = typeof sp.ref === "string" ? sp.ref : null;
 
   return (
-    <OffresClient current={current} balance={balance} payReturnRef={payReturnRef} />
+    <OffresClient
+      current={current}
+      balance={balance}
+      payReturn={payReturn}
+      payReturnRef={payReturnRef}
+    />
   );
 }

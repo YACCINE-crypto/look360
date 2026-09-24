@@ -13,24 +13,27 @@ export interface CreatePaymentInput {
   amount: number; // FCFA (entier)
   currency: string; // 'XOF' uniquement (validé)
   description: string;
-  reference: string; // notre référence marchande (clé d'idempotence)
-  returnUrl: string; // page de retour utilisateur
-  callbackUrl: string; // URL du webhook (serveur → serveur)
   purpose: Purpose;
   metadata: Record<string, unknown>;
-  customer: { id: string; email?: string; name?: string; country?: string };
+  customer: { id?: string; email?: string; name?: string; country?: string };
+  // Facultatifs — certains prestataires les utilisent, GeniusPay non
+  // (il génère la référence et prend la return_url depuis son dashboard).
+  reference?: string;
+  returnUrl?: string;
+  callbackUrl?: string;
 }
 
 export interface CreatePaymentResult {
   checkoutUrl: string;
-  providerRef: string; // référence côté prestataire (ou la nôtre si échoée)
+  providerRef: string; // référence GÉNÉRÉE par le prestataire (clé d'idempotence)
   raw: unknown;
 }
 
 export interface WebhookVerification {
   valid: boolean;
   event: string; // ex. 'payment.success'
-  reference: string; // notre référence marchande, ré-émise par le prestataire
+  status: string; // normalisé : 'success' | 'failed' | 'cancelled' | 'pending' | …
+  reference: string; // référence du prestataire (= payments.provider_ref)
   transactionId?: string;
   reason?: string; // si invalide
 }

@@ -1,18 +1,27 @@
 // ===========================================================================
 // Prestataire GeniusPay (implémente PaymentProvider).
+// Contrat EXACT repris de l'intégration validée en prod (projet OS-ECOMMERCE) :
 //
-// Règles validées (à reprendre telles quelles) :
-//   • currency 'XOF' UNIQUEMENT (XAF est rejeté en 422).
-//   • NE PAS envoyer payment_method 'pawapay'.
-//   • customer.country transmis si connu.
+// CRÉATION (POST) :
+//   URL      : GENIUSPAY_API_URL (défaut https://geniuspay.ci/api/v1/merchant/payments)
+//   En-têtes : X-API-Key, X-API-Secret, Content-Type, Accept
+//   Corps    : { amount, currency:'XOF', description, metadata,
+//                [mmo_provider], customer:{ country } }
+//              → PAS de reference/callback_url/return_url (GeniusPay génère la
+//                référence ; la return_url se configure dans le dashboard).
+//              → currency 'XOF' UNIQUEMENT (XAF rejeté 422).
+//              → PAS de payment_method 'pawapay' (débit direct). Pour les pays
+//                100% mobile-money on passe mmo_provider (indice opérateur).
+//   Réponse  : data.reference (ou data.id) + data.checkout_url (ou checkoutUrl),
+//              success !== false, HTTP 200/201.
 //
-// Secrets (jamais en dur — variables d'environnement des Edge Functions) :
-//   GENIUSPAY_ENV=sandbox|live   GENIUSPAY_API_KEY   GENIUSPAY_API_SECRET
-//   GENIUSPAY_WEBHOOK_SECRET     (optionnel) GENIUSPAY_API_BASE
+// WEBHOOK :
+//   Signature = HMAC-SHA256( `${X-Webhook-Timestamp}.${rawBody}` , SECRET )
+//   En-têtes  : X-Webhook-Signature (hex, préfixe sha256= toléré), X-Webhook-Timestamp
+//   Anti-rejeu: |now - timestamp| ≤ 5 min.
 //
-// NB contrat HTTP : le mapping requête/réponse est centralisé ici (une seule
-// place à ajuster si le sandbox renvoie des noms de champs différents). Le
-// parsing de la réponse est tolérant (checkout_url / payment_url / data.link…).
+// Secrets (env des Edge Functions) : GENIUSPAY_API_URL, GENIUSPAY_API_KEY,
+//   GENIUSPAY_API_SECRET, GENIUSPAY_WEBHOOK_SECRET, GENIUSPAY_ENV (label).
 // ===========================================================================
 
 import {
@@ -24,125 +33,96 @@ import {
   WebhookVerification,
 } from "./payments.ts";
 
-function baseUrl(): string {
-  const override = Deno.env.get("GENIUSPAY_API_BASE");
-  if (override) return override.replace(/\/+$/, "");
-  const env = (Deno.env.get("GENIUSPAY_ENV") ?? "sandbox").toLowerCase();
-  return env === "live"
-    ? "https://api.geniuspay.io/api/v1"
-    : "https://sandbox.geniuspay.io/api/v1";
+const DEFAULT_URL = "https://geniuspay.ci/api/v1/merchant/payments";
+const MAX_SKEW_MS = 5 * 60 * 1000;
+
+// Indice d'opérateur pour les pays 100% mobile money (non-XOF). Les pays XOF
+// (CI, SN, BJ…) n'en ont pas besoin : lien checkout standard.
+const MMO_PROVIDER: Record<string, string> = {
+  GA: "AIRTEL_GAB", CD: "AIRTEL_COD", CG: "AIRTEL_COG", CM: "ORANGE_CMR",
+  KE: "MPESA_KEN", RW: "AIRTEL_RWA", UG: "AIRTEL_UGA", ZM: "MTN_MOMO_ZMB",
+};
+
+function tsToMs(raw: string): number | null {
+  if (!raw) return null;
+  const n = Number(raw);
+  if (Number.isFinite(n)) return n < 1e12 ? n * 1000 : n;
+  const d = Date.parse(raw);
+  return Number.isFinite(d) ? d : null;
 }
 
-/** Cherche récursivement la 1re URL http(s) sous des clés de type checkout/lien. */
-function extractCheckoutUrl(obj: unknown): string | null {
-  const KEYS = [
-    "checkout_url",
-    "checkoutUrl",
-    "payment_url",
-    "paymentUrl",
-    "authorization_url",
-    "redirect_url",
-    "redirectUrl",
-    "url",
-    "link",
-  ];
-  const seen = new Set<unknown>();
-  const walk = (o: unknown): string | null => {
-    if (!o || typeof o !== "object" || seen.has(o)) return null;
-    seen.add(o);
-    const rec = o as Record<string, unknown>;
-    for (const k of KEYS) {
-      const v = rec[k];
-      if (typeof v === "string" && /^https?:\/\//.test(v)) return v;
-    }
-    for (const v of Object.values(rec)) {
-      const found = walk(v);
-      if (found) return found;
-    }
-    return null;
-  };
-  return walk(obj);
-}
-
-function extractString(obj: unknown, keys: string[]): string | undefined {
-  const seen = new Set<unknown>();
-  const walk = (o: unknown): string | undefined => {
-    if (!o || typeof o !== "object" || seen.has(o)) return undefined;
-    seen.add(o);
-    const rec = o as Record<string, unknown>;
-    for (const k of keys) {
-      const v = rec[k];
-      if (typeof v === "string" && v) return v;
-      if (typeof v === "number") return String(v);
-    }
-    for (const v of Object.values(rec)) {
-      const found = walk(v);
-      if (found) return found;
-    }
-    return undefined;
-  };
-  return walk(obj);
+function normalizeStatus(event: string, dataStatus: string): string {
+  const e = event.toLowerCase();
+  let status = (dataStatus ?? "").toLowerCase();
+  if (e.includes("success") || e.includes("paid") || e.includes("completed")) status = "success";
+  else if (e.includes("fail") || e.includes("error") || e.includes("declin")) status = "failed";
+  else if (e.includes("cancel")) status = "cancelled";
+  else if (e.includes("expir")) status = "expired";
+  if (["completed", "complete", "paid", "successful", "success"].includes(status)) status = "success";
+  if (!status) status = "pending";
+  return status;
 }
 
 export class GeniusPayProvider implements PaymentProvider {
   readonly name = "geniuspay";
 
   async createPayment(input: CreatePaymentInput): Promise<CreatePaymentResult> {
-    const apiKey = Deno.env.get("GENIUSPAY_API_KEY");
-    const apiSecret = Deno.env.get("GENIUSPAY_API_SECRET");
-    if (!apiKey || !apiSecret) throw new Error("geniuspay_keys_missing");
-
-    // GeniusPay n'accepte que XOF.
+    const url = Deno.env.get("GENIUSPAY_API_URL") ?? DEFAULT_URL;
+    const key = Deno.env.get("GENIUSPAY_API_KEY");
+    const secret = Deno.env.get("GENIUSPAY_API_SECRET");
+    if (!key || !secret) throw new Error("geniuspay_not_configured");
     if (input.currency !== "XOF") throw new Error("currency_must_be_xof");
 
-    // Corps de requête. NB : PAS de payment_method 'pawapay'. On laisse
-    // GeniusPay proposer les méthodes disponibles ; country aide au routage.
+    const country = (input.customer.country ?? "").toUpperCase().slice(0, 2);
+    const provider = MMO_PROVIDER[country];
+
     const body: Record<string, unknown> = {
       amount: input.amount,
       currency: "XOF",
-      description: input.description,
-      reference: input.reference,
-      callback_url: input.callbackUrl,
-      return_url: input.returnUrl,
+      description: input.description || "Look360",
       metadata: input.metadata,
-      customer: {
-        id: input.customer.id,
-        ...(input.customer.email ? { email: input.customer.email } : {}),
-        ...(input.customer.name ? { name: input.customer.name } : {}),
-        ...(input.customer.country
-          ? { country: input.customer.country }
-          : {}),
-      },
     };
+    if (provider) {
+      body.mmo_provider = provider;
+      body.customer = { country };
+    } else if (country) {
+      body.customer = { country };
+    }
 
-    const res = await fetch(`${baseUrl()}/payments`, {
+    const res = await fetch(url, {
       method: "POST",
       headers: {
+        "X-API-Key": key,
+        "X-API-Secret": secret,
         "Content-Type": "application/json",
         Accept: "application/json",
-        Authorization: `Bearer ${apiSecret}`,
-        "X-Api-Key": apiKey,
       },
       body: JSON.stringify(body),
     });
 
-    const raw = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      const msg = extractString(raw, ["message", "error", "detail"]) ??
-        `geniuspay_http_${res.status}`;
-      throw new Error(`geniuspay_create_failed: ${msg}`);
+    const raw = await res.text();
+    let parsed: Record<string, unknown> = {};
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      parsed = {};
     }
 
-    const checkoutUrl = extractCheckoutUrl(raw);
-    if (!checkoutUrl) throw new Error("geniuspay_no_checkout_url");
-    const providerRef = extractString(raw, [
-      "id",
-      "transaction_id",
-      "transactionId",
-      "reference",
-    ]) ?? input.reference;
+    const d = (parsed.data ?? {}) as Record<string, unknown>;
+    const reference = (d.reference ?? d.id ?? null) as string | null;
+    const checkoutUrl = (d.checkout_url ?? d.checkoutUrl ?? null) as string | null;
+    const ok = (res.status === 200 || res.status === 201) &&
+      parsed.success !== false && !!reference && !!checkoutUrl;
 
-    return { checkoutUrl, providerRef, raw };
+    if (!ok) {
+      const err = parsed.error as { message?: string } | string | undefined;
+      const msg = (typeof err === "object" ? err?.message : err) ??
+        (parsed.message as string | undefined) ?? raw.slice(0, 200) ??
+        "geniuspay_error";
+      throw new Error(`geniuspay_http_${res.status}: ${msg}`);
+    }
+
+    return { checkoutUrl: checkoutUrl!, providerRef: String(reference), raw: parsed };
   }
 
   async verifyWebhook(
@@ -150,70 +130,36 @@ export class GeniusPayProvider implements PaymentProvider {
     headers: Headers,
   ): Promise<WebhookVerification> {
     const secret = Deno.env.get("GENIUSPAY_WEBHOOK_SECRET");
-    if (!secret) {
-      return { valid: false, event: "", reference: "", reason: "no_secret" };
+    if (!secret) return { valid: false, event: "", status: "", reference: "", reason: "not_configured" };
+
+    const sig = (headers.get("X-Webhook-Signature") ?? headers.get("x-webhook-signature") ?? "")
+      .replace(/^sha256=/i, "").trim().toLowerCase();
+    const ts = (headers.get("X-Webhook-Timestamp") ?? headers.get("x-webhook-timestamp") ?? "").trim();
+    if (!sig || !ts) return { valid: false, event: "", status: "", reference: "", reason: "missing_signature" };
+
+    const tsMs = tsToMs(ts);
+    if (tsMs === null || Math.abs(Date.now() - tsMs) > MAX_SKEW_MS) {
+      return { valid: false, event: "", status: "", reference: "", reason: "stale_timestamp" };
     }
 
-    // Signature HMAC-SHA256 du corps brut (plusieurs noms d'en-tête possibles).
-    const provided =
-      headers.get("x-geniuspay-signature") ??
-      headers.get("x-webhook-signature") ??
-      headers.get("x-signature") ??
-      "";
-    const expected = await hmacSha256Hex(secret, rawBody);
-    const cleaned = provided.trim().replace(/^sha256=/i, "");
-    if (!cleaned || !timingSafeEqual(cleaned.toLowerCase(), expected)) {
-      return { valid: false, event: "", reference: "", reason: "bad_signature" };
+    const expected = await hmacSha256Hex(secret, `${ts}.${rawBody}`);
+    if (!timingSafeEqual(expected, sig)) {
+      return { valid: false, event: "", status: "", reference: "", reason: "bad_signature" };
     }
 
-    let payload: unknown;
+    let payload: Record<string, unknown> = {};
     try {
       payload = JSON.parse(rawBody);
     } catch {
-      return { valid: false, event: "", reference: "", reason: "bad_json" };
+      return { valid: false, event: "", status: "", reference: "", reason: "bad_json" };
     }
 
-    // Anti-rejeu : horodatage de l'événement dans une fenêtre de 5 min.
-    const tsStr =
-      extractString(payload, ["timestamp", "created_at", "createdAt", "event_time"]) ??
-      headers.get("x-geniuspay-timestamp") ??
-      "";
-    if (tsStr) {
-      const ts = Number.isFinite(Number(tsStr))
-        ? Number(tsStr) * (String(tsStr).length <= 10 ? 1000 : 1) // sec ou ms
-        : Date.parse(tsStr);
-      if (Number.isFinite(ts) && Math.abs(Date.now() - ts) > 5 * 60 * 1000) {
-        return { valid: false, event: "", reference: "", reason: "stale" };
-      }
-    }
+    const event = String(payload.event ?? payload.type ?? "");
+    const d = (payload.data ?? payload ?? {}) as Record<string, unknown>;
+    const reference = String(d.reference ?? d.id ?? payload.reference ?? "");
+    const status = normalizeStatus(event, String(d.status ?? ""));
+    const transactionId = (d.id ?? d.transaction_id ?? undefined) as string | undefined;
 
-    const event =
-      extractString(payload, ["event", "type", "status", "event_type"]) ?? "";
-    const reference =
-      extractString(payload, [
-        "reference",
-        "merchant_reference",
-        "merchantReference",
-        "metadata_reference",
-      ]) ?? "";
-    const transactionId = extractString(payload, [
-      "transaction_id",
-      "transactionId",
-      "id",
-    ]);
-
-    return { valid: true, event, reference, transactionId };
+    return { valid: true, event, status, reference, transactionId };
   }
-}
-
-/** Un événement GeniusPay signifie-t-il « paiement réussi » ? */
-export function isSuccessEvent(event: string): boolean {
-  const e = event.toLowerCase();
-  return (
-    e.includes("success") ||
-    e === "payment.completed" ||
-    e === "completed" ||
-    e === "successful" ||
-    e === "paid"
-  );
 }
