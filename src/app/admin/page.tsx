@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PLANS } from "@/lib/billing";
 import { COST_PER_CREDIT_FCFA } from "@/lib/adminCost";
 import { Cockpit, type CockpitData } from "@/components/admin/Cockpit";
+import { Charts, type MonthPoint } from "@/components/admin/Charts";
 
 export const dynamic = "force-dynamic";
 
@@ -24,9 +25,25 @@ const num = (x: unknown): number =>
 
 export default async function AdminCockpitPage() {
   const supabase = await createClient();
-  // Agrégats réels, une seule requête, réservée superadmin (fonction gardée).
-  const { data } = await supabase.rpc("admin_cockpit");
+  // Agrégats réels, réservés superadmin (fonctions gardées).
+  const [{ data }, { data: charts }] = await Promise.all([
+    supabase.rpc("admin_cockpit"),
+    supabase.rpc("admin_charts"),
+  ]);
   const r = (data ?? {}) as Partial<Raw>;
+
+  const c = (charts ?? {}) as {
+    revenue_by_month?: { month: string; total: number }[];
+    signups_by_month?: { month: string; count: number }[];
+  };
+  const revenue: MonthPoint[] = (c.revenue_by_month ?? []).map((d) => ({
+    month: d.month,
+    value: num(d.total),
+  }));
+  const signups: MonthPoint[] = (c.signups_by_month ?? []).map((d) => ({
+    month: d.month,
+    value: num(d.count),
+  }));
 
   const free = num(r.plan_free);
   const starter = num(r.plan_starter);
@@ -69,6 +86,7 @@ export default async function AdminCockpitPage() {
       </div>
 
       <Cockpit k={k} />
+      <Charts revenue={revenue} signups={signups} plans={k.plans} />
     </div>
   );
 }
