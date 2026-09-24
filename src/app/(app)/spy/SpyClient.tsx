@@ -668,8 +668,13 @@ export function SpyCard({
             </span>
           )}
           {ad.targets_eu && ad.reach != null && (
-            <span className="bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-[11px] font-semibold">
-              Reach {formatReach(ad.reach)}
+            <span className="bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" title="Reach UE (transparence DSA)">
+              <Icon name="eye" size={11} /> Reach {formatReach(ad.reach)}
+            </span>
+          )}
+          {ad.targets_eu && ad.spend && (
+            <span className="bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" title="Dépense estimée (transparence DSA UE)">
+              <Icon name="trending" size={11} /> Dépense {ad.spend}
             </span>
           )}
         </div>

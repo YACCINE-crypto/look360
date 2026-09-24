@@ -151,24 +151,36 @@ function FeatureCard({
 /* ------------------------------------------------------- Mini-interfaces */
 
 function SpyGridMini() {
-  const ads = [88, 76, 91, 69, 82, 73];
+  const ads = [
+    { score: 88, tint: "from-rose-200 to-rose-100", j: 123 },
+    { score: 76, tint: "from-sky-200 to-sky-100", j: 208 },
+    { score: 91, tint: "from-amber-200 to-amber-100", j: 64 },
+  ];
   return (
-    <div className="grid grid-cols-3 gap-2.5">
-      {ads.map((score, i) => (
+    <div className="grid grid-cols-3 gap-3">
+      {ads.map((ad, i) => (
         <div
           key={i}
-          className="border-border bg-background overflow-hidden rounded-lg border"
+          className="border-border bg-background overflow-hidden rounded-xl border"
         >
-          <div className="bg-input text-muted-foreground flex aspect-square items-center justify-center">
-            <Icon name="image" size={16} />
+          <div
+            className={`relative flex aspect-[4/5] items-center justify-center bg-gradient-to-br ${ad.tint}`}
+          >
+            <span className="absolute left-1.5 top-1.5 rounded bg-black/60 px-1.5 py-0.5 text-[8px] font-bold text-white">
+              VIDÉO
+            </span>
+            <span className="bg-success-bg text-success absolute right-1.5 top-1.5 rounded-full px-1.5 py-0.5 text-[8px] font-bold">
+              {ad.score}
+            </span>
+            <span className="bg-surface/90 text-foreground grid h-8 w-8 place-items-center rounded-full shadow">
+              <Icon name="play" size={14} />
+            </span>
           </div>
-          <div className="flex items-center justify-between px-1.5 py-1">
-            <span className="bg-secondary text-secondary-foreground rounded px-1 text-[9px] font-bold">
-              {score}
-            </span>
-            <span className="text-success">
-              <Icon name="trending" size={11} />
-            </span>
+          <div className="px-2 py-1.5">
+            <div className="bg-muted h-1.5 w-4/5 rounded-full" />
+            <p className="text-muted-foreground mt-1.5 text-[9px] font-medium">
+              Tourne depuis {ad.j} j
+            </p>
           </div>
         </div>
       ))}
@@ -178,10 +190,29 @@ function SpyGridMini() {
 
 function VerdictMini() {
   return (
-    <div className="border-border bg-surface space-y-2.5 rounded-xl border p-3">
-      <Row label="Commandes reçues" value="12" />
-      <Row label="Taux de closing" value="58 %" accent />
-      <Row label="Marge nette" value="+44 %" accent />
+    <div className="border-border bg-surface space-y-3 rounded-xl border p-3">
+      {/* Taux de closing + barre */}
+      <div>
+        <div className="flex items-baseline justify-between">
+          <span className="text-muted-foreground text-[11px]">
+            Taux de closing
+          </span>
+          <span className="text-success text-lg font-extrabold tabular-nums">
+            70 %
+          </span>
+        </div>
+        <div className="bg-input mt-1 h-2 overflow-hidden rounded-full">
+          <div className="bg-success h-full rounded-full" style={{ width: "70%" }} />
+        </div>
+        <p className="text-muted-foreground mt-0.5 text-[9px]">Objectif 60 %</p>
+      </div>
+
+      {/* Mini stats */}
+      <div className="grid grid-cols-2 gap-2">
+        <MiniStat label="Marge nette" value="+44 %" />
+        <MiniStat label="Commandes" value="12" />
+      </div>
+
       <span className="bg-success-bg text-success inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold">
         <Icon name="check" size={13} strokeWidth={3} /> Rentable
       </span>
@@ -189,8 +220,21 @@ function VerdictMini() {
   );
 }
 
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-background rounded-lg px-2.5 py-2">
+      <p className="text-muted-foreground text-[10px]">{label}</p>
+      <p className="text-foreground text-sm font-bold tabular-nums">{value}</p>
+    </div>
+  );
+}
+
 function WinnerAgentMini() {
-  const rows = ["Winner #1", "Winner #2", "Winner #3"];
+  const rows = [
+    { title: "Masseur cervical", score: 88, label: "Fort potentiel", tint: "from-violet-200 to-violet-100" },
+    { title: "Sérum anti-âge", score: 81, label: "Fort potentiel", tint: "from-rose-200 to-rose-100" },
+    { title: "Montre connectée", score: 74, label: "Bon", tint: "from-sky-200 to-sky-100" },
+  ];
   return (
     <div className="space-y-2">
       {rows.map((r, i) => (
@@ -198,14 +242,20 @@ function WinnerAgentMini() {
           key={i}
           className="border-border bg-background flex items-center gap-2.5 rounded-lg border px-2.5 py-2"
         >
-          <span className="bg-input text-muted-foreground grid h-7 w-7 shrink-0 place-items-center rounded-md">
-            <Icon name="image" size={13} />
+          <span
+            className={`text-foreground/40 grid h-9 w-9 shrink-0 place-items-center rounded-md bg-gradient-to-br ${r.tint}`}
+          >
+            <Icon name="image" size={14} />
           </span>
           <div className="min-w-0 flex-1">
-            <div className="bg-muted h-2 w-2/3 rounded-full" />
-            <div className="bg-muted/60 mt-1.5 h-1.5 w-1/3 rounded-full" />
+            <p className="text-foreground truncate text-xs font-semibold">
+              {r.title}
+            </p>
+            <p className="text-success text-[10px] font-medium">
+              Score {r.score} · {r.label}
+            </p>
           </div>
-          <span className="bg-secondary text-primary rounded-full px-1.5 py-0.5 text-[9px] font-bold">
+          <span className="bg-secondary text-primary shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold">
             auto
           </span>
         </div>
@@ -305,25 +355,3 @@ function CodAfriqueMini() {
   );
 }
 
-function Row({
-  label,
-  value,
-  accent = false,
-}: {
-  label: string;
-  value: string;
-  accent?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="text-muted-foreground text-xs">{label}</span>
-      <span
-        className={`text-sm font-bold tabular-nums ${
-          accent ? "text-primary" : "text-foreground"
-        }`}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}

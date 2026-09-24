@@ -3,6 +3,7 @@ import {
   buildAdLibraryUrl,
   normalizeApifyItem,
   applySpyFilters,
+  isEUCountry,
   type SpyFilters,
   type SpyAd,
 } from "./spy";
@@ -23,6 +24,11 @@ function token(): string {
  * (~45 s). La grille se contente des champs de la carte (créative, page, date,
  * variantes, reach, lien) ; le détail complet est chargé à la demande à
  * l'ouverture d'une pub (voir fetchAdDetail). Plafond de résultats abaissé.
+ *
+ * EXCEPTION : pour les pays de l'UE, le reach et la dépense (transparence DSA)
+ * ne sont renvoyés QUE si `scrapeAdDetails=true`. On force donc le détail pour
+ * ces pays (c'est là que le reach a de la valeur), les pays africains restant
+ * en liste rapide (pas de reach public de toute façon).
  */
 function actorInput(url: string, count: number, withDetails: boolean) {
   return {
@@ -30,6 +36,11 @@ function actorInput(url: string, count: number, withDetails: boolean) {
     count: Math.min(Math.max(count, 1), 100),
     scrapeAdDetails: withDetails,
   };
+}
+
+/** Le détail (reach/dépense UE) est requis dès qu'un pays UE est ciblé. */
+function needsDetails(filters: SpyFilters): boolean {
+  return filters.details ?? isEUCountry(filters.country);
 }
 
 export type SpyFetchResult = { url: string; raw_count: number; ads: SpyAd[] };
@@ -43,7 +54,7 @@ export type SpyFetchResult = { url: string; raw_count: number; ads: SpyAd[] };
  */
 export async function fetchSpyAds(filters: SpyFilters): Promise<SpyFetchResult> {
   const url = buildAdLibraryUrl(filters);
-  const input = actorInput(url, filters.limit ?? 40, filters.details ?? false);
+  const input = actorInput(url, filters.limit ?? 40, needsDetails(filters));
 
   const endpoint =
     `${API}/acts/${ACTOR}/run-sync-get-dataset-items?token=${token()}&format=json`;
@@ -75,7 +86,7 @@ const TERMINAL = new Set(["SUCCEEDED", "FAILED", "ABORTED", "TIMED-OUT"]);
 /** Démarre un run (sans attendre) et renvoie les identifiants pour poller. */
 export async function startSpyRun(filters: SpyFilters): Promise<SpyRun> {
   const url = buildAdLibraryUrl(filters);
-  const input = actorInput(url, filters.limit ?? 40, false);
+  const input = actorInput(url, filters.limit ?? 40, needsDetails(filters));
   const res = await fetch(`${API}/acts/${ACTOR}/runs?token=${token()}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

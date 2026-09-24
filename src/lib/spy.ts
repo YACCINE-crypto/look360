@@ -209,6 +209,7 @@ export type SpyAd = {
   statut: "active" | "inactive";
   targets_eu: boolean;
   reach: number | null;
+  spend: string | null; // fourchette de dépense UE (transparence DSA), si Meta la publie
   country: string | null;
   score: number;
   score_label: "Fort potentiel" | "Moyen" | "Faible";
@@ -278,6 +279,13 @@ export function normalizeApifyItem(raw: Record<string, unknown>, country: string
     (typeof raw.reach_estimate === "number" ? (raw.reach_estimate as number) : null);
   const reach = targets_eu ? reachRaw : null;
 
+  // Dépense UE (transparence DSA) — publiée par Meta pour une partie des pubs
+  // ciblant l'UE. Peut être un nombre, une chaîne, ou une fourchette
+  // { lower_bound, upper_bound, currency }. Null si Meta ne la fournit pas.
+  const spend = targets_eu
+    ? formatSpend(aaa.spend ?? euT.spend ?? raw.spend ?? aaa.eu_total_spend ?? euT.eu_total_spend)
+    : null;
+
   const platforms = ((raw.publisher_platform ?? []) as string[]).map(
     (p) => PLATFORM_LABEL[p] ?? p,
   );
@@ -325,6 +333,7 @@ export function normalizeApifyItem(raw: Record<string, unknown>, country: string
     statut: is_active ? "active" : "inactive",
     targets_eu,
     reach,
+    spend,
     country: (snap.country_iso_code as string) ?? country ?? null,
     score,
     score_label,
@@ -395,6 +404,47 @@ export function formatReach(v: number | null | undefined): string {
   if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1).replace(".0", "")}M`;
   if (v >= 1_000) return `${Math.round(v / 1_000)}k`;
   return String(v);
+}
+
+/** Montant compact (ex. 1,2 K · 850). */
+function compactMoney(v: number): string {
+  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1).replace(".0", "")}M`;
+  if (v >= 1_000) return `${(v / 1_000).toFixed(1).replace(".0", "")}k`;
+  return String(Math.round(v));
+}
+function toNum(v: unknown): number | null {
+  if (typeof v === "number" && isFinite(v)) return v;
+  if (typeof v === "string") {
+    const n = Number(v.replace(/[^\d.]/g, ""));
+    return isFinite(n) && n > 0 ? n : null;
+  }
+  return null;
+}
+
+/**
+ * Formate la dépense UE (transparence DSA) pour l'affichage. Accepte un nombre,
+ * une chaîne, ou une fourchette { lower_bound, upper_bound, currency }.
+ * Retourne null si rien d'exploitable (Meta ne publie la dépense que pour une
+ * partie des pubs ciblant l'UE).
+ */
+export function formatSpend(v: unknown): string | null {
+  if (v == null) return null;
+  if (typeof v === "number") return v > 0 ? compactMoney(v) : null;
+  if (typeof v === "string") {
+    const t = v.trim();
+    return t && t !== "0" ? t : null;
+  }
+  if (typeof v === "object") {
+    const o = v as Record<string, unknown>;
+    const lo = toNum(o.lower_bound ?? o.min ?? o.spend_lower ?? o.lowerBound);
+    const hi = toNum(o.upper_bound ?? o.max ?? o.spend_upper ?? o.upperBound);
+    const cur =
+      typeof o.currency === "string" && o.currency ? ` ${o.currency}` : "";
+    if (lo != null && hi != null) return `${compactMoney(lo)}–${compactMoney(hi)}${cur}`;
+    if (hi != null) return `≤ ${compactMoney(hi)}${cur}`;
+    if (lo != null) return `≥ ${compactMoney(lo)}${cur}`;
+  }
+  return null;
 }
 
 export function applySpyFilters(ads: SpyAd[], f: SpyFilters): SpyAd[] {
