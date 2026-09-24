@@ -115,11 +115,12 @@ export function LandingFooter() {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Nous contacter sur WhatsApp"
-        className="fixed bottom-5 right-5 z-40 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition-transform hover:scale-110 active:scale-95"
+        className="fixed bottom-4 right-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition-transform hover:scale-110 active:scale-95 sm:h-14 sm:w-14"
       >
         <svg
-          width="26"
-          height="26"
+          width="22"
+          height="22"
+          className="sm:h-[26px] sm:w-[26px]"
           viewBox="0 0 24 24"
           fill="currentColor"
           aria-hidden="true"

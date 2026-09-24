@@ -9,7 +9,7 @@ import { RevealOnScroll } from "./RevealOnScroll";
  */
 export function FonctionsSection() {
   return (
-    <section id="fonctions" className="bg-surface scroll-mt-20 px-4 py-20 sm:px-6">
+    <section id="fonctions" className="bg-surface scroll-mt-20 px-4 py-12 sm:px-6 sm:py-20">
       <div className="mx-auto max-w-6xl">
         <RevealOnScroll>
           <div className="text-center">
@@ -23,7 +23,7 @@ export function FonctionsSection() {
           </div>
         </RevealOnScroll>
 
-        <div className="mt-12 grid gap-5 md:grid-cols-3">
+        <div className="mt-8 grid gap-5 sm:mt-12 md:grid-cols-3">
           {/* Spy Facebook — large : 2 vraies cartes */}
           <FeatureCard
             className="md:col-span-2"
@@ -156,13 +156,13 @@ function FeatureCard({
             : "border-border bg-surface shadow-card"
         }`}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <span className="bg-secondary text-primary grid h-10 w-10 shrink-0 place-items-center rounded-xl">
             <Icon name={icon} size={20} />
           </span>
-          <h3 className="text-foreground text-base font-bold">{title}</h3>
+          <h3 className="text-foreground min-w-0 text-base font-bold">{title}</h3>
           {featured && (
-            <span className="bg-primary text-primary-foreground ml-auto rounded-full px-2 py-0.5 text-[10px] font-bold">
+            <span className="bg-primary text-primary-foreground shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold sm:ml-auto">
               Le cœur de l&apos;app
             </span>
           )}

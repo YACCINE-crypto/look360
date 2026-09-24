@@ -1,32 +1,9 @@
 import Link from "next/link";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { Icon } from "@/components/Icon";
 import { RevealOnScroll } from "./RevealOnScroll";
 import { HeroPreview } from "./HeroPreview";
 
-/** Compte réel de commerçants (barre de confiance). Jamais de faux chiffre :
- *  en cas d'échec ou de base vide, on bascule sur un message « premiers ». */
-async function getMerchantCount(): Promise<number | null> {
-  try {
-    const admin = createAdminClient();
-    const { count, error } = await admin
-      .from("profiles")
-      .select("id", { count: "exact", head: true });
-    if (error) return null;
-    return count ?? 0;
-  } catch {
-    return null;
-  }
-}
-
-// Socle de départ affiché dans la barre de confiance (choix marketing).
-// Le compteur réel prend le relais dès qu'il dépasse ce socle.
-const BASE_MERCHANTS = 100;
-
-export async function Hero() {
-  const real = await getMerchantCount();
-  const merchants = Math.max(real ?? 0, BASE_MERCHANTS);
-
+export function Hero() {
   return (
     <section className="relative overflow-hidden">
       {/* Fond dégradé doux (bleu de marque en haut, sans excès) */}
@@ -35,7 +12,7 @@ export async function Hero() {
         className="from-secondary/50 pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b via-background to-background"
       />
 
-      <div className="mx-auto max-w-6xl px-4 pb-10 pt-16 sm:px-6 sm:pt-24">
+      <div className="mx-auto max-w-6xl px-4 pb-10 pt-12 sm:px-6 sm:pt-24">
         <RevealOnScroll>
           <div className="mx-auto max-w-3xl text-center">
             {/* Eyebrow pill */}
@@ -81,19 +58,17 @@ export async function Hero() {
 
         {/* Aperçu de l'app */}
         <RevealOnScroll delay={120}>
-          <div className="mt-14">
+          <div className="mt-10 sm:mt-14">
             <HeroPreview />
           </div>
         </RevealOnScroll>
 
         {/* Barre de confiance */}
         <RevealOnScroll delay={200}>
-          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:mt-10 sm:flex-row">
             <AvatarCluster />
             <p className="text-muted-foreground text-sm">
-              Déjà{" "}
-              <span className="text-foreground font-bold">{merchants}+</span>{" "}
-              commerçants sur Look360
+              Rejoins les premiers commerçants sur Look360
             </p>
           </div>
         </RevealOnScroll>

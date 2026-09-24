@@ -43,7 +43,7 @@ const ROWS: {
 
 export function ComparatifSection() {
   return (
-    <section id="comparatif" className="scroll-mt-20 px-4 py-20 sm:px-6">
+    <section id="comparatif" className="scroll-mt-20 px-4 py-12 sm:px-6 sm:py-20">
       <div className="mx-auto max-w-5xl">
         <RevealOnScroll>
           <div className="text-center">
@@ -61,17 +61,18 @@ export function ComparatifSection() {
         </RevealOnScroll>
 
         <RevealOnScroll delay={120}>
-          <div className="border-border bg-surface shadow-card mt-12 overflow-hidden rounded-2xl border">
+          <div className="border-border bg-surface shadow-card mt-8 overflow-hidden rounded-2xl border sm:mt-12">
             {/* En-tête */}
-            <div className="border-border grid grid-cols-[1fr_auto_auto] items-center gap-2 border-b px-4 py-4 sm:px-6">
-              <span className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">
+            <div className="border-border grid grid-cols-[1fr_auto_auto] items-center gap-1.5 border-b px-3 py-4 sm:gap-2 sm:px-6">
+              <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-wide sm:text-xs">
                 Fonctionnalité
               </span>
-              <span className="text-primary w-24 text-center text-sm font-extrabold sm:w-32">
+              <span className="text-primary w-16 text-center text-sm font-extrabold sm:w-32">
                 Look360
               </span>
-              <span className="text-muted-foreground w-24 text-center text-xs font-semibold sm:w-32">
-                Les autres spy tools
+              <span className="text-muted-foreground w-16 text-center text-[10px] font-semibold leading-tight sm:w-32 sm:text-xs">
+                <span className="sm:hidden">Autres</span>
+                <span className="hidden sm:inline">Les autres spy tools</span>
               </span>
             </div>
 
@@ -79,7 +80,7 @@ export function ComparatifSection() {
             {ROWS.map((r, i) => (
               <div
                 key={i}
-                className={`grid grid-cols-[1fr_auto_auto] items-center gap-2 px-4 py-3.5 sm:px-6 ${
+                className={`grid grid-cols-[1fr_auto_auto] items-center gap-1.5 px-3 py-3.5 sm:gap-2 sm:px-6 ${
                   r.testing
                     ? "bg-secondary/40"
                     : i % 2 === 1
@@ -87,9 +88,9 @@ export function ComparatifSection() {
                       : ""
                 }`}
               >
-                <span className="flex items-center gap-2">
+                <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <span
-                    className={`text-sm ${
+                    className={`text-[13px] sm:text-sm ${
                       r.strong
                         ? "text-foreground font-semibold"
                         : "text-foreground"
@@ -103,10 +104,10 @@ export function ComparatifSection() {
                     </span>
                   )}
                 </span>
-                <span className="flex w-24 justify-center sm:w-32">
+                <span className="flex w-16 justify-center sm:w-32">
                   <CellMark cell={r.look} positive />
                 </span>
-                <span className="flex w-24 justify-center sm:w-32">
+                <span className="flex w-16 justify-center sm:w-32">
                   <CellMark cell={r.autres} />
                 </span>
               </div>

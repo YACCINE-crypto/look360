@@ -41,7 +41,7 @@ export default async function LandingPage() {
         <section
           key={s.id}
           id={s.id}
-          className={`scroll-mt-20 px-4 py-16 sm:px-6 ${
+          className={`scroll-mt-20 px-4 py-12 sm:px-6 sm:py-16 ${
             i % 2 === 0 ? "bg-surface" : "bg-background"
           }`}
         >
