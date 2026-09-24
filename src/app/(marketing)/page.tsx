@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { RevealOnScroll } from "@/components/landing/RevealOnScroll";
 import { Hero } from "@/components/landing/Hero";
 import { EtapesSection } from "@/components/landing/EtapesSection";
+import { FonctionsSection } from "@/components/landing/FonctionsSection";
+import { ComparatifSection } from "@/components/landing/ComparatifSection";
 
 export const dynamic = "force-dynamic";
 
@@ -27,10 +29,12 @@ export default async function LandingPage() {
       {/* PROBLÈME/SOLUTION + 3 ÉTAPES — STEP 2 */}
       <EtapesSection />
 
+      {/* GRILLE DE FONCTIONS + COMPARATIF — STEP 3 */}
+      <FonctionsSection />
+      <ComparatifSection />
+
       {/* Sections ancrées — remplies aux STEP suivants */}
       {[
-        { id: "fonctions", label: "Fonctions", step: "STEP 3" },
-        { id: "comparatif", label: "Comparatif", step: "STEP 3" },
         { id: "tarifs", label: "Tarifs", step: "STEP 6" },
         { id: "faq", label: "FAQ", step: "STEP 7" },
       ].map((s, i) => (
