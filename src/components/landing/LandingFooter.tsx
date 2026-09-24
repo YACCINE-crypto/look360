@@ -2,9 +2,9 @@ import Link from "next/link";
 
 /* eslint-disable @next/next/no-img-element */
 
-// Contacts — à confirmer par Yaccine (placeholders explicites).
-const WHATSAPP_URL = "https://wa.me/2250000000000"; // [numéro WhatsApp à fournir]
-const SUPPORT_EMAIL = "support@look360.io"; // [email support à confirmer]
+// Contacts officiels Look360.
+const WHATSAPP_URL = "https://wa.me/2250502952588";
+const SUPPORT_EMAIL = "look360app@gmail.com";
 
 const COLS: { title: string; links: { label: string; href: string }[] }[] = [
   {
