@@ -62,6 +62,14 @@
   color-scheme: light;
 }
 
+/* Défilement fluide vers les ancres de la landing — désactivé si l'utilisateur
+   préfère moins d'animations. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 /* Base — reprise du socle Kimba */
 * {
   box-sizing: border-box;

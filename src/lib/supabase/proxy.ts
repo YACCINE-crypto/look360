@@ -38,8 +38,13 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Routes publiques (pas besoin d'être connecté).
+  // Routes publiques (pas besoin d'être connecté) : landing marketing,
+  // pages légales, et le parcours d'authentification.
   const isPublic =
+    pathname === "/" ||
+    pathname.startsWith("/cgu") ||
+    pathname.startsWith("/confidentialite") ||
+    pathname.startsWith("/remboursement") ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
     pathname.startsWith("/forgot-password") ||
