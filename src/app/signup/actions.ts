@@ -40,5 +40,5 @@ export async function signup(
   // Confirmation email désactivée → session déjà active : on entre directement
   // sur l'onboarding. Sinon → écran "vérifie ta boîte mail".
   if (data.session) redirect("/bienvenue");
-  redirect("/signup?sent=1");
+  redirect("/login?sent=1");
 }

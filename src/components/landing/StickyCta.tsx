@@ -16,7 +16,7 @@ export function StickyCta() {
           </span>
         </p>
         <Link
-          href="/signup"
+          href="/login?tab=signup"
           className="bg-primary text-primary-foreground inline-flex min-h-[42px] shrink-0 items-center gap-1.5 rounded-full px-5 text-sm font-semibold"
         >
           Commencer <Icon name="chevronRight" size={16} />

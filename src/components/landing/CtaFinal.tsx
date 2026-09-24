@@ -21,7 +21,7 @@ export function CtaFinal() {
           </p>
           <div className="relative mt-8 flex flex-col items-center gap-3">
             <Link
-              href="/signup"
+              href="/login?tab=signup"
               className="text-primary inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl bg-white px-8 text-base font-bold shadow-lg transition-transform hover:scale-[1.03] active:scale-95"
             >
               Commencer gratuitement <Icon name="chevronRight" size={18} />

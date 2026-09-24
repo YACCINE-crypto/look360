@@ -24,13 +24,43 @@ export default function LoginPage() {
 
 function AuthCard() {
   const params = useSearchParams();
-  const [tab, setTab] = useState<"login" | "signup">("login");
+  const [tab, setTab] = useState<"login" | "signup">(
+    params.get("tab") === "signup" ? "signup" : "login",
+  );
 
   const [loginError, loginAction, loginPending] = useActionState(login, null);
   const [signupError, signupAction, signupPending] = useActionState(signup, null);
 
   const reset = params.get("reset") === "1";
   const authError = params.get("error") === "auth";
+  const sent = params.get("sent") === "1";
+
+  // Écran « vérifie ta boîte mail » après inscription (confirmation email).
+  if (sent) {
+    return (
+      <main className="bg-background flex min-h-screen items-center justify-center px-4 py-12">
+        <div className="w-full max-w-sm">
+          <div className="mb-6 flex flex-col items-center text-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/look360-logo.svg" alt="Look360" className="mb-3 h-12 w-auto" />
+          </div>
+          <div className="border-border bg-surface space-y-3 rounded-2xl border p-6 text-center shadow-lg">
+            <p className="text-lg font-semibold">Vérifie ta boîte mail 📩</p>
+            <p className="text-muted-foreground text-sm">
+              On t&apos;a envoyé un lien de confirmation. Clique dessus pour
+              activer ton compte Gratuit, puis connecte-toi.
+            </p>
+            <Link
+              href="/login"
+              className="text-primary inline-block text-sm font-semibold hover:underline"
+            >
+              Aller à la connexion
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="bg-background flex min-h-screen items-center justify-center px-4 py-12">

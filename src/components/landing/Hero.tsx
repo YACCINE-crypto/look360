@@ -37,7 +37,7 @@ export function Hero() {
             {/* CTAs */}
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link
-                href="/signup"
+                href="/login?tab=signup"
                 className="bg-primary text-primary-foreground shadow-primary/25 inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl px-7 text-base font-semibold shadow-lg transition-transform hover:scale-[1.03] active:scale-95 sm:w-auto"
               >
                 Commencer gratuitement

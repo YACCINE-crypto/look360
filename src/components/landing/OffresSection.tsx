@@ -180,7 +180,7 @@ export function OffresSection() {
 
                   {/* CTA -> inscription */}
                   <Link
-                    href="/signup"
+                    href="/login?tab=signup"
                     className={`mt-5 inline-flex min-h-[46px] w-full items-center justify-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-transform hover:scale-[1.02] active:scale-95 ${
                       isPopular
                         ? "from-primary shadow-primary/25 bg-gradient-to-t to-blue-500 text-white shadow-lg"
@@ -236,7 +236,7 @@ export function OffresSection() {
               </p>
             </div>
             <Link
-              href="/signup"
+              href="/login?tab=signup"
               className="border-border text-foreground hover:bg-input inline-flex min-h-[44px] items-center justify-center rounded-full border px-5 text-sm font-semibold"
             >
               Commencer gratuitement

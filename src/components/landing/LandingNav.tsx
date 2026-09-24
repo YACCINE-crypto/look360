@@ -66,7 +66,7 @@ export function LandingNav() {
             Connexion
           </Link>
           <Link
-            href="/signup"
+            href="/login?tab=signup"
             className="bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-transform hover:scale-[1.03] active:scale-95"
           >
             Commencer gratuitement
@@ -108,7 +108,7 @@ export function LandingNav() {
                 Connexion
               </Link>
               <Link
-                href="/signup"
+                href="/login?tab=signup"
                 onClick={() => setOpen(false)}
                 className="bg-primary text-primary-foreground rounded-lg px-3 py-2.5 text-center text-sm font-semibold"
               >
