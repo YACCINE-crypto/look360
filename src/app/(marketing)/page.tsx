@@ -6,6 +6,7 @@ import { EtapesSection } from "@/components/landing/EtapesSection";
 import { FonctionsSection } from "@/components/landing/FonctionsSection";
 import { ComparatifSection } from "@/components/landing/ComparatifSection";
 import { TestingSection } from "@/components/landing/TestingSection";
+import { PreuveSection } from "@/components/landing/PreuveSection";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,9 @@ export default async function LandingPage() {
 
       {/* SECTION TESTING SIGNATURE — STEP 4 */}
       <TestingSection />
+
+      {/* PREUVE SOCIALE / VITRINE PUBLIQUE — STEP 5 */}
+      <PreuveSection />
 
       {/* Sections ancrées — remplies aux STEP suivants */}
       {[
