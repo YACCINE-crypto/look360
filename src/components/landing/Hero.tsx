@@ -19,8 +19,13 @@ async function getMerchantCount(): Promise<number | null> {
   }
 }
 
+// Socle de départ affiché dans la barre de confiance (choix marketing).
+// Le compteur réel prend le relais dès qu'il dépasse ce socle.
+const BASE_MERCHANTS = 100;
+
 export async function Hero() {
-  const merchants = await getMerchantCount();
+  const real = await getMerchantCount();
+  const merchants = Math.max(real ?? 0, BASE_MERCHANTS);
 
   return (
     <section className="relative overflow-hidden">
@@ -86,15 +91,9 @@ export async function Hero() {
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <AvatarCluster />
             <p className="text-muted-foreground text-sm">
-              {merchants && merchants > 0 ? (
-                <>
-                  Déjà{" "}
-                  <span className="text-foreground font-bold">{merchants}</span>{" "}
-                  commerçant{merchants > 1 ? "s" : ""} sur Look360
-                </>
-              ) : (
-                <>Sois parmi les premiers commerçants à valider tes produits</>
-              )}
+              Déjà{" "}
+              <span className="text-foreground font-bold">{merchants}+</span>{" "}
+              commerçants sur Look360
             </p>
           </div>
         </RevealOnScroll>

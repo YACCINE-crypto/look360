@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { RevealOnScroll } from "@/components/landing/RevealOnScroll";
 import { Hero } from "@/components/landing/Hero";
+import { EtapesSection } from "@/components/landing/EtapesSection";
 
 export const dynamic = "force-dynamic";
 
@@ -23,9 +24,11 @@ export default async function LandingPage() {
       {/* HERO — STEP 1 */}
       <Hero />
 
+      {/* PROBLÈME/SOLUTION + 3 ÉTAPES — STEP 2 */}
+      <EtapesSection />
+
       {/* Sections ancrées — remplies aux STEP suivants */}
       {[
-        { id: "etapes", label: "Comment ça marche", step: "STEP 2" },
         { id: "fonctions", label: "Fonctions", step: "STEP 3" },
         { id: "comparatif", label: "Comparatif", step: "STEP 3" },
         { id: "tarifs", label: "Tarifs", step: "STEP 6" },

@@ -44,7 +44,7 @@ export function LandingFooter() {
               <img
                 src="/look360-logo.svg"
                 alt="Look360"
-                className="h-8 w-auto"
+                className="h-10 w-auto"
               />
               <p className="text-foreground mt-3 text-sm font-semibold">
                 Trouve. Teste. Valide.

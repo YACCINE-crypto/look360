@@ -41,7 +41,7 @@ export function LandingNav() {
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         {/* Logo */}
         <Link href="/" className="flex items-center" aria-label="Look360 — accueil">
-          <img src="/look360-logo.svg" alt="Look360" className="h-7 w-auto" />
+          <img src="/look360-logo.svg" alt="Look360" className="h-9 w-auto sm:h-10" />
         </Link>
 
         {/* Liens d'ancre — desktop */}
