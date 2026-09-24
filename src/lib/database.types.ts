@@ -300,16 +300,19 @@ export type Database = {
           id: string
           nom: string | null
           role: string
+          vitrine_share: boolean
         }
         Insert: {
           id: string
           nom?: string | null
           role?: string
+          vitrine_share?: boolean
         }
         Update: {
           id?: string
           nom?: string | null
           role?: string
+          vitrine_share?: boolean
         }
         Relationships: []
       }
@@ -572,6 +575,16 @@ export type Database = {
       }
       set_plan: { Args: { p_user: string; p_plan: string }; Returns: number }
       renew_monthly: { Args: { p_user: string }; Returns: number }
+      vitrine_winners: {
+        Args: never
+        Returns: {
+          categorie: string
+          marche: string
+          marge_pct: number
+          closing_pct: number
+          validated_at: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

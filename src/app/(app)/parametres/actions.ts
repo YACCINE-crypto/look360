@@ -9,10 +9,6 @@ export async function setVitrineShare(value: boolean): Promise<void> {
   const { data: claims } = await supabase.auth.getClaims();
   const uid = claims?.claims?.sub as string | undefined;
   if (!uid) return;
-  // Colonne récente (types générés pas encore à jour) → cast localisé.
-  await supabase
-    .from("profiles")
-    .update({ vitrine_share: value } as never)
-    .eq("id", uid);
+  await supabase.from("profiles").update({ vitrine_share: value }).eq("id", uid);
   revalidatePath("/parametres");
 }

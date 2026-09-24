@@ -17,9 +17,7 @@ export default async function ParametresPage() {
     .select("vitrine_share")
     .eq("id", uid)
     .maybeSingle();
-  // Colonne récente (types générés pas encore à jour) → cast localisé.
-  const share =
-    (profile as { vitrine_share?: boolean } | null)?.vitrine_share ?? true;
+  const share = profile?.vitrine_share ?? true;
 
   return (
     <div className="mx-auto max-w-2xl space-y-5">

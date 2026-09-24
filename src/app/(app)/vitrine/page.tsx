@@ -47,10 +47,7 @@ export default async function VitrinePage() {
   // QUE des agrégats anonymisés (catégorie, pays, marge %, closing %), exclut
   // les produits de l'appelant, respecte l'opt-out des propriétaires et ne
   // renvoie des lignes qu'aux comptes Business. Aucune identité ne transite.
-  // La fonction est récente : on caste l'appel (types générés pas encore à jour).
-  const { data } = await (
-    supabase.rpc as unknown as (fn: string) => Promise<{ data: Winner[] | null }>
-  )("vitrine_winners");
+  const { data } = await supabase.rpc("vitrine_winners");
   const rows = (data ?? []) as Winner[];
 
   return (
