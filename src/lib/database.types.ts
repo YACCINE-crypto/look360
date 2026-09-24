@@ -575,6 +575,7 @@ export type Database = {
       }
       set_plan: { Args: { p_user: string; p_plan: string }; Returns: number }
       renew_monthly: { Args: { p_user: string }; Returns: number }
+      admin_cockpit: { Args: never; Returns: Json }
       vitrine_winners: {
         Args: never
         Returns: {
