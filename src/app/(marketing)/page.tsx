@@ -7,6 +7,7 @@ import { FonctionsSection } from "@/components/landing/FonctionsSection";
 import { ComparatifSection } from "@/components/landing/ComparatifSection";
 import { TestingSection } from "@/components/landing/TestingSection";
 import { PreuveSection } from "@/components/landing/PreuveSection";
+import { OffresSection } from "@/components/landing/OffresSection";
 
 export const dynamic = "force-dynamic";
 
@@ -41,9 +42,11 @@ export default async function LandingPage() {
       {/* PREUVE SOCIALE / VITRINE PUBLIQUE — STEP 5 */}
       <PreuveSection />
 
+      {/* BLOC OFFRES — STEP 6 */}
+      <OffresSection />
+
       {/* Sections ancrées — remplies aux STEP suivants */}
       {[
-        { id: "tarifs", label: "Tarifs", step: "STEP 6" },
         { id: "faq", label: "FAQ", step: "STEP 7" },
       ].map((s, i) => (
         <section
