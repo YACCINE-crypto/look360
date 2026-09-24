@@ -5,6 +5,7 @@ import { Hero } from "@/components/landing/Hero";
 import { EtapesSection } from "@/components/landing/EtapesSection";
 import { FonctionsSection } from "@/components/landing/FonctionsSection";
 import { ComparatifSection } from "@/components/landing/ComparatifSection";
+import { TestingSection } from "@/components/landing/TestingSection";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,9 @@ export default async function LandingPage() {
       {/* GRILLE DE FONCTIONS + COMPARATIF — STEP 3 */}
       <FonctionsSection />
       <ComparatifSection />
+
+      {/* SECTION TESTING SIGNATURE — STEP 4 */}
+      <TestingSection />
 
       {/* Sections ancrées — remplies aux STEP suivants */}
       {[
