@@ -35,21 +35,23 @@ export function FonctionsSection() {
             <div className="grid grid-cols-2 gap-3">
               <AdCardPreview
                 page="Boutique bien-être"
-                text="Le complément n°1 pour vos cheveux — résultats en 30 jours."
-                score={79}
-                label="Fort potentiel"
-                days={94}
-                reach="817k"
-                media="Vidéo"
+                text="Résultats visibles en quelques semaines — la routine qui change tout."
+                score={54}
+                label="Moyen"
+                days={111}
+                reach="129k"
+                media="Image"
+                img="/landing/spy-1.jpg"
               />
               <AdCardPreview
-                page="Boutique beauté"
-                text="Retrouvez vos compléments préférés — formules naturelles."
-                score={66}
-                label="Moyen"
-                days={148}
-                reach="437k"
-                media="Image"
+                page="Boutique santé"
+                text="Fatigue, stress ou crampes ? Votre corps vous envoie peut-être un signal."
+                score={70}
+                label="Fort potentiel"
+                days={108}
+                reach="88k"
+                media="Vidéo"
+                img="/landing/spy-2.jpg"
               />
             </div>
           </FeatureCard>
@@ -62,9 +64,9 @@ export function FonctionsSection() {
             delay={80}
           >
             <div className="space-y-2">
-              <WinnerRow title="Masseur cervical" score={88} label="Fort potentiel" />
-              <WinnerRow title="Sérum anti-âge" score={81} label="Fort potentiel" />
-              <WinnerRow title="Montre connectée" score={74} label="Bon" />
+              <WinnerRow title="Magnésium Complex" score={88} label="Fort potentiel" img="/landing/vitrine-4.jpg" />
+              <WinnerRow title="Power bank 60000mAh" score={81} label="Fort potentiel" img="/landing/vitrine-3.jpg" />
+              <WinnerRow title="Tablette enfant" score={74} label="Bon" img="/landing/vitrine-1.jpg" />
             </div>
           </FeatureCard>
 
@@ -409,15 +411,22 @@ function WinnerRow({
   title,
   score,
   label,
+  img,
 }: {
   title: string;
   score: number;
   label: string;
+  img?: string;
 }) {
   return (
     <div className="border-border bg-background flex items-center gap-2.5 rounded-lg border p-2">
       <span className="bg-input text-muted-foreground/50 relative grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-md">
-        <Icon name="image" size={14} />
+        {img ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={img} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <Icon name="image" size={14} />
+        )}
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-foreground truncate text-xs font-semibold">{title}</p>
