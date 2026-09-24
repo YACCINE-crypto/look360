@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { RevealOnScroll } from "@/components/landing/RevealOnScroll";
 import { Hero } from "@/components/landing/Hero";
 import { EtapesSection } from "@/components/landing/EtapesSection";
 import { FonctionsSection } from "@/components/landing/FonctionsSection";
@@ -8,6 +7,8 @@ import { ComparatifSection } from "@/components/landing/ComparatifSection";
 import { TestingSection } from "@/components/landing/TestingSection";
 import { PreuveSection } from "@/components/landing/PreuveSection";
 import { OffresSection } from "@/components/landing/OffresSection";
+import { FaqSection } from "@/components/landing/FaqSection";
+import { CtaFinal } from "@/components/landing/CtaFinal";
 
 export const dynamic = "force-dynamic";
 
@@ -45,25 +46,9 @@ export default async function LandingPage() {
       {/* BLOC OFFRES — STEP 6 */}
       <OffresSection />
 
-      {/* Sections ancrées — remplies aux STEP suivants */}
-      {[
-        { id: "faq", label: "FAQ", step: "STEP 7" },
-      ].map((s, i) => (
-        <section
-          key={s.id}
-          id={s.id}
-          className={`scroll-mt-20 px-4 py-12 sm:px-6 sm:py-16 ${
-            i % 2 === 0 ? "bg-surface" : "bg-background"
-          }`}
-        >
-          <RevealOnScroll>
-            <div className="border-border text-muted-foreground mx-auto max-w-6xl rounded-2xl border border-dashed p-10 text-center">
-              <p className="text-foreground text-lg font-bold">{s.label}</p>
-              <p className="mt-1 text-sm">Section à construire — {s.step}</p>
-            </div>
-          </RevealOnScroll>
-        </section>
-      ))}
+      {/* FAQ + CTA FINAL — STEP 7 */}
+      <FaqSection />
+      <CtaFinal />
     </div>
   );
 }
