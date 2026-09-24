@@ -27,11 +27,17 @@ export type Subscription = {
 /** Abonnement + solde d'un compte (via service_role — lecture fiable). */
 export async function getSubscription(userId: string): Promise<Subscription | null> {
   const admin = createAdminClient();
-  const { data } = await admin
+  const { data, error } = await admin
     .from("subscriptions")
     .select("plan, status, monthly_credits, pack_credits, credits_balance, current_period_end, has_ever_paid")
     .eq("user_id", userId)
     .maybeSingle();
+  // NE PLUS avaler l'erreur : si le client admin échoue (mauvaise clé
+  // service_role → lecture soumise à la RLS, 0 ligne), on le voit dans les logs
+  // au lieu d'un silencieux « retour Gratuit ».
+  if (error) {
+    console.error("getSubscription admin read failed:", error.message, "user:", userId);
+  }
   return (data as Subscription | null) ?? null;
 }
 
