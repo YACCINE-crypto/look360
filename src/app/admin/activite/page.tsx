@@ -1,15 +1,26 @@
+import { createClient } from "@/lib/supabase/server";
+import { ActivityFeed, type ActivityEvent } from "@/components/admin/ActivityFeed";
+
 export const dynamic = "force-dynamic";
 
-export default function AdminPage() {
+export default async function AdminActivitePage() {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("admin_activity");
+  const initial = (Array.isArray(data) ? data : []) as unknown as ActivityEvent[];
+
   return (
     <div className="space-y-6">
-      <h1 className="text-foreground text-2xl font-extrabold tracking-tight">
-        Activité
-      </h1>
-      <div className="border-border text-muted-foreground rounded-2xl border border-dashed p-10 text-center">
-        <p className="text-foreground font-semibold">Activité</p>
-        <p className="mt-1 text-sm">Section à construire — STEP 3.</p>
+      <div>
+        <h1 className="text-foreground text-2xl font-extrabold tracking-tight">
+          Activité
+        </h1>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Les derniers événements en temps réel — inscriptions, paiements,
+          changements d&apos;offre, recherches spy.
+        </p>
       </div>
+
+      <ActivityFeed initial={initial} />
     </div>
   );
 }

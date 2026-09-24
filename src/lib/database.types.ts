@@ -577,6 +577,7 @@ export type Database = {
       renew_monthly: { Args: { p_user: string }; Returns: number }
       admin_cockpit: { Args: never; Returns: Json }
       admin_charts: { Args: never; Returns: Json }
+      admin_activity: { Args: never; Returns: Json }
       vitrine_winners: {
         Args: never
         Returns: {
