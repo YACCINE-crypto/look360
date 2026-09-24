@@ -1,29 +1,22 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { getSubscription } from "@/lib/credits";
 import { planConfig } from "@/lib/billing";
 import { PageHeader } from "@/components/ui";
 import { Icon } from "@/components/Icon";
-import { CreativeMedia } from "@/components/CreativeMedia";
 import { FeatureLock } from "@/components/FeatureLock";
-import { marcheLabel, emotionLabel } from "@/lib/produits";
+import { marcheLabel } from "@/lib/produits";
 
 export const dynamic = "force-dynamic";
 
-// Champs affichés dans la vitrine — VOLONTAIREMENT limités à l'inspiration
-// produit. On n'expose JAMAIS l'économie privée d'un autre commerçant
-// (coûts, prix fournisseur, marges, liens sources, notes).
-type VitrineRow = {
-  id: string;
-  nom: string | null;
-  marche: string | null;
+// Lignes 100% ANONYMISÉES renvoyées par la fonction SECURITY DEFINER
+// public.vitrine_winners() : jamais d'user_id, jamais de nom de produit.
+type Winner = {
   categorie: string | null;
-  angle_marketing: string | null;
-  emotion_tag: string | null;
-  image_url: string | null;
-  media_cdn_url: string | null;
-  created_at: string;
+  marche: string | null;
+  marge_pct: number | null;
+  closing_pct: number | null;
+  validated_at: string;
 };
 
 export default async function VitrinePage() {
@@ -32,9 +25,7 @@ export default async function VitrinePage() {
   const userId = claims?.claims?.sub as string | undefined;
   if (!userId) redirect("/login");
 
-  // ── Gating RÉEL côté serveur : la vitrine des winners validés est une
-  // donnée premium, réservée au plan Business. Les autres offres voient un
-  // cadenas + upsell — aucune donnée n'est lue si l'offre ne l'inclut pas.
+  // ── Gating RÉEL côté serveur : donnée premium réservée au plan Business.
   const sub = await getSubscription(userId);
   if (!planConfig(sub?.plan).vitrineEnabled) {
     return (
@@ -52,26 +43,21 @@ export default async function VitrinePage() {
     );
   }
 
-  // Lecture inter-comptes via service_role (la RLS cloisonne chaque compte à
-  // ses propres produits). On ne remonte QUE des produits « validés » et
-  // seulement les champs d'inspiration ci-dessus.
-  const admin = createAdminClient();
-  const { data } = await admin
-    .from("produits")
-    .select(
-      "id, nom, marche, categorie, angle_marketing, emotion_tag, image_url, media_cdn_url, created_at",
-    )
-    .eq("statut", "valide")
-    .order("created_at", { ascending: false })
-    .limit(60);
-
-  const rows = (data ?? []) as VitrineRow[];
+  // Lecture inter-comptes via la fonction SECURITY DEFINER : elle n'expose
+  // QUE des agrégats anonymisés (catégorie, pays, marge %, closing %), exclut
+  // les produits de l'appelant, respecte l'opt-out des propriétaires et ne
+  // renvoie des lignes qu'aux comptes Business. Aucune identité ne transite.
+  // La fonction est récente : on caste l'appel (types générés pas encore à jour).
+  const { data } = await (
+    supabase.rpc as unknown as (fn: string) => Promise<{ data: Winner[] | null }>
+  )("vitrine_winners");
+  const rows = (data ?? []) as Winner[];
 
   return (
     <div className="space-y-4">
       <PageHeader
         title="Vitrine des winners validés"
-        subtitle="Les produits déjà validés par la communauté de commerçants Look360 — inspirez-vous de ce qui gagne."
+        subtitle="Les produits validés par la communauté (≥ 10 commandes reçues), 100 % anonymisés — inspirez-vous de ce qui gagne."
       >
         <span className="bg-secondary text-primary inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold">
           <Icon name="store" size={14} /> Business
@@ -85,53 +71,55 @@ export default async function VitrinePage() {
           </span>
           <p className="font-medium">Aucun winner validé pour l&apos;instant</p>
           <p className="text-muted-foreground mx-auto mt-1 max-w-md text-sm">
-            Dès que des produits sont validés par la communauté, ils
-            apparaissent ici pour vous inspirer.
+            Dès que des commerçants valident des produits (≥ 10 commandes
+            reçues), ils apparaissent ici, sans jamais révéler leur identité.
           </p>
         </div>
       ) : (
         <>
           <p className="text-muted-foreground text-sm">
-            {rows.length} produit{rows.length > 1 ? "s" : ""} validé
-            {rows.length > 1 ? "s" : ""}
+            {rows.length} winner{rows.length > 1 ? "s" : ""} validé
+            {rows.length > 1 ? "s" : ""} · données anonymisées
           </p>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {rows.map((p) => (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {rows.map((w, i) => (
               <article
-                key={p.id}
-                className="bg-surface border-border shadow-card flex h-full flex-col overflow-hidden rounded-xl border"
+                key={i}
+                className="bg-surface border-border shadow-card flex flex-col gap-3 rounded-xl border p-4"
               >
-                <CreativeMedia
-                  image={p.media_cdn_url ?? p.image_url}
-                  alt={p.nom ?? "Produit validé"}
-                >
-                  <span className="bg-success text-primary-foreground absolute left-2 top-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold shadow">
-                    <Icon name="check" size={11} /> Validé
+                <div className="flex items-center justify-between">
+                  <span className="text-foreground font-semibold">
+                    {w.categorie ?? "Catégorie"}
                   </span>
-                </CreativeMedia>
-
-                <div className="border-border flex flex-1 flex-col gap-1.5 border-t p-3">
-                  <h3
-                    className="truncate font-semibold leading-snug"
-                    title={p.nom ?? ""}
-                  >
-                    {p.nom ?? "Sans nom"}
-                  </h3>
-                  <p className="text-muted-foreground truncate text-xs">
-                    {p.categorie ? `${p.categorie} · ` : ""}
-                    {marcheLabel(p.marche)}
-                  </p>
-                  {p.angle_marketing && (
-                    <p className="text-muted-foreground mt-auto line-clamp-2 text-xs italic">
-                      « {p.angle_marketing} »
-                    </p>
-                  )}
-                  {p.emotion_tag && (
-                    <span className="bg-secondary text-primary mt-1 inline-flex w-fit rounded-full px-2 py-0.5 text-[10px] font-medium">
-                      {emotionLabel(p.emotion_tag)}
-                    </span>
-                  )}
+                  <span className="bg-success-bg text-success inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold">
+                    <Icon name="check" size={11} strokeWidth={3} /> Validé
+                  </span>
                 </div>
+                <p className="text-muted-foreground text-xs">
+                  Marché : {marcheLabel(w.marche)}
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-background rounded-lg p-2.5 text-center">
+                    <p className="text-success text-lg font-extrabold tabular-nums">
+                      {w.closing_pct ?? "—"} %
+                    </p>
+                    <p className="text-muted-foreground text-[10px]">
+                      Taux de closing
+                    </p>
+                  </div>
+                  <div className="bg-background rounded-lg p-2.5 text-center">
+                    <p className="text-primary text-lg font-extrabold tabular-nums">
+                      {w.marge_pct ?? "—"} %
+                    </p>
+                    <p className="text-muted-foreground text-[10px]">
+                      Marge nette
+                    </p>
+                  </div>
+                </div>
+                <p className="text-muted-foreground/70 text-[10px]">
+                  Commerçant anonyme · validé le{" "}
+                  {new Date(w.validated_at).toLocaleDateString("fr-FR")}
+                </p>
               </article>
             ))}
           </div>

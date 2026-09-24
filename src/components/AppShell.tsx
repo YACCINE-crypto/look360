@@ -100,6 +100,14 @@ function Sidebar({
           <CreditsBadge credits={credits} plan={plan} />
         </div>
         <NotifBell />
+        <Link
+          href="/parametres"
+          onClick={onClose}
+          className="text-muted-foreground hover:bg-input hover:text-foreground flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors"
+        >
+          <Icon name="settings" size={16} />
+          Paramètres
+        </Link>
         <form action={logout}>
           <button
             type="submit"
