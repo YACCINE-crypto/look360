@@ -1,5 +1,6 @@
 import { Icon } from "@/components/Icon";
 import { RevealOnScroll } from "./RevealOnScroll";
+import { FeatureVerdict } from "./FeatureVerdict";
 
 /**
  * Grille de fonctions — chaque carte reproduit FIDÈLEMENT l'affichage réel de
@@ -26,6 +27,7 @@ export function FonctionsSection() {
         <div className="mt-8 grid gap-5 sm:mt-12 md:grid-cols-3">
           {/* Spy Facebook — large : 2 vraies cartes */}
           <FeatureCard
+            num="01"
             className="md:col-span-2"
             icon="eye"
             title="Spy Facebook"
@@ -58,6 +60,7 @@ export function FonctionsSection() {
 
           {/* Winner Agent */}
           <FeatureCard
+            num="02"
             icon="trophy"
             title="Winner Agent"
             desc="L'agent scanne chaque jour et sort les meilleures pubs selon tes mots-clés et pays."
@@ -70,8 +73,9 @@ export function FonctionsSection() {
             </div>
           </FeatureCard>
 
-          {/* Testing — pleine largeur, verdict fidèle */}
+          {/* Testing — pleine largeur, verdict animé */}
           <FeatureCard
+            num="03"
             className="md:col-span-3"
             icon="flask"
             title="Testing & rentabilité"
@@ -79,11 +83,12 @@ export function FonctionsSection() {
             featured
             delay={0}
           >
-            <VerdictPreview />
+            <FeatureVerdict />
           </FeatureCard>
 
           {/* Top Trend */}
           <FeatureCard
+            num="04"
             icon="trending"
             title="Top Trend"
             desc="Le classement des produits qui montent, en temps réel."
@@ -94,6 +99,7 @@ export function FonctionsSection() {
 
           {/* WhatsApp */}
           <FeatureCard
+            num="05"
             icon="bell"
             title="Winners sur WhatsApp"
             desc="Reçois tes winners du jour directement sur WhatsApp."
@@ -104,6 +110,7 @@ export function FonctionsSection() {
 
           {/* COD Afrique */}
           <FeatureCard
+            num="06"
             icon="check"
             title="Pensé COD Afrique"
             desc="Winners Afrique + Europe, mobile money, FCFA, closing local."
@@ -114,6 +121,7 @@ export function FonctionsSection() {
 
           {/* Vitrine — large */}
           <FeatureCard
+            num="07"
             className="md:col-span-3"
             icon="store"
             title="Vitrine des winners validés"
@@ -131,6 +139,7 @@ export function FonctionsSection() {
 /* ---------------------------------------------------------------- Carte */
 
 function FeatureCard({
+  num,
   icon,
   title,
   desc,
@@ -139,6 +148,7 @@ function FeatureCard({
   featured = false,
   delay = 0,
 }: {
+  num?: string;
   icon: React.ComponentProps<typeof Icon>["name"];
   title: string;
   desc: string;
@@ -150,15 +160,20 @@ function FeatureCard({
   return (
     <RevealOnScroll delay={delay} className={className}>
       <div
-        className={`flex h-full flex-col rounded-2xl border p-6 transition-shadow hover:shadow-md ${
+        className={`relative flex h-full flex-col rounded-2xl border p-6 transition-shadow hover:shadow-md ${
           featured
             ? "border-primary/40 bg-gradient-to-b from-secondary/40 to-surface ring-primary/15 shadow-lg ring-1"
             : "border-border bg-surface shadow-card"
         }`}
       >
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <span className="bg-secondary text-primary grid h-10 w-10 shrink-0 place-items-center rounded-xl">
+          <span className="bg-secondary text-primary relative grid h-10 w-10 shrink-0 place-items-center rounded-xl">
             <Icon name={icon} size={20} />
+            {num && (
+              <span className="border-surface bg-foreground text-background absolute -right-1.5 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full border px-1 text-[9px] font-bold tabular-nums">
+                {num}
+              </span>
+            )}
           </span>
           <h3 className="text-foreground min-w-0 text-base font-bold">{title}</h3>
           {featured && (
@@ -287,121 +302,6 @@ function FakeBtn({
     <span className="border-border text-muted-foreground inline-flex items-center justify-center gap-1 rounded-md border py-1 text-[9px] font-medium">
       <Icon name={icon} size={9} /> {label}
     </span>
-  );
-}
-
-/* -------------------------------------------------- Verdict testing fidèle */
-
-function VerdictPreview() {
-  return (
-    <div className="border-border bg-surface grid gap-5 rounded-xl border p-5 md:grid-cols-2">
-      {/* Colonne verdict */}
-      <div>
-        <div className="flex items-center justify-between">
-          <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-wide">
-            Verdict du test
-          </span>
-          <span className="text-muted-foreground text-[11px]">
-            Durée <span className="text-foreground font-bold">2 jours</span>
-          </span>
-        </div>
-
-        <span className="bg-success-bg text-success mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold">
-          <span className="bg-success h-2 w-2 rounded-full" /> Rentable
-        </span>
-
-        <div className="mt-4">
-          <div className="flex items-baseline justify-between">
-            <span className="text-muted-foreground text-xs">
-              Taux de confirmation (closing)
-            </span>
-            <span className="text-success text-xs font-semibold">
-              Excellent closing
-            </span>
-          </div>
-          <p className="text-success text-3xl font-extrabold tabular-nums">70 %</p>
-          <div className="bg-input mt-1 h-2.5 overflow-hidden rounded-full">
-            <div className="bg-success h-full rounded-full" style={{ width: "70%" }} />
-          </div>
-          <div className="text-muted-foreground mt-1 flex justify-between text-[9px]">
-            <span>0 %</span>
-            <span>Objectif 60 %</span>
-            <span>100 %</span>
-          </div>
-        </div>
-
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <StatTile label="Bénéfice projeté" value="103 500" unit="FCFA" />
-          <StatTile label="Marge nette" value="74 %" unit="sur prix de vente" accent />
-          <StatTile label="ROAS" value="28.0x" unit="retour budget pub" amber />
-          <StatTile label="Budget pub" value="5 000" unit="FCFA" />
-        </div>
-      </div>
-
-      {/* Colonne recommandation + chiffres réels */}
-      <div className="flex flex-col gap-3">
-        <div className="bg-secondary/50 text-foreground rounded-xl p-3 text-xs leading-relaxed">
-          <span className="text-primary font-bold">💡 Recommandation :</span> le
-          taux de closing dépasse l&apos;objectif et la marge est solide. Ce
-          produit est prêt pour la production.
-        </div>
-        <div className="border-border grid grid-cols-2 gap-2 rounded-xl border p-3">
-          <RealFig label="Commandes reçues" value="10" />
-          <RealFig label="Confirmées" value="7" ok />
-          <RealFig label="Prix de vente" value="20 000" />
-          <RealFig label="Coût produit" value="2 700" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function StatTile({
-  label,
-  value,
-  unit,
-  accent = false,
-  amber = false,
-}: {
-  label: string;
-  value: string;
-  unit: string;
-  accent?: boolean;
-  amber?: boolean;
-}) {
-  return (
-    <div className="bg-background rounded-lg p-2.5">
-      <p className="text-muted-foreground text-[10px]">{label}</p>
-      <p
-        className={`text-base font-extrabold tabular-nums ${
-          accent ? "text-success" : amber ? "text-warning" : "text-foreground"
-        }`}
-      >
-        {value}
-      </p>
-      <p className="text-muted-foreground text-[9px]">{unit}</p>
-    </div>
-  );
-}
-
-function RealFig({
-  label,
-  value,
-  ok = false,
-}: {
-  label: string;
-  value: string;
-  ok?: boolean;
-}) {
-  return (
-    <div
-      className={`rounded-lg border px-2.5 py-2 ${
-        ok ? "border-success/40 bg-success-bg/40" : "border-border bg-background"
-      }`}
-    >
-      <p className="text-muted-foreground text-[9px]">{label}</p>
-      <p className="text-foreground text-sm font-bold tabular-nums">{value}</p>
-    </div>
   );
 }
 

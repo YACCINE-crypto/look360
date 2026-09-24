@@ -38,7 +38,7 @@ const FAQ: { q: string; a: string }[] = [
 
 export function FaqSection() {
   return (
-    <section id="faq" className="scroll-mt-20 px-4 py-12 sm:px-6 sm:py-20">
+    <section id="faq" className="bg-surface scroll-mt-20 px-4 py-12 sm:px-6 sm:py-20">
       <div className="mx-auto max-w-3xl">
         <RevealOnScroll>
           <h2 className="text-foreground text-center text-3xl font-extrabold tracking-tight sm:text-4xl">

@@ -37,7 +37,7 @@ export function LandingFooter() {
   return (
     <>
       <footer className="border-border bg-surface border-t">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+        <div className="mx-auto max-w-6xl px-4 pb-28 pt-12 sm:px-6 sm:pb-12">
           <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
             {/* Marque + slogan */}
             <div>
@@ -115,7 +115,7 @@ export function LandingFooter() {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Nous contacter sur WhatsApp"
-        className="fixed bottom-4 right-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition-transform hover:scale-110 active:scale-95 sm:h-14 sm:w-14"
+        className="fixed bottom-20 right-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition-transform hover:scale-110 active:scale-95 sm:bottom-5 sm:right-5 sm:h-14 sm:w-14"
       >
         <svg
           width="22"

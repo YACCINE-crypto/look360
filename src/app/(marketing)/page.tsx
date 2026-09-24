@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Hero } from "@/components/landing/Hero";
+import { TrustStrip } from "@/components/landing/TrustStrip";
+import { CtaInline } from "@/components/landing/CtaInline";
+import { StickyCta } from "@/components/landing/StickyCta";
 import { EtapesSection } from "@/components/landing/EtapesSection";
 import { FonctionsSection } from "@/components/landing/FonctionsSection";
 import { ComparatifSection } from "@/components/landing/ComparatifSection";
@@ -29,6 +32,7 @@ export default async function LandingPage() {
     <div>
       {/* HERO — STEP 1 */}
       <Hero />
+      <TrustStrip />
 
       {/* PROBLÈME/SOLUTION + 3 ÉTAPES — STEP 2 */}
       <EtapesSection />
@@ -36,6 +40,7 @@ export default async function LandingPage() {
       {/* GRILLE DE FONCTIONS + COMPARATIF — STEP 3 */}
       <FonctionsSection />
       <ComparatifSection />
+      <CtaInline />
 
       {/* SECTION TESTING SIGNATURE — STEP 4 */}
       <TestingSection />
@@ -49,6 +54,9 @@ export default async function LandingPage() {
       {/* FAQ + CTA FINAL — STEP 7 */}
       <FaqSection />
       <CtaFinal />
+
+      {/* Barre CTA collante — mobile uniquement */}
+      <StickyCta />
     </div>
   );
 }

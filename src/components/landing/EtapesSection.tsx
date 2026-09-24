@@ -25,7 +25,7 @@ const STEPS = [
 
 export function EtapesSection() {
   return (
-    <section id="etapes" className="scroll-mt-20 px-4 py-12 sm:px-6 sm:py-20">
+    <section id="etapes" className="scroll-mt-20 bg-[#f8faff] px-4 py-12 sm:px-6 sm:py-20">
       <div className="mx-auto max-w-6xl">
         {/* AVANT / APRÈS */}
         <RevealOnScroll>

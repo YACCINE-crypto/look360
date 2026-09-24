@@ -101,7 +101,7 @@ function features(p: Plan): Feat[] {
 
 export function OffresSection() {
   return (
-    <section id="tarifs" className="bg-surface scroll-mt-20 px-4 py-12 sm:px-6 sm:py-20">
+    <section id="tarifs" className="scroll-mt-20 bg-[#f8faff] px-4 py-12 sm:px-6 sm:py-20">
       <div className="mx-auto max-w-6xl">
         <RevealOnScroll>
           <div className="text-center">

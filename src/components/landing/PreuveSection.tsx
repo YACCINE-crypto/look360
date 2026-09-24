@@ -110,7 +110,7 @@ export async function PreuveSection() {
     stats && stats.teaser.length >= 3 ? stats.teaser : GENERIC_TEASER;
 
   return (
-    <section id="preuve" className="scroll-mt-20 px-4 py-12 sm:px-6 sm:py-20">
+    <section id="preuve" className="bg-surface scroll-mt-20 px-4 py-12 sm:px-6 sm:py-20">
       <div className="mx-auto max-w-6xl">
         <RevealOnScroll>
           <div className="text-center">

@@ -43,7 +43,7 @@ const ROWS: {
 
 export function ComparatifSection() {
   return (
-    <section id="comparatif" className="scroll-mt-20 px-4 py-12 sm:px-6 sm:py-20">
+    <section id="comparatif" className="scroll-mt-20 bg-[#f8faff] px-4 py-12 sm:px-6 sm:py-20">
       <div className="mx-auto max-w-5xl">
         <RevealOnScroll>
           <div className="text-center">
