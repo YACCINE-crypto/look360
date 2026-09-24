@@ -301,18 +301,21 @@ export type Database = {
           nom: string | null
           role: string
           vitrine_share: boolean
+          suspended: boolean
         }
         Insert: {
           id: string
           nom?: string | null
           role?: string
           vitrine_share?: boolean
+          suspended?: boolean
         }
         Update: {
           id?: string
           nom?: string | null
           role?: string
           vitrine_share?: boolean
+          suspended?: boolean
         }
         Relationships: []
       }
@@ -578,6 +581,26 @@ export type Database = {
       admin_cockpit: { Args: never; Returns: Json }
       admin_charts: { Args: never; Returns: Json }
       admin_activity: { Args: never; Returns: Json }
+      admin_clients: {
+        Args: {
+          p_search?: string | null
+          p_plan?: string | null
+          p_status?: string | null
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: Json
+      }
+      admin_client_detail: { Args: { p_user: string }; Returns: Json }
+      admin_grant_credits: {
+        Args: { p_user: string; p_amount: number; p_reason?: string }
+        Returns: undefined
+      }
+      admin_set_plan: { Args: { p_user: string; p_plan: string }; Returns: undefined }
+      admin_set_suspended: {
+        Args: { p_user: string; p_bool: boolean }
+        Returns: undefined
+      }
       vitrine_winners: {
         Args: never
         Returns: {

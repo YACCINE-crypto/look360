@@ -19,12 +19,15 @@ export default async function AppLayout({
 
   // Profil + compteur de soumissions EN PARALLÈLE (une seule latence DB).
   const [{ data: profile }, { count }] = await Promise.all([
-    supabase.from("profiles").select("nom, role").eq("id", userId).maybeSingle(),
+    supabase.from("profiles").select("nom, role, suspended").eq("id", userId).maybeSingle(),
     supabase
       .from("produits")
       .select("id", { count: "exact", head: true })
       .in("statut_revue", ["soumis", "en_analyse"]),
   ]);
+
+  // Compte suspendu par un superadmin → accès bloqué.
+  if (profile?.suspended) redirect("/suspendu");
 
   const role = profile?.role ?? "—";
   const displayName =
