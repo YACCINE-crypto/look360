@@ -27,7 +27,7 @@ export async function signup(
     password,
     options: {
       data: { nom: nom || email.split("@")[0] },
-      emailRedirectTo: `${origin}/auth/confirm?next=/`,
+      emailRedirectTo: `${origin}/auth/confirm?next=/bienvenue`,
     },
   });
 
@@ -37,8 +37,8 @@ export async function signup(
     return error.message;
   }
 
-  // Confirmation email désactivée → session déjà active : on entre directement.
-  // Sinon → écran "vérifie ta boîte mail".
-  if (data.session) redirect("/");
+  // Confirmation email désactivée → session déjà active : on entre directement
+  // sur l'onboarding. Sinon → écran "vérifie ta boîte mail".
+  if (data.session) redirect("/bienvenue");
   redirect("/signup?sent=1");
 }
