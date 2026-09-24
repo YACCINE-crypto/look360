@@ -64,9 +64,9 @@ export function FonctionsSection() {
             delay={80}
           >
             <div className="space-y-2">
-              <WinnerRow title="Magnésium Complex" score={88} label="Fort potentiel" img="/landing/vitrine-4.jpg" />
-              <WinnerRow title="Power bank 60000mAh" score={81} label="Fort potentiel" img="/landing/vitrine-3.jpg" />
-              <WinnerRow title="Tablette enfant" score={74} label="Bon" img="/landing/vitrine-1.jpg" />
+              <WinnerRow title="Montre connectée" score={88} label="Fort potentiel" img="/landing/winner-1.jpg" />
+              <WinnerRow title="Sérum niacinamide" score={81} label="Fort potentiel" img="/landing/winner-2.jpg" />
+              <WinnerRow title="Masseur cervical" score={74} label="Bon" img="/landing/winner-3.jpg" />
             </div>
           </FeatureCard>
 
