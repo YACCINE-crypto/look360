@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSubscription } from "@/lib/credits";
 import { AppShell } from "@/components/AppShell";
+import { PlanProvider } from "@/components/PlanProvider";
 
 export default async function AppLayout({
   children,
@@ -42,7 +43,7 @@ export default async function AppLayout({
       credits={sub?.credits_balance ?? 0}
       plan={sub?.plan ?? "free"}
     >
-      {children}
+      <PlanProvider plan={sub?.plan ?? "free"}>{children}</PlanProvider>
     </AppShell>
   );
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getSubscription } from "@/lib/credits";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,8 +14,16 @@ export const maxDuration = 60;
 export async function GET(request: Request) {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
-  if (!data?.claims?.sub) {
+  const userId = data?.claims?.sub as string | undefined;
+  if (!userId) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  // Téléchargement réservé aux offres payantes (Starter et plus). Regarder la
+  // vidéo reste possible pour tous (lecture in-app, sans passer par cette route).
+  const sub = await getSubscription(userId);
+  if ((sub?.plan ?? "free") === "free") {
+    return NextResponse.redirect(new URL("/offres?locked=video", request.url));
   }
 
   const u = new URL(request.url).searchParams.get("url");

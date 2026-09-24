@@ -21,6 +21,7 @@ import {
   type SpyAd,
 } from "@/lib/spy";
 import { searchCost, formatCredits, SEARCH_COST_PER_COUNTRY } from "@/lib/billing";
+import { useCanDownload } from "@/components/PlanProvider";
 
 const labelCls = "text-xs font-medium text-muted-foreground";
 
@@ -571,6 +572,7 @@ export function SpyCard({
   const [followed, setFollowed] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const canDownload = useCanDownload();
   const kind = ad.landing_kind ?? landingKind(ad.landing_url);
   const isShop = kind === "shop";
   const pageName = cleanField(ad.page_name);
@@ -734,12 +736,22 @@ export function SpyCard({
               >
                 <Icon name="play" size={12} /> Regarder
               </button>
-              <a
-                href={`/api/spy/video?url=${encodeURIComponent(ad.media_url)}`}
-                className="border-border hover:bg-input flex flex-1 items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors"
-              >
-                <Icon name="download" size={12} /> Télécharger
-              </a>
+              {canDownload ? (
+                <a
+                  href={`/api/spy/video?url=${encodeURIComponent(ad.media_url)}`}
+                  className="border-border hover:bg-input flex flex-1 items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors"
+                >
+                  <Icon name="download" size={12} /> Télécharger
+                </a>
+              ) : (
+                <Link
+                  href="/offres"
+                  title="Téléchargement inclus à partir de l'offre Starter"
+                  className="border-border text-muted-foreground hover:bg-input flex flex-1 items-center justify-center gap-1 rounded-md border border-dashed px-2 py-1.5 text-xs font-medium transition-colors"
+                >
+                  <Icon name="lock" size={12} /> Télécharger
+                </Link>
+              )}
             </div>
           )}
 
@@ -770,6 +782,7 @@ function AddButton() {
 }
 
 export function VideoModal({ url, onClose }: { url: string; onClose: () => void }) {
+  const canDownload = useCanDownload();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70" onClick={onClose} aria-hidden="true" />
@@ -782,12 +795,21 @@ export function VideoModal({ url, onClose }: { url: string; onClose: () => void 
           <Icon name="x" size={18} />
         </button>
         <video src={url} controls autoPlay className="max-h-[80vh] w-full rounded-lg bg-black" />
-        <a
-          href={`/api/spy/video?url=${encodeURIComponent(url)}`}
-          className="bg-primary text-primary-foreground mt-3 inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold"
-        >
-          <Icon name="download" size={16} /> Télécharger la vidéo
-        </a>
+        {canDownload ? (
+          <a
+            href={`/api/spy/video?url=${encodeURIComponent(url)}`}
+            className="bg-primary text-primary-foreground mt-3 inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold"
+          >
+            <Icon name="download" size={16} /> Télécharger la vidéo
+          </a>
+        ) : (
+          <Link
+            href="/offres"
+            className="bg-input text-muted-foreground mt-3 inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold"
+          >
+            <Icon name="lock" size={16} /> Télécharger — inclus à partir de Starter
+          </Link>
+        )}
       </div>
     </div>
   );

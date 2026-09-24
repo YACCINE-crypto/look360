@@ -29,11 +29,11 @@ export function subscriptionPrice(plan: PaidPlan, hasEverPaid: boolean): number 
   return hasEverPaid ? p.priceNormal : p.priceFirst;
 }
 
-// Packs de recharge — crédits INTERNES (affichés ×100 : 50 000 / 120 000 / 300 000).
+// Packs de recharge — crédits (même unité que la base, ×100).
 export const CREDIT_PACKS: { credits: number; price: number }[] = [
-  { credits: 500, price: 3000 },
-  { credits: 1200, price: 6000 },
-  { credits: 3000, price: 13000 },
+  { credits: 50000, price: 3000 },
+  { credits: 120000, price: 6000 },
+  { credits: 300000, price: 13000 },
 ];
 
 /** Retrouve un pack par ses crédits internes (valeur validée, non falsifiable). */

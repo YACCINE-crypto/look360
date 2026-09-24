@@ -23,9 +23,10 @@ Navigateur (app)                Edge Functions (Deno)              Base (RPC SEC
                                   · idempotent (ref)                (atomique + verrou FOR UPDATE)
 ```
 
-- **Unité des crédits** : la base stocke l'unité **interne** (Business = 6 000/mois,
-  packs 500/1 200/3 000). L'affichage ×100 est purement front (`formatCredits`).
-  Les fonctions créditent l'interne → **marge et nombre d'actions inchangés**.
+- **Unité des crédits** : unité **unique ×100** dans toutes les couches (base,
+  Edge Functions, affichage) — Business = 600 000/mois, packs 50 000/120 000/
+  300 000, recherche 1 000/pays, analyse 2 000. `plan_monthly_credits` (base) est
+  la source de vérité pour l'abonnement ; les packs créditent `payments.credits`.
 - **Aucun nom de prestataire côté client** : les boutons disent
   « Choisir cette offre » / « Recharger ». Le nom « GeniusPay » n'apparaît que
   dans le code serveur / la config.
@@ -33,7 +34,7 @@ Navigateur (app)                Edge Functions (Deno)              Base (RPC SEC
   + `_shared/provider.ts` (registry). Ajouter Flutterwave/Paystack = une classe
   de plus, sans toucher aux Edge Functions.
 
-## Montants (unité d'affichage ×100 — usage réel inchangé)
+## Montants (unité crédits ×100, identique partout)
 
 | Offre | Normal | 1er mois (si `has_ever_paid=false`) | Crédits/mois (affichés) |
 |-------|-------:|-----------------------:|---------------------:|
