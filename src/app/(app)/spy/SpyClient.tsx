@@ -340,7 +340,7 @@ export function SpyClient({ balance }: { balance: number; plan?: string }) {
             }`}
             title="Coût débité uniquement si la recherche n'est pas déjà en cache"
           >
-            ≈ {cost} crédit{cost > 1 ? "s" : ""}
+            ≈ {formatCredits(cost)} crédits
           </span>
           <span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 text-xs font-semibold">
             Solde : {formatCredits(bal)}
@@ -488,8 +488,11 @@ function ConfirmSearch({
           <h3 className="font-bold">Confirmer la recherche</h3>
         </div>
         <p className="text-muted-foreground text-sm">
-          Cette recherche coûtera <b className="text-foreground">{cost} crédit{cost > 1 ? "s" : ""}</b>
-          {countries.length > 1 ? ` (${countries.length} pays × 10)` : ""} — continuer ?
+          Cette recherche coûtera <b className="text-foreground">{formatCredits(cost)} crédits</b>
+          {countries.length > 1
+            ? ` (${countries.length} pays × ${formatCredits(SEARCH_COST_PER_COUNTRY)})`
+            : ""}{" "}
+          — continuer ?
         </p>
         <p className="text-muted-foreground mt-1 text-xs">
           Solde actuel : {formatCredits(balance)} crédits. Gratuit si la recherche est déjà en cache.

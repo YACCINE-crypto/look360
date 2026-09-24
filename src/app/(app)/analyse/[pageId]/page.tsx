@@ -258,7 +258,7 @@ function AnalyseGate({
         </div>
 
         <p className="text-sm">
-          Cette analyse coûtera <b>{ANALYZE_COST} crédits</b> — toutes ses pubs actives,
+          Cette analyse coûtera <b>{formatCredits(ANALYZE_COST)} crédits</b> — toutes ses pubs actives,
           son activité et son audience cumulée.
         </p>
         <p className="text-muted-foreground text-xs">
@@ -270,7 +270,7 @@ function AnalyseGate({
             href={go}
             className="bg-primary text-primary-foreground inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
           >
-            <Icon name="search" size={16} /> Analyser ({ANALYZE_COST} crédits)
+            <Icon name="search" size={16} /> Analyser ({formatCredits(ANALYZE_COST)} crédits)
           </Link>
         ) : (
           <div className="space-y-3">

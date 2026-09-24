@@ -1,21 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { motion, type Variants } from "motion/react";
 import NumberFlow from "@number-flow/react";
-import {
-  Zap,
-  Users,
-  Bot,
-  Check,
-  X,
-  Sparkles,
-  Crown,
-  ArrowUpRight,
-} from "lucide-react";
+import { Zap, Check, X, Sparkles, Crown, ArrowUpRight } from "lucide-react";
 import {
   PLANS,
-  PLAN_ORDER,
   CREDIT_PACKS,
   formatCredits,
   planLabel,
@@ -26,8 +16,83 @@ const fcfa = (n: number) => new Intl.NumberFormat("fr-FR").format(n) + " FCFA";
 const discountPct = (normal: number, first: number) =>
   Math.round((1 - first / normal) * 100);
 
-/** Offres populaires mises en avant. */
+/** On ne montre en grand que les offres PAYANTES. Le Gratuit = bandeau discret. */
+const PAID_ORDER: Plan[] = ["starter", "pro", "business"];
 const POPULAR: Plan = "pro";
+
+/** Baseline « montée en gamme » affichée sous le nom de chaque offre. */
+const TAGLINE: Record<Plan, string> = {
+  free: "",
+  starter: "L'essentiel pour se lancer",
+  pro: "Tout le Starter, plus l'automatisation",
+  business: "Tout le Pro, à grande échelle",
+};
+
+const SUPPORT: Record<Plan, string> = {
+  free: "communautaire",
+  starter: "standard",
+  pro: "prioritaire",
+  business: "prioritaire (VIP)",
+};
+
+type Feat = { label: ReactNode; on: boolean };
+
+/** Liste complète des fonctionnalités, avec ✅ inclus / ❌ non inclus. */
+function features(p: Plan): Feat[] {
+  const c = PLANS[p];
+  const s = c.competitorSlots > 1 ? "s" : "";
+  return [
+    {
+      label: (
+        <>
+          <b className="text-foreground font-semibold">
+            {formatCredits(c.monthlyCredits)}
+          </b>{" "}
+          crédits / mois
+        </>
+      ),
+      on: true,
+    },
+    { label: "Spy Facebook — recherche de pubs", on: true },
+    { label: "Top Trend — classement produits", on: true },
+    { label: "Analyse de concurrent", on: true },
+    { label: "Téléchargement des vidéos de pub", on: true },
+    {
+      label: (
+        <>
+          Suivi de{" "}
+          <b className="text-foreground font-semibold">{c.competitorSlots}</b>{" "}
+          concurrent{s}
+        </>
+      ),
+      on: c.competitorSlots > 0,
+    },
+    {
+      label: c.winnerEnabled ? (
+        <>
+          Winner Agent auto —{" "}
+          <b className="text-foreground font-semibold">
+            {c.winnerKeywords} mots-clés
+          </b>{" "}
+          × {c.winnerCountries} pays
+        </>
+      ) : (
+        "Winner Agent automatique"
+      ),
+      on: c.winnerEnabled,
+    },
+    { label: "Winners du jour sur WhatsApp", on: c.whatsapp },
+    { label: "Vitrine des winners validés", on: true },
+    {
+      label: (
+        <>
+          Support <b className="text-foreground font-semibold">{SUPPORT[p]}</b>
+        </>
+      ),
+      on: true,
+    },
+  ];
+}
 
 const reveal: Variants = {
   hidden: { opacity: 0, y: 24, filter: "blur(8px)" },
@@ -58,42 +123,36 @@ export default function OffresClient({
   }, []);
 
   return (
-    <div className="space-y-8">
-      {/* En-tête + solde */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">
-            Offres &amp; crédits
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Les crédits servent aux recherches et aux analyses. Change d&apos;offre
-            quand tu veux.
-          </p>
-        </div>
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="border-border bg-surface shadow-card flex items-center gap-4 rounded-2xl border px-5 py-3"
-        >
-          <div>
-            <p className="text-muted-foreground text-[11px] font-semibold uppercase tracking-wide">
-              Solde
-            </p>
-            <p className="text-primary flex items-center gap-1 text-2xl font-bold tabular-nums">
-              <Zap size={20} className="fill-primary text-primary" />
-              {formatCredits(balance)}
-            </p>
-          </div>
-          <div className="border-border h-10 border-l" />
-          <div>
-            <p className="text-muted-foreground text-[11px] font-semibold uppercase tracking-wide">
-              Offre actuelle
-            </p>
-            <p className="text-lg font-bold">{planLabel(current)}</p>
-          </div>
-        </motion.div>
+    <div className="space-y-7">
+      {/* En-tête */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">
+          Offres &amp; crédits
+        </h1>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Les crédits servent aux recherches et aux analyses. Change d&apos;offre
+          quand tu veux.
+        </p>
       </div>
+
+      {/* Bandeau discret — offre actuelle (Gratuit ou autre) + solde */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="border-border bg-surface shadow-card flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border px-4 py-2.5 text-sm"
+      >
+        <span className="text-muted-foreground">Ton offre actuelle :</span>
+        <span className="font-bold">{planLabel(current)}</span>
+        <span className="text-muted-foreground">
+          — {formatCredits(PLANS[current].monthlyCredits)} crédits / mois
+        </span>
+        <span className="text-border mx-1">·</span>
+        <span className="text-primary inline-flex items-center gap-1 font-semibold">
+          <Zap size={14} className="fill-primary text-primary" /> Solde{" "}
+          {formatCredits(balance)}
+        </span>
+      </motion.div>
 
       {/* Bandeau promo lancement */}
       <motion.div
@@ -106,63 +165,16 @@ export default function OffresClient({
         Offre de lancement — jusqu&apos;à −33&nbsp;% sur le 1<sup>er</sup> mois
       </motion.div>
 
-      {/* Grille d'offres */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:items-stretch">
-        {PLAN_ORDER.map((p, i) => {
+      {/* Grille des 3 offres payantes */}
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-3 md:items-stretch">
+        {PAID_ORDER.map((p, i) => {
           const cfg = PLANS[p];
           const isCurrent = p === current;
           const isPopular = p === POPULAR;
-          const isFree = cfg.priceNormal === 0;
           const pct =
             cfg.priceFirst != null
               ? discountPct(cfg.priceNormal, cfg.priceFirst)
               : 0;
-
-          const features = [
-            {
-              icon: <Zap size={16} className="text-primary" />,
-              label: (
-                <>
-                  <b className="text-foreground font-semibold">
-                    {formatCredits(cfg.monthlyCredits)}
-                  </b>{" "}
-                  crédits / mois
-                </>
-              ),
-              on: true,
-            },
-            {
-              icon: <Users size={16} className="text-primary" />,
-              label:
-                cfg.competitorSlots === 0 ? (
-                  "Pas de suivi concurrent"
-                ) : (
-                  <>
-                    <b className="text-foreground font-semibold">
-                      {cfg.competitorSlots}
-                    </b>{" "}
-                    concurrent{cfg.competitorSlots > 1 ? "s" : ""} suivi
-                    {cfg.competitorSlots > 1 ? "s" : ""}
-                  </>
-                ),
-              on: cfg.competitorSlots > 0,
-            },
-            {
-              icon: <Bot size={16} className="text-primary" />,
-              label: cfg.winnerEnabled ? (
-                <>
-                  Winner Agent —{" "}
-                  <b className="text-foreground font-semibold">
-                    {cfg.winnerKeywords} mots-clés
-                  </b>{" "}
-                  × {cfg.winnerCountries} pays
-                </>
-              ) : (
-                "Winner Agent : non inclus"
-              ),
-              on: cfg.winnerEnabled,
-            },
-          ];
 
           return (
             <motion.div
@@ -173,7 +185,7 @@ export default function OffresClient({
               animate="show"
               className={`relative flex flex-col rounded-3xl border p-6 ${
                 isPopular
-                  ? "border-primary/40 bg-gradient-to-b from-secondary/60 to-surface ring-primary shadow-xl shadow-primary/10 ring-2 lg:-my-2 lg:py-8"
+                  ? "border-primary/40 bg-gradient-to-b from-secondary/60 to-surface ring-primary shadow-xl shadow-primary/10 ring-2 md:-my-2 md:py-8"
                   : "border-border bg-surface shadow-card"
               }`}
             >
@@ -186,71 +198,71 @@ export default function OffresClient({
                 </div>
               )}
 
-              {/* Nom + actuelle */}
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-xl font-bold">{cfg.label}</h3>
-                {isCurrent && (
-                  <span className="bg-success-bg text-success rounded-full px-2 py-0.5 text-[11px] font-semibold">
-                    Actuelle
-                  </span>
-                )}
+              {/* Nom + tagline + actuelle */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-bold">{cfg.label}</h3>
+                  {isCurrent && (
+                    <span className="bg-success-bg text-success rounded-full px-2 py-0.5 text-[11px] font-semibold">
+                      Actuelle
+                    </span>
+                  )}
+                </div>
+                <p className="text-muted-foreground mt-0.5 text-xs">
+                  {TAGLINE[p]}
+                </p>
               </div>
 
               {/* Prix + promo */}
-              <div className="min-h-[104px]">
-                {isFree ? (
-                  <>
-                    <p className="text-4xl font-bold">Gratuit</p>
-                    <p className="text-muted-foreground mt-2 text-sm">
-                      Pour découvrir Look360
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <div className="mb-1 flex items-center gap-2">
-                      <span className="text-muted-foreground text-base font-medium line-through">
-                        {fcfa(cfg.priceNormal)}
-                      </span>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-2 py-0.5 text-[11px] font-extrabold text-white shadow-sm">
-                        <Sparkles size={11} />−{pct}%
-                      </span>
-                    </div>
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-primary text-4xl font-extrabold tabular-nums">
-                        <NumberFlow
-                          value={mounted ? (cfg.priceFirst ?? 0) : 0}
-                          locales="fr-FR"
-                        />
-                      </span>
-                      <span className="text-primary text-base font-bold">
-                        FCFA
-                      </span>
-                    </div>
-                    <p className="text-muted-foreground mt-1 text-xs font-medium">
-                      le 1<sup>er</sup> mois, puis {fcfa(cfg.priceNormal)}/mois
-                    </p>
-                  </>
-                )}
+              <div className="min-h-[100px]">
+                <div className="mb-1 flex items-center gap-2">
+                  <span className="text-muted-foreground text-base font-medium line-through">
+                    {fcfa(cfg.priceNormal)}
+                  </span>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-2 py-0.5 text-[11px] font-extrabold text-white shadow-sm">
+                    <Sparkles size={11} />−{pct}%
+                  </span>
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-primary text-4xl font-extrabold tabular-nums">
+                    <NumberFlow
+                      value={mounted ? (cfg.priceFirst ?? 0) : 0}
+                      locales="fr-FR"
+                    />
+                  </span>
+                  <span className="text-primary text-base font-bold">FCFA</span>
+                </div>
+                <p className="text-muted-foreground mt-1 text-xs font-medium">
+                  le 1<sup>er</sup> mois, puis {fcfa(cfg.priceNormal)}/mois
+                </p>
               </div>
 
               {/* CTA */}
               <PlanButton isCurrent={isCurrent} isPopular={isPopular} />
 
-              {/* Features */}
-              <ul className="border-border mt-6 space-y-3 border-t pt-5">
-                {features.map((f, fi) => (
+              {/* Comparatif complet des fonctionnalités */}
+              <ul className="border-border mt-6 space-y-2.5 border-t pt-5">
+                {features(p).map((f, fi) => (
                   <li key={fi} className="flex items-start gap-2.5 text-sm">
                     <span
                       className={`mt-0.5 grid h-5 w-5 shrink-0 place-content-center rounded-full ${
                         f.on
-                          ? "bg-secondary text-primary"
-                          : "bg-muted text-muted-foreground"
+                          ? "bg-success-bg text-success"
+                          : "bg-danger-bg text-danger"
                       }`}
                     >
-                      {f.on ? <Check size={13} strokeWidth={3} /> : <X size={12} strokeWidth={3} />}
+                      {f.on ? (
+                        <Check size={13} strokeWidth={3} />
+                      ) : (
+                        <X size={12} strokeWidth={3} />
+                      )}
                     </span>
                     <span
-                      className={f.on ? "text-muted-foreground" : "text-muted-foreground/70"}
+                      className={
+                        f.on
+                          ? "text-muted-foreground"
+                          : "text-muted-foreground/60 line-through"
+                      }
                     >
                       {f.label}
                     </span>
@@ -280,26 +292,24 @@ export default function OffresClient({
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, margin: "-40px" }}
-              className="border-border bg-surface shadow-card flex items-center justify-between gap-3 rounded-2xl border p-5"
+              className="border-border bg-surface shadow-card flex flex-col items-center gap-3 rounded-2xl border p-5 text-center"
             >
               <div>
-                <p className="flex items-center gap-1.5 text-2xl font-bold tabular-nums">
+                <p className="flex items-center justify-center gap-1.5 text-2xl font-bold tabular-nums whitespace-nowrap">
                   <Zap size={18} className="fill-primary text-primary" />
                   {formatCredits(pack.credits)}
                 </p>
                 <p className="text-muted-foreground text-sm">crédits</p>
               </div>
-              <div className="flex flex-col items-end gap-2">
-                <p className="text-base font-bold">{fcfa(pack.price)}</p>
-                <button
-                  type="button"
-                  disabled
-                  title="Paiement bientôt disponible"
-                  className="bg-input text-muted-foreground inline-flex min-h-[38px] cursor-not-allowed items-center justify-center rounded-full px-4 text-sm font-semibold"
-                >
-                  Bientôt disponible
-                </button>
-              </div>
+              <p className="text-lg font-bold">{fcfa(pack.price)}</p>
+              <button
+                type="button"
+                disabled
+                title="Paiement bientôt disponible"
+                className="bg-input text-muted-foreground inline-flex min-h-[40px] w-full cursor-not-allowed items-center justify-center rounded-full px-4 text-sm font-semibold"
+              >
+                Bientôt disponible
+              </button>
             </motion.div>
           ))}
         </div>
