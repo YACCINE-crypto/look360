@@ -19,7 +19,7 @@ export function TestingSection() {
       <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-2 md:gap-14">
         {/* Colonne texte */}
         <RevealOnScroll>
-          <div>
+          <div className="text-center md:text-left">
             <span className="border-primary/20 bg-surface text-primary inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold">
               <Icon name="flask" size={13} /> La fonction signature
             </span>
@@ -33,8 +33,8 @@ export function TestingSection() {
               suppositions.
             </p>
 
-            {/* Comment ça marche */}
-            <ul className="mt-6 space-y-4">
+            {/* Comment ça marche — liste lisible à gauche, bloc centré sur mobile */}
+            <ul className="mx-auto mt-6 max-w-md space-y-4 text-left md:mx-0 md:max-w-none">
               <Step
                 icon="inbox"
                 title="Tes commandes → ton taux de closing"
