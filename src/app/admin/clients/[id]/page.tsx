@@ -74,11 +74,19 @@ export default async function AdminClientDetailPage({
             <span className="bg-secondary text-primary rounded-full px-2.5 py-1 text-xs font-semibold">
               {planLabel(c.plan)}
             </span>
-            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${c.suspended ? "bg-danger-bg text-danger" : "bg-success-bg text-success"}`}>
-              {c.suspended ? "Suspendu" : c.status}
+            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${c.suspended ? "bg-danger-bg text-danger" : c.status === "active" ? "bg-success-bg text-success" : "bg-input text-muted-foreground"}`}>
+              {c.suspended ? "Suspendu" : c.status === "active" ? "Abonnement actif" : c.status === "expired" ? "Abonnement expiré" : c.status}
             </span>
           </div>
         </div>
+        {c.current_period_end && (
+          <p className="text-muted-foreground mt-2 text-xs">
+            {c.status === "active" ? "Prochaine échéance : " : "Abonnement terminé le "}
+            <span className="text-foreground font-medium">
+              {new Date(c.current_period_end).toLocaleDateString("fr-FR")}
+            </span>
+          </p>
+        )}
 
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Fig label="Solde crédits" value={formatCredits(c.credits_balance ?? 0)} />

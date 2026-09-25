@@ -18,7 +18,22 @@ type Row = {
   tests_count: number;
   ca_genere: number;
   created_at: string;
+  current_period_end: string | null;
+  last_payment_status: string | null;
+  last_payment_at: string | null;
 };
+
+const PAY_LABEL: Record<string, { txt: string; cls: string }> = {
+  success: { txt: "Réussi", cls: "bg-success-bg text-success" },
+  failed: { txt: "Échoué", cls: "bg-danger-bg text-danger" },
+  error: { txt: "Échoué", cls: "bg-danger-bg text-danger" },
+  cancelled: { txt: "Annulé", cls: "bg-input text-muted-foreground" },
+  pending: { txt: "En attente", cls: "bg-amber-100 text-amber-700" },
+};
+function payBadge(status: string | null) {
+  if (!status) return { txt: "—", cls: "bg-input text-muted-foreground" };
+  return PAY_LABEL[status] ?? { txt: status, cls: "bg-input text-muted-foreground" };
+}
 
 const PAGE_SIZE = 25;
 const fcfa = (n: number) => new Intl.NumberFormat("fr-FR").format(n) + " FCFA";
@@ -112,12 +127,13 @@ export default async function AdminClientsPage({
 
       {/* Table */}
       <div className="border-border bg-surface shadow-card overflow-x-auto rounded-2xl border">
-        <table className="w-full min-w-[880px] text-sm">
+        <table className="w-full min-w-[1000px] text-sm">
           <thead className="border-border text-muted-foreground border-b text-left text-xs uppercase tracking-wide">
             <tr>
               <th className="px-4 py-3 font-semibold">Client</th>
               <th className="px-4 py-3 font-semibold">Offre</th>
-              <th className="px-4 py-3 font-semibold">Statut</th>
+              <th className="px-4 py-3 font-semibold">Abonnement</th>
+              <th className="px-4 py-3 font-semibold">Dernier paiement</th>
               <th className="px-4 py-3 text-right font-semibold">Solde</th>
               <th className="px-4 py-3 text-right font-semibold">Rech. / Tests</th>
               <th className="px-4 py-3 text-right font-semibold">CA généré</th>
@@ -127,7 +143,7 @@ export default async function AdminClientsPage({
           <tbody className="divide-border divide-y">
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-muted-foreground px-4 py-10 text-center">
+                <td colSpan={8} className="text-muted-foreground px-4 py-10 text-center">
                   Aucun client.
                 </td>
               </tr>
@@ -156,12 +172,37 @@ export default async function AdminClientsPage({
                   </td>
                   <td className="px-4 py-3">
                     <span
-                      className={`text-xs font-medium ${
-                        r.status === "active" ? "text-success" : "text-muted-foreground"
+                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                        r.status === "active"
+                          ? "bg-success-bg text-success"
+                          : "bg-input text-muted-foreground"
                       }`}
                     >
-                      {r.status}
+                      {r.status === "active" ? "Actif" : r.status === "expired" ? "Expiré" : r.status}
                     </span>
+                    {r.current_period_end && (
+                      <span className="text-muted-foreground/70 mt-0.5 block text-[11px]">
+                        {r.status === "active" ? "Échéance " : "Fin "}
+                        {new Date(r.current_period_end).toLocaleDateString("fr-FR")}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {(() => {
+                      const b = payBadge(r.last_payment_status);
+                      return (
+                        <>
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${b.cls}`}>
+                            {b.txt}
+                          </span>
+                          {r.last_payment_at && (
+                            <span className="text-muted-foreground/70 mt-0.5 block text-[11px]">
+                              {new Date(r.last_payment_at).toLocaleDateString("fr-FR")}
+                            </span>
+                          )}
+                        </>
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums">{nf(r.credits_balance)}</td>
                   <td className="text-muted-foreground px-4 py-3 text-right tabular-nums">

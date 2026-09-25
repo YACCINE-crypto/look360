@@ -581,6 +581,7 @@ export type Database = {
       admin_cockpit: { Args: never; Returns: Json }
       admin_charts: { Args: never; Returns: Json }
       admin_activity: { Args: never; Returns: Json }
+      admin_revenue: { Args: never; Returns: Json }
       admin_clients: {
         Args: {
           p_search?: string | null
