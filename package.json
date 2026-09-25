@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@number-flow/react": "^0.6.2",
+    "@sentry/nextjs": "^11.0.0",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",
     "lucide-react": "^1.47.0",
