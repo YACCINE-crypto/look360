@@ -206,7 +206,9 @@ export function AppShell({
           <CreditsBadge credits={credits} plan={plan} compact />
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 pb-24 lg:p-6 lg:pb-6">{children}</main>
+        <main className="app-canvas flex-1 overflow-y-auto p-4 pb-24 lg:p-6 lg:pb-6">
+          <div className="rise-in mx-auto max-w-[1400px]">{children}</div>
+        </main>
 
         {/* Barre d'onglets basse (mobile) — feel appli native */}
         <MobileTabBar onMenu={() => setMobileOpen(true)} />

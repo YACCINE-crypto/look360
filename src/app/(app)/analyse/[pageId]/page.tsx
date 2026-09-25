@@ -291,10 +291,10 @@ function KpiTile({
   accent?: boolean;
 }) {
   return (
-    <Card className="p-4">
+    <Card className="card-lift p-4">
       <div className="flex items-start justify-between gap-2">
         <span className="text-muted-foreground text-xs font-medium">{label}</span>
-        <span className="bg-input text-muted-foreground grid h-8 w-8 shrink-0 place-items-center rounded-lg">
+        <span className="bg-secondary text-primary grid h-8 w-8 shrink-0 place-items-center rounded-lg">
           <Icon name={icon} size={16} />
         </span>
       </div>

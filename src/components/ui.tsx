@@ -32,13 +32,14 @@ export function PageHeader({
 }) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <h1 className="text-lg font-semibold tracking-tight lg:text-xl">
-          {title}
-        </h1>
-        {subtitle && (
-          <p className="text-muted-foreground mt-0.5 text-sm">{subtitle}</p>
-        )}
+      <div className="flex items-start gap-3">
+        <span className="from-primary to-primary/40 mt-0.5 h-8 w-1.5 shrink-0 rounded-full bg-gradient-to-b" />
+        <div>
+          <h1 className="text-lg font-bold tracking-tight lg:text-xl">{title}</h1>
+          {subtitle && (
+            <p className="text-muted-foreground mt-0.5 text-sm">{subtitle}</p>
+          )}
+        </div>
       </div>
       {children && (
         <div className="flex shrink-0 items-center gap-2">{children}</div>
@@ -64,10 +65,10 @@ export function StatCard({
   trendTone?: Tone;
 }) {
   return (
-    <Card className="p-4">
+    <Card className="card-lift p-4">
       <div className="flex items-start justify-between gap-2">
         <p className="text-muted-foreground text-xs font-medium">{label}</p>
-        <span className="bg-input text-muted-foreground grid h-8 w-8 shrink-0 place-items-center rounded-lg">
+        <span className="bg-secondary text-primary grid h-8 w-8 shrink-0 place-items-center rounded-lg">
           <Icon name={icon} size={16} />
         </span>
       </div>

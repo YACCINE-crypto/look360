@@ -61,9 +61,9 @@ export function SidebarNav({
             key={it.href}
             href={it.href}
             onClick={onNavigate}
-            className={`flex min-h-[44px] items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
+            className={`relative flex min-h-[44px] items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all ${
               active
-                ? "bg-secondary text-primary font-medium"
+                ? "from-secondary to-secondary/40 text-primary font-semibold shadow-sm before:absolute before:left-0 before:top-1/2 before:h-5 before:w-1 before:-translate-y-1/2 before:rounded-full before:bg-primary bg-gradient-to-r"
                 : "text-muted-foreground hover:bg-input hover:text-foreground"
             }`}
           >

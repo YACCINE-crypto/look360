@@ -51,8 +51,10 @@
   /* (plus d'override --text-* : text-xs=12 · text-sm=14 · text-base=16
       · text-lg=18 · text-2xl=24 · text-4xl=36, comme Kimba) */
 
-  /* Ombre de carte Kimba (subtile, neutre) */
-  --shadow-card: 0 1px 3px 0 rgb(15 23 42 / 0.04), 0 1px 2px -1px rgb(15 23 42 / 0.03);
+  /* Ombres — profondeur douce (moins plat), toujours neutres. */
+  --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 4px 12px -4px rgb(15 23 42 / 0.06);
+  --shadow-lift: 0 12px 28px -10px rgb(15 23 42 / 0.16), 0 4px 10px -6px rgb(15 23 42 / 0.10);
+  --shadow-glow: 0 6px 20px -6px color-mix(in srgb, var(--color-primary) 45%, transparent);
 
   /* Largeur canonique de la sidebar (Kimba = 224px) */
   --spacing-sidebar: 14rem;
@@ -100,6 +102,46 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: color-mix(in srgb, var(--color-muted-foreground) 70%, transparent);
+}
+
+/* Canvas de l'app — fond légèrement teinté (marque) en coins, pour ne plus être
+   plat. Très subtil, thème clair conservé. */
+.app-canvas {
+  background:
+    radial-gradient(1100px 560px at 100% -8%, color-mix(in srgb, var(--color-primary) 7%, transparent), transparent 62%),
+    radial-gradient(900px 520px at -6% 108%, color-mix(in srgb, var(--color-primary) 5%, transparent), transparent 60%),
+    var(--color-background);
+}
+
+/* Élévation au survol — cartes interactives (desktop surtout). */
+.card-lift {
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .card-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift);
+  }
+}
+
+/* Entrée douce du contenu de page (désactivée si reduced-motion). */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .rise-in {
+    animation: rise-in 0.4s ease both;
+  }
 }
 
 /* Scroll horizontal tactile fluide, sans barre visible (filtres statut). */
