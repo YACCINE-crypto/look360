@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { searchSpyWithCache } from "@/lib/spyCache";
 import { Card } from "@/components/ui";
 import { Icon } from "@/components/Icon";
+import { CountryFlag, MeterBar, type Tone } from "@/components/dataviz";
 import { AdGrid } from "@/components/AdGrid";
 import { AdActivityChart } from "./AdActivityChart";
 import { SuivreButton } from "./SuivreButton";
@@ -104,6 +105,18 @@ export default async function AnalysePage({
   const audience = ads.reduce((s, a) => s + (a.reach ?? 0), 0);
   const hasAudience = ads.some((a) => a.reach != null);
 
+  // Agrégats supplémentaires — 100 % données réelles Apify.
+  const withMedia = ads.filter((a) => a.media_type !== "none");
+  const videos = withMedia.filter((a) => a.media_type === "video").length;
+  const images = withMedia.filter((a) => a.media_type === "image").length;
+  const videosPct = withMedia.length > 0 ? Math.round((videos / withMedia.length) * 100) : null;
+  const joursList = ads.map((a) => a.jours_actifs).filter((j): j is number => j != null);
+  const ancienneteMoy =
+    joursList.length > 0 ? Math.round(joursList.reduce((s, j) => s + j, 0) / joursList.length) : null;
+  const onFacebook = ads.filter((a) => a.platforms.some((p) => /facebook/i.test(p))).length;
+  const onInstagram = ads.filter((a) => a.platforms.some((p) => /instagram/i.test(p))).length;
+  const avatarImg = top?.thumbnail_url ?? ads.find((a) => a.thumbnail_url)?.thumbnail_url ?? null;
+
   // Ouvrir la fiche = "j'ai vu" → on remet le badge "nouvelle pub" à zéro.
   if (userId) {
     await supabase
@@ -123,80 +136,122 @@ export default async function AnalysePage({
         Spy Facebook
       </Link>
 
-      {/* En-tête concurrent */}
-      <div className="border-border bg-surface shadow-card flex flex-col gap-4 rounded-xl border p-5 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight">{pageName}</h1>
-          <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-            {domaine && (
-              <span className="flex items-center gap-1">
-                <Icon name="external" size={13} /> {domaine}
-              </span>
-            )}
-            {likes != null && (
-              <span className="flex items-center gap-1">
-                <Icon name="users" size={13} /> {nf.format(likes)} likes
-              </span>
-            )}
-            <span className="flex items-center gap-1">
-              <Icon name="today" size={13} /> 1ʳᵉ pub vue : {formatDate(firstDate)}
+      {/* En-tête concurrent — fiche marque */}
+      <div className="border-border bg-surface shadow-card rounded-2xl border p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 items-start gap-3">
+            {/* Avatar = meilleure créative (fallback initiale) */}
+            <span className="border-border bg-input relative grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl border">
+              {avatarImg ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatarImg} alt={pageName} className="h-full w-full object-cover" />
+              ) : (
+                <span className="text-muted-foreground text-lg font-bold">
+                  {pageName.slice(0, 2).toUpperCase()}
+                </span>
+              )}
             </span>
-            <span>{countryLabel(country)}</span>
+            <div className="min-w-0">
+              <h1 className="truncate text-2xl font-extrabold tracking-tight">{pageName}</h1>
+              <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                {domaine && (
+                  <span className="flex items-center gap-1">
+                    <Icon name="external" size={13} /> {domaine}
+                  </span>
+                )}
+                <span className="flex items-center gap-1">
+                  <CountryFlag code={country} /> {countryLabel(country)}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Icon name="today" size={13} /> Depuis {formatDate(firstDate)}
+                </span>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                {likes != null && (
+                  <span className="bg-input text-muted-foreground inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium">
+                    <Icon name="users" size={12} /> {nf.format(likes)} likes
+                  </span>
+                )}
+                {platforms.map((pl) => (
+                  <span key={pl} className="bg-secondary text-primary rounded-full px-2 py-0.5 text-xs font-medium">
+                    {pl}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
-          {platforms.length > 0 && (
-            <p className="text-muted-foreground mt-1 text-xs">{platforms.join(" · ")}</p>
-          )}
-        </div>
-        <div className="flex shrink-0 flex-wrap gap-2">
-          <SuivreButton pageId={pageId} pageName={pageName} domaine={domaine} country={country} />
-          {top && (
-            <form action={ajouterAuxProduits}>
-              <input type="hidden" name="nom" value={pageName} />
-              <input type="hidden" name="image_url" value={top.thumbnail_url ?? top.media_url ?? ""} />
-              <input type="hidden" name="landing_url" value={top.landing_url ?? ""} />
-              <input type="hidden" name="ad_library_url" value={top.ad_library_url} />
-              <input type="hidden" name="ad_text" value={top.ad_text ?? ""} />
-              <input type="hidden" name="marche" value={top.country ?? ""} />
-              <button
-                type="submit"
-                className="bg-primary text-primary-foreground inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
-              >
-                <Icon name="plus" size={16} /> Ajouter à mes produits
-              </button>
-            </form>
-          )}
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <SuivreButton pageId={pageId} pageName={pageName} domaine={domaine} country={country} />
+            {top && (
+              <form action={ajouterAuxProduits}>
+                <input type="hidden" name="nom" value={pageName} />
+                <input type="hidden" name="image_url" value={top.thumbnail_url ?? top.media_url ?? ""} />
+                <input type="hidden" name="landing_url" value={top.landing_url ?? ""} />
+                <input type="hidden" name="ad_library_url" value={top.ad_library_url} />
+                <input type="hidden" name="ad_text" value={top.ad_text ?? ""} />
+                <input type="hidden" name="marche" value={top.country ?? ""} />
+                <button
+                  type="submit"
+                  className="bg-primary text-primary-foreground inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
+                >
+                  <Icon name="plus" size={16} /> Ajouter à mes produits
+                </button>
+              </form>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Stats — uniquement des données réelles issues d'Apify */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Card className="flex flex-col gap-1 px-4 py-3">
-          <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-            Pubs actives
-          </span>
-          <span className="text-primary text-2xl font-bold tabular-nums">{ads.length}</span>
-          <span className="text-muted-foreground text-xs">créatives en diffusion</span>
-        </Card>
-        <Card className="flex flex-col gap-1 px-4 py-3">
-          <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-            Audience cumulée
-          </span>
-          <span className="text-primary text-2xl font-bold tabular-nums">
-            {hasAudience ? formatReach(audience) : "—"}
-          </span>
-          <span className="text-muted-foreground text-xs">
-            {hasAudience ? "portée de l'ensemble de ses pubs (UE)" : "portée non publiée hors UE"}
-          </span>
-        </Card>
+      {/* KPI — uniquement des données réelles issues d'Apify */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <KpiTile label="Pubs actives" value={nf.format(ads.length)} icon="eye" hint="en diffusion" accent />
+        <KpiTile
+          label="Audience cumulée"
+          value={hasAudience ? formatReach(audience) : "—"}
+          icon="users"
+          hint={hasAudience ? "portée UE (DSA)" : "hors UE : non publiée"}
+        />
+        <KpiTile
+          label="Créatives vidéo"
+          value={videosPct == null ? "—" : `${videosPct}%`}
+          icon="play"
+          hint={`${videos} vidéo${videos > 1 ? "s" : ""} / ${images} image${images > 1 ? "s" : ""}`}
+        />
+        <KpiTile
+          label="Ancienneté moy."
+          value={ancienneteMoy == null ? "—" : `${ancienneteMoy} j`}
+          icon="clock"
+          hint="de diffusion par pub"
+        />
       </div>
 
-      {/* Graphe activité */}
-      <Card className="p-5">
-        <p className="text-muted-foreground mb-3 text-xs font-medium uppercase tracking-wide">
-          Activité publicitaire (pubs lancées / mois)
-        </p>
-        <AdActivityChart data={chart} />
-      </Card>
+      {/* Graphe activité + répartitions */}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+        <Card className="p-5 lg:col-span-2">
+          <p className="text-muted-foreground mb-3 text-xs font-medium uppercase tracking-wide">
+            Activité publicitaire (pubs lancées / mois)
+          </p>
+          <AdActivityChart data={chart} />
+        </Card>
+        <Card className="space-y-4 p-5">
+          <div>
+            <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
+              Formats
+            </p>
+            <BreakRow label="Vidéo" n={videos} total={withMedia.length} tone="primary" />
+            <BreakRow label="Image" n={images} total={withMedia.length} tone="muted" />
+          </div>
+          {(onFacebook > 0 || onInstagram > 0) && (
+            <div className="border-border border-t pt-3">
+              <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
+                Plateformes
+              </p>
+              <BreakRow label="Facebook" n={onFacebook} total={ads.length} tone="primary" />
+              <BreakRow label="Instagram" n={onInstagram} total={ads.length} tone="warning" />
+            </div>
+          )}
+        </Card>
+      </div>
 
       {/* Créatives */}
       {failed ? (
@@ -217,6 +272,62 @@ export default async function AnalysePage({
           <AdGrid ads={ads} />
         </div>
       )}
+    </div>
+  );
+}
+
+/** Tuile KPI compacte (données réelles). */
+function KpiTile({
+  label,
+  value,
+  icon,
+  hint,
+  accent = false,
+}: {
+  label: string;
+  value: string;
+  icon: Parameters<typeof Icon>[0]["name"];
+  hint?: string;
+  accent?: boolean;
+}) {
+  return (
+    <Card className="p-4">
+      <div className="flex items-start justify-between gap-2">
+        <span className="text-muted-foreground text-xs font-medium">{label}</span>
+        <span className="bg-input text-muted-foreground grid h-8 w-8 shrink-0 place-items-center rounded-lg">
+          <Icon name={icon} size={16} />
+        </span>
+      </div>
+      <p className={`mt-1 text-2xl font-extrabold tabular-nums ${accent ? "text-primary" : "text-foreground"}`}>
+        {value}
+      </p>
+      {hint && <p className="text-muted-foreground mt-0.5 text-[11px]">{hint}</p>}
+    </Card>
+  );
+}
+
+/** Ligne de répartition : libellé + compteur + jauge de proportion. */
+function BreakRow({
+  label,
+  n,
+  total,
+  tone,
+}: {
+  label: string;
+  n: number;
+  total: number;
+  tone: Tone;
+}) {
+  const pct = total > 0 ? Math.round((n / total) * 100) : 0;
+  return (
+    <div className="mb-2 last:mb-0">
+      <div className="mb-1 flex items-center justify-between text-xs">
+        <span className="text-foreground font-medium">{label}</span>
+        <span className="text-muted-foreground tabular-nums">
+          {n} · {pct}%
+        </span>
+      </div>
+      <MeterBar value={pct} tone={tone} height={6} />
     </div>
   );
 }

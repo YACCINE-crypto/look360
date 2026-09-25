@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader, Card } from "@/components/ui";
 import { Icon } from "@/components/Icon";
+import { CountryFlag } from "@/components/dataviz";
 import { countryLabel, cleanField } from "@/lib/spy";
 import { getSubscription } from "@/lib/credits";
 import { planConfig } from "@/lib/billing";
@@ -122,8 +123,8 @@ export default async function SurveillancePage() {
                       </p>
                     )}
                     {c.country && (
-                      <p className="text-muted-foreground mt-0.5 text-xs">
-                        {countryLabel(c.country)}
+                      <p className="text-muted-foreground mt-0.5 flex items-center gap-1 text-xs">
+                        <CountryFlag code={c.country} /> {countryLabel(c.country)}
                       </p>
                     )}
                   </div>
