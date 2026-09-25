@@ -34,7 +34,11 @@ export function CreativeMedia({
   return (
     <div className={`bg-input relative w-full overflow-hidden ${aspect}`}>
       {image ? (
-        <img src={image} alt={alt} className="h-full w-full object-cover object-center" />
+        <img
+          src={image}
+          alt={alt}
+          className="h-full w-full object-cover object-center transition-transform duration-500 ease-out group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+        />
       ) : (
         <div className="text-muted-foreground grid h-full w-full place-items-center">
           <Icon name="image" size={26} />

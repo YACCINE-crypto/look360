@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui";
 import { Icon } from "@/components/Icon";
 import { StatusChip } from "@/components/StatusChip";
+import { AujourdhuiKpis } from "./AujourdhuiKpis";
 import type { TestResult } from "@/lib/testing";
 import {
   formatFCFA,
@@ -60,43 +61,36 @@ export function AujourdhuiView({ data }: { data: AujourdhuiData }) {
   const { kpis } = data;
   return (
     <div className="space-y-6">
-      {/* En-tête */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Aujourd&apos;hui</h1>
-          <p className="text-muted-foreground mt-0.5 text-sm capitalize">
-            {data.dateLabel}
-            <span className="lowercase">
-              {" · "}
-              <span className={data.pendingCount > 0 ? "text-warning font-medium" : ""}>
-                {data.pendingCount} décision{data.pendingCount > 1 ? "s" : ""} en attente
-              </span>
-            </span>
-          </p>
+      {/* En-tête — bandeau vivant */}
+      <div className="from-primary/10 via-secondary/40 border-border relative overflow-hidden rounded-2xl border bg-gradient-to-r to-transparent p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="from-primary to-primary/40 mt-0.5 h-9 w-1.5 shrink-0 rounded-full bg-gradient-to-b" />
+            <div>
+              <h1 className="text-2xl font-extrabold tracking-tight">Aujourd&apos;hui</h1>
+              <p className="text-muted-foreground mt-0.5 text-sm capitalize">
+                {data.dateLabel}
+                <span className="lowercase">
+                  {" · "}
+                  <span className={data.pendingCount > 0 ? "text-warning font-semibold" : ""}>
+                    {data.pendingCount} décision{data.pendingCount > 1 ? "s" : ""} en attente
+                  </span>
+                </span>
+              </p>
+            </div>
+          </div>
+          <span className="border-border bg-surface/80 text-muted-foreground inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs backdrop-blur">
+            <Icon name="clock" size={13} />
+            Mis à jour à {data.heure}
+          </span>
         </div>
-        <span className="border-border bg-surface text-muted-foreground inline-flex w-fit items-center gap-1.5 rounded-md border px-3 py-2 text-xs">
-          <Icon name="clock" size={13} />
-          Mis à jour à {data.heure}
-        </span>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi label="Produits en test" value={String(kpis.enTest)} hint="actifs cette semaine" />
-        <Kpi
-          label="Taux de validation"
-          value={kpis.tauxValidation === null ? "—" : `${kpis.tauxValidation.toFixed(0)}%`}
-          hint="produits tranchés"
-          valueClass="text-success"
-        />
-        <Kpi
-          label="Marge moyenne"
-          value={kpis.margeMoyenne === null ? "—" : `${kpis.margeMoyenne.toFixed(0)}%`}
-          hint="produits validés"
-          valueClass="text-warning"
-        />
-        <Kpi label="En production" value={String(kpis.enProduction)} hint="produits actifs" />
-      </div>
+      {/* KPIs animés */}
+      <AujourdhuiKpis kpis={kpis} />
+
+      {/* Raccourcis */}
+      <QuickActions />
 
       {/* Produit du jour */}
       <section className="space-y-3">
@@ -173,25 +167,44 @@ export function AujourdhuiView({ data }: { data: AujourdhuiData }) {
   );
 }
 
-function Kpi({
-  label,
-  value,
-  hint,
-  valueClass = "",
-}: {
+const QUICK_ACTIONS: {
+  href: string;
   label: string;
-  value: string;
-  hint: string;
-  valueClass?: string;
-}) {
+  desc: string;
+  icon: Parameters<typeof Icon>[0]["name"];
+  tone: string;
+}[] = [
+  { href: "/spy", label: "Spy Facebook", desc: "Trouver des pubs gagnantes", icon: "eye", tone: "bg-secondary text-primary" },
+  { href: "/recherche?add=1", label: "Nouveau produit", desc: "Ajouter à évaluer", icon: "plus", tone: "bg-success-bg text-success" },
+  { href: "/winners", label: "Winners du jour", desc: "Le repérage du jour", icon: "trophy", tone: "bg-warning-bg text-warning" },
+  { href: "/pipeline", label: "Pipeline", desc: "Suivre le flux produits", icon: "pipeline", tone: "bg-chip-idee text-chip-idee-fg" },
+];
+
+/** Raccourcis d'action rapides (tableau de bord). */
+function QuickActions() {
   return (
-    <Card className="flex flex-col gap-1 px-4 py-3">
-      <span className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
-        {label}
-      </span>
-      <span className={`text-2xl font-bold tabular-nums ${valueClass}`}>{value}</span>
-      <span className="text-muted-foreground text-xs">{hint}</span>
-    </Card>
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {QUICK_ACTIONS.map((a) => (
+        <Link
+          key={a.href}
+          href={a.href}
+          className="group border-border bg-surface shadow-card card-lift flex items-center gap-3 rounded-xl border p-4"
+        >
+          <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl ${a.tone}`}>
+            <Icon name={a.icon} size={20} />
+          </span>
+          <span className="min-w-0">
+            <span className="text-foreground block truncate text-sm font-semibold">{a.label}</span>
+            <span className="text-muted-foreground block truncate text-xs">{a.desc}</span>
+          </span>
+          <Icon
+            name="chevronRight"
+            size={16}
+            className="text-muted-foreground ml-auto shrink-0 transition-transform group-hover:translate-x-0.5"
+          />
+        </Link>
+      ))}
+    </div>
   );
 }
 

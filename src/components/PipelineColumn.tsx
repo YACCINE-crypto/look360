@@ -91,7 +91,7 @@ function PipelineCard({
 }) {
   const statut = p.statut as Statut;
   return (
-    <div className="border-border bg-surface shadow-card hover:border-primary/40 flex h-full flex-col overflow-hidden rounded-lg border transition-all hover:shadow-md">
+    <div className="group border-border bg-surface shadow-card hover:border-primary/40 flex h-full flex-col overflow-hidden rounded-lg border transition-all hover:shadow-lift">
       <div className="relative">
         <CreativeMedia image={p.media_cdn_url ?? p.image_url} alt={p.nom ?? "Produit"} ratio="portrait" />
         <div className="absolute left-1.5 top-1.5 z-10">

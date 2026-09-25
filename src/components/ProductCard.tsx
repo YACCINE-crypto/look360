@@ -39,7 +39,7 @@ export function ProductCard({
 
   return (
     <article
-      className={`bg-surface relative flex h-full flex-col overflow-hidden rounded-xl border shadow-card transition-all hover:-translate-y-0.5 hover:shadow-lg ${
+      className={`group bg-surface relative flex h-full flex-col overflow-hidden rounded-xl border shadow-card transition-all hover:-translate-y-0.5 hover:shadow-lift ${
         urgent ? "border-warning" : statut === "en_test" ? "border-primary/30" : "border-border"
       }`}
     >

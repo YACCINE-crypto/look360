@@ -615,7 +615,7 @@ export function SpyCard({
   }
 
   return (
-    <article className="bg-surface border-border shadow-card flex h-full flex-col overflow-hidden rounded-xl border">
+    <article className="group bg-surface border-border shadow-card card-lift flex h-full flex-col overflow-hidden rounded-xl border">
       <CreativeMedia
         image={ad.thumbnail_url}
         alt={pageName ?? ""}

@@ -89,7 +89,7 @@ export default async function WinnersPage() {
       ) : (
         <>
           <p className="text-muted-foreground text-sm">{ads.length} winner(s) aujourd&apos;hui</p>
-          <AdGrid ads={ads} />
+          <AdGrid ads={ads} ranked />
         </>
       )}
     </div>
