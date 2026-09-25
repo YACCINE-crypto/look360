@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { PipelineColumn } from "@/components/PipelineColumn";
 import { PageHeader } from "@/components/ui";
-import { margeParProduit } from "@/lib/testing";
+import { EmptyPreview } from "@/components/dataviz";
+import { margeParProduit, closingParProduit } from "@/lib/testing";
 import { type Produit, type Statut } from "@/lib/produits";
 
 const COLONNES: Statut[] = [
@@ -23,6 +24,7 @@ export default async function PipelinePage() {
   ]);
 
   const marges = margeParProduit(tests ?? []);
+  const closings = closingParProduit(tests ?? []);
   const parStatut = (s: Statut): Produit[] =>
     (produits ?? []).filter((p) => p.statut === s);
 
@@ -33,17 +35,29 @@ export default async function PipelinePage() {
         subtitle="Suivi complet du flux : idée → production."
       />
 
-      {/* Desktop : colonnes horizontales scrollables ; mobile : empilé */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:overflow-x-auto lg:pb-4">
-        {COLONNES.map((s) => (
-          <PipelineColumn
-            key={s}
-            statut={s}
-            produits={parStatut(s)}
-            marges={marges}
-          />
-        ))}
-      </div>
+      {(produits?.length ?? 0) === 0 ? (
+        <EmptyPreview
+          icon="pipeline"
+          title="Ton pipeline est vide"
+          description="Chaque produit avance ici de l'idée à la production. Ajoute-en un pour voir le flux se remplir."
+          ctaHref="/recherche?add=1"
+          ctaLabel="Ajouter un produit"
+          variant="board"
+        />
+      ) : (
+        /* Desktop : colonnes horizontales scrollables ; mobile : empilé */
+        <div className="flex flex-col gap-4 lg:flex-row lg:overflow-x-auto lg:pb-4">
+          {COLONNES.map((s) => (
+            <PipelineColumn
+              key={s}
+              statut={s}
+              produits={parStatut(s)}
+              marges={marges}
+              closings={closings}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

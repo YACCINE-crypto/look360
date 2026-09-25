@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/ui";
+import { EmptyPreview, CountryFlag } from "@/components/dataviz";
 import { marcheLabel, formatFCFA } from "@/lib/produits";
 import { computeTest, margeColorClass, type Test } from "@/lib/testing";
 import { dernierTestParProduit } from "@/lib/score";
@@ -45,15 +46,14 @@ export default async function TestingPage() {
       />
 
       {total === 0 ? (
-        <div className="border-border bg-surface rounded-xl border border-dashed p-12 text-center">
-          <span className="bg-secondary text-primary mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full">
-            <Icon name="flask" size={24} />
-          </span>
-          <p className="font-medium">Aucun produit en test</p>
-          <Link href="/recherche" className="text-primary mt-1 inline-block text-sm font-medium hover:underline">
-            Envoie-en un depuis la page Recherche.
-          </Link>
-        </div>
+        <EmptyPreview
+          icon="flask"
+          title="Aucun produit en test"
+          description="Envoie un produit en test depuis la Recherche : closing, marge et verdict s'afficheront ici en direct."
+          ctaHref="/recherche"
+          ctaLabel="Aller à la Recherche"
+          variant="list"
+        />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {produits?.map((p) => {
@@ -97,7 +97,9 @@ export default async function TestingPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="truncate font-semibold leading-snug">{p.nom ?? "Sans nom"}</p>
-                      <p className="text-muted-foreground text-xs">{marcheLabel(p.marche)}</p>
+                      <p className="text-muted-foreground flex items-center gap-1 text-xs">
+                        <CountryFlag code={p.marche} /> {marcheLabel(p.marche)}
+                      </p>
                     </div>
                     <Icon name="chevronRight" size={16} className="text-muted-foreground group-hover:text-foreground shrink-0" />
                   </div>

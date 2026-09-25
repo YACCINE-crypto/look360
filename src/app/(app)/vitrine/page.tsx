@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSubscription } from "@/lib/credits";
 import { planConfig } from "@/lib/billing";
 import { PageHeader } from "@/components/ui";
+import { EmptyPreview } from "@/components/dataviz";
 import { Icon } from "@/components/Icon";
 import { FeatureLock } from "@/components/FeatureLock";
 import { marcheLabel } from "@/lib/produits";
@@ -62,16 +63,14 @@ export default async function VitrinePage() {
       </PageHeader>
 
       {rows.length === 0 ? (
-        <div className="border-border bg-surface rounded-xl border border-dashed p-12 text-center">
-          <span className="bg-secondary text-primary mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full">
-            <Icon name="store" size={24} />
-          </span>
-          <p className="font-medium">Aucun winner validé pour l&apos;instant</p>
-          <p className="text-muted-foreground mx-auto mt-1 max-w-md text-sm">
-            Dès que des commerçants valident des produits (≥ 10 commandes
-            reçues), ils apparaissent ici, sans jamais révéler leur identité.
-          </p>
-        </div>
+        <EmptyPreview
+          icon="store"
+          title="Aucun winner validé pour l'instant"
+          description="Dès que des commerçants valident des produits (≥ 10 commandes reçues), ils apparaissent ici — sans jamais révéler leur identité."
+          ctaHref="/recherche"
+          ctaLabel="Explorer les produits"
+          variant="cards"
+        />
       ) : (
         <>
           <p className="text-muted-foreground text-sm">

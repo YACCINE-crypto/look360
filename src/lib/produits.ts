@@ -68,6 +68,21 @@ export function marcheLabel(code: string | null): string {
   return MARCHES.find((m) => m.code === code)?.label ?? code;
 }
 
+/**
+ * Drapeau emoji d'un code pays ISO-2 (CI → 🇨🇮). Transforme les deux lettres
+ * en indicateurs régionaux Unicode. Renvoie "" si le code est invalide.
+ */
+export function marcheFlag(code: string | null): string {
+  if (!code) return "";
+  const cc = code.trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(cc)) return "";
+  const base = 0x1f1e6;
+  return String.fromCodePoint(
+    base + (cc.charCodeAt(0) - 65),
+    base + (cc.charCodeAt(1) - 65),
+  );
+}
+
 // --- Catégories produit (design "Nouveau produit") ---
 export const CATEGORIES = [
   "Santé & Bien-être",

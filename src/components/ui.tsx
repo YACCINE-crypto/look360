@@ -1,4 +1,5 @@
 import { Icon } from "./Icon";
+import { Sparkline, type Tone } from "./dataviz";
 
 type IconName = Parameters<typeof Icon>[0]["name"];
 
@@ -52,11 +53,15 @@ export function StatCard({
   value,
   icon,
   valueClass = "",
+  trend,
+  trendTone = "primary",
 }: {
   label: string;
   value: string;
   icon: IconName;
   valueClass?: string;
+  trend?: number[];
+  trendTone?: Tone;
 }) {
   return (
     <Card className="p-4">
@@ -66,9 +71,12 @@ export function StatCard({
           <Icon name={icon} size={16} />
         </span>
       </div>
-      <p className={`mt-1 text-2xl font-bold tabular-nums ${valueClass}`}>
-        {value}
-      </p>
+      <div className="mt-1 flex items-end justify-between gap-2">
+        <p className={`text-2xl font-bold tabular-nums ${valueClass}`}>{value}</p>
+        {trend && trend.length >= 2 && (
+          <Sparkline data={trend} tone={trendTone} width={72} height={26} />
+        )}
+      </div>
     </Card>
   );
 }

@@ -1,5 +1,6 @@
 import { Icon } from "./Icon";
 import { StatCard } from "./ui";
+import type { Tone } from "./dataviz";
 
 type IconName = Parameters<typeof Icon>[0]["name"];
 
@@ -8,6 +9,8 @@ export type Stat = {
   value: string;
   icon: IconName;
   valueClass?: string;
+  trend?: number[];
+  trendTone?: Tone;
 };
 
 /** Bandeau de statistiques — grille de cartes KPI (recette Kimba). */
@@ -21,6 +24,8 @@ export function StatsStrip({ stats }: { stats: Stat[] }) {
           value={s.value}
           icon={s.icon}
           valueClass={s.valueClass}
+          trend={s.trend}
+          trendTone={s.trendTone}
         />
       ))}
     </div>

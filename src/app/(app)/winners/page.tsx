@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/ui";
+import { EmptyPreview } from "@/components/dataviz";
 import { Icon } from "@/components/Icon";
 import { AdGrid } from "@/components/AdGrid";
 import { FeatureLock } from "@/components/FeatureLock";
@@ -77,16 +78,14 @@ export default async function WinnersPage() {
       <WinnerConfigForm config={config} />
 
       {ads.length === 0 ? (
-        <div className="border-border bg-surface rounded-xl border border-dashed p-12 text-center">
-          <span className="bg-warning-bg text-warning mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full">
-            <Icon name="trophy" size={24} />
-          </span>
-          <p className="font-medium">Aucun winner aujourd&apos;hui pour l&apos;instant</p>
-          <p className="text-muted-foreground mx-auto mt-1 max-w-md text-sm">
-            L&apos;agent tourne chaque jour. Ajuste tes critères ci-dessus puis clique
-            « Lancer maintenant » pour un premier repérage immédiat.
-          </p>
-        </div>
+        <EmptyPreview
+          icon="trophy"
+          title="Aucun winner aujourd'hui pour l'instant"
+          description="L'agent tourne chaque jour. Ajuste tes critères ci-dessus puis lance un repérage, ou explore le Spy en attendant."
+          ctaHref="/spy"
+          ctaLabel="Explorer le Spy"
+          variant="cards"
+        />
       ) : (
         <>
           <p className="text-muted-foreground text-sm">{ads.length} winner(s) aujourd&apos;hui</p>

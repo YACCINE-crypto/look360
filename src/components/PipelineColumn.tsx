@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { Icon } from "./Icon";
+import { StatusChip } from "./StatusChip";
 import { CreativeMedia } from "./CreativeMedia";
+import { ProgressRing, MeterBar, CountryFlag, margeTone } from "./dataviz";
 import { envoyerEnTest, passerEnProduction } from "@/app/(app)/recherche/actions";
 import { margeColorClass } from "@/lib/testing";
 import {
-  marcheLabel,
   formatFCFA,
   STATUT_LABELS,
   type Produit,
@@ -18,45 +19,58 @@ const COLUMN_ICON: Record<string, Parameters<typeof Icon>[0]["name"]> = {
   valide: "check",
   production: "pipeline",
 };
+const COLUMN_ACCENT: Record<string, string> = {
+  idee: "bg-chip-idee text-chip-idee-fg",
+  a_tester: "bg-chip-bleu text-chip-bleu-fg",
+  en_test: "bg-secondary text-primary",
+  valide: "bg-success-bg text-success",
+  production: "bg-primary text-primary-foreground",
+};
 
 export function PipelineColumn({
   statut,
   produits,
   marges,
+  closings,
 }: {
   statut: Statut;
   produits: Produit[];
   marges: Record<string, number>;
+  closings: Record<string, number>;
 }) {
   return (
     <section className="border-border bg-surface flex w-full shrink-0 flex-col rounded-xl border shadow-card lg:w-72">
       <div className="border-border flex items-center justify-between border-b px-4 py-3">
         <div className="flex items-center gap-2">
-          <Icon name={COLUMN_ICON[statut] ?? "today"} size={16} className="text-muted-foreground" />
-          <div>
-            <h2 className="text-sm font-semibold leading-none">
-              {STATUT_LABELS[statut]}
-            </h2>
-            <p className="text-muted-foreground mt-1 text-xs">
-              {produits.length} produit{produits.length > 1 ? "s" : ""}
-            </p>
-          </div>
+          <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${COLUMN_ACCENT[statut] ?? "bg-input text-muted-foreground"}`}>
+            <Icon name={COLUMN_ICON[statut] ?? "today"} size={16} />
+          </span>
+          <h2 className="text-sm font-semibold leading-none">{STATUT_LABELS[statut]}</h2>
         </div>
+        <span className="bg-input text-muted-foreground rounded-full px-2 py-0.5 text-xs font-bold tabular-nums">
+          {produits.length}
+        </span>
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-3">
         {produits.length === 0 && (
-          <p className="border-border text-muted-foreground rounded-lg border border-dashed p-4 text-center text-xs">
-            Vide
-          </p>
+          <div className="border-border text-muted-foreground rounded-lg border border-dashed py-6 text-center text-xs">
+            <Icon name={COLUMN_ICON[statut] ?? "today"} size={18} className="mx-auto mb-1 opacity-50" />
+            Aucun produit ici
+          </div>
         )}
         {produits.map((p) => (
-          <PipelineCard key={p.id} p={p} marge={marges[p.id] ?? null} />
+          <PipelineCard
+            key={p.id}
+            p={p}
+            marge={marges[p.id] ?? null}
+            closing={closings[p.id] ?? null}
+          />
         ))}
 
         <Link
           href="/recherche?add=1"
-          className="border-border text-muted-foreground hover:text-primary mt-auto flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-dashed py-2 text-sm font-medium"
+          className="border-border text-muted-foreground hover:text-primary hover:border-primary/40 mt-auto flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-dashed py-2 text-sm font-medium transition-colors"
         >
           <Icon name="plus" size={14} />
           Ajouter
@@ -66,21 +80,52 @@ export function PipelineColumn({
   );
 }
 
-function PipelineCard({ p, marge }: { p: Produit; marge: number | null }) {
+function PipelineCard({
+  p,
+  marge,
+  closing,
+}: {
+  p: Produit;
+  marge: number | null;
+  closing: number | null;
+}) {
   const statut = p.statut as Statut;
   return (
-    <div className="border-border bg-surface flex h-full flex-col overflow-hidden rounded-lg border">
-      <CreativeMedia image={p.media_cdn_url ?? p.image_url} alt={p.nom ?? "Produit"} />
-      <div className="flex flex-1 flex-col space-y-2 p-3">
-        <div>
+    <div className="border-border bg-surface shadow-card hover:border-primary/40 flex h-full flex-col overflow-hidden rounded-lg border transition-all hover:shadow-md">
+      <div className="relative">
+        <CreativeMedia image={p.media_cdn_url ?? p.image_url} alt={p.nom ?? "Produit"} ratio="portrait" />
+        <div className="absolute left-1.5 top-1.5 z-10">
+          <StatusChip statut={statut} />
+        </div>
+        {p.marche && (
+          <span className="bg-surface/90 text-foreground absolute right-1.5 top-1.5 z-10 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold shadow-sm backdrop-blur">
+            <CountryFlag code={p.marche} /> {p.marche}
+          </span>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col gap-2 p-2.5">
+        <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{p.nom ?? "Sans nom"}</p>
-          <p className="text-muted-foreground text-xs">
-            {formatFCFA(p.cout_livre_estime)} · {marcheLabel(p.marche)}
+          <p className="text-muted-foreground truncate text-[11px]">
+            {formatFCFA(p.cout_livre_estime)}
           </p>
         </div>
-        <p className={`text-xs font-semibold ${margeColorClass(marge)}`}>
-          {marge == null ? "—" : `${marge.toFixed(0)}% marge`}
-        </p>
+
+        <div className="flex items-center gap-2">
+          <ProgressRing value={closing} size={38} stroke={4} />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-baseline justify-between">
+              <span className="text-muted-foreground text-[10px]">Marge</span>
+              <span className={`text-xs font-bold tabular-nums ${margeColorClass(marge)}`}>
+                {marge == null ? "—" : `${marge.toFixed(0)}%`}
+              </span>
+            </div>
+            <div className="mt-1">
+              <MeterBar value={marge ?? 0} tone={marge == null ? "muted" : margeTone(marge)} height={5} />
+            </div>
+          </div>
+        </div>
+
         <PipelineAction statut={statut} id={p.id} />
       </div>
     </div>

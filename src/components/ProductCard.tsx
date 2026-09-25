@@ -3,6 +3,7 @@ import { Icon } from "./Icon";
 import { StatusChip } from "./StatusChip";
 import { ProductActions } from "./ProductActions";
 import { CreativeMedia } from "./CreativeMedia";
+import { ProgressRing, MeterBar, CountryFlag, margeTone } from "./dataviz";
 import { margeColorClass } from "@/lib/testing";
 import { scoreMeta } from "@/lib/score";
 import {
@@ -22,20 +23,24 @@ export function ProductCard({
   p,
   marge,
   score,
+  closing,
 }: {
   p: Produit;
   marge?: number | null;
   score?: number | null;
+  closing?: number | null;
 }) {
   const statut = p.statut as Statut;
   const echeance = prochaineEcheance(p.date_a_travailler, p.date_lancement_testing);
   const echLabel = echeanceLabel(echeance);
   const urgent = echeanceProche(echeance);
+  const hasMarge = marge != null;
+  const hasClosing = closing != null;
 
   return (
     <article
-      className={`bg-surface relative flex h-full flex-col overflow-hidden rounded-xl border shadow-card transition-shadow hover:shadow-md ${
-        urgent ? "border-warning" : "border-border"
+      className={`bg-surface relative flex h-full flex-col overflow-hidden rounded-xl border shadow-card transition-all hover:-translate-y-0.5 hover:shadow-lg ${
+        urgent ? "border-warning" : statut === "en_test" ? "border-primary/30" : "border-border"
       }`}
     >
       {/* Toute la carte est cliquable vers la page détail (lien étiré).
@@ -52,10 +57,15 @@ export function ProductCard({
         </div>
         {score != null && (
           <span
-            className={`absolute right-2 top-2 z-20 rounded-full px-2 py-0.5 text-[11px] font-semibold ${scoreMeta(score).badge}`}
+            className={`absolute right-2 top-2 z-20 rounded-full px-2 py-0.5 text-[11px] font-semibold shadow-sm ${scoreMeta(score).badge}`}
             title="Score produit gagnant (0–100)"
           >
             {score} · {scoreMeta(score).label}
+          </span>
+        )}
+        {p.marche && (
+          <span className="bg-surface/90 text-foreground absolute bottom-2 left-2 z-20 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold shadow-sm backdrop-blur">
+            <CountryFlag code={p.marche} /> {p.marche}
           </span>
         )}
         <ProductActions
@@ -66,7 +76,7 @@ export function ProductCard({
         />
       </CreativeMedia>
 
-      <div className="flex flex-1 flex-col gap-2 border-t border-border p-3">
+      <div className="flex flex-1 flex-col gap-2.5 border-t border-border p-3">
         <div className="min-w-0">
           <h3 className="truncate font-semibold leading-snug" title={p.nom ?? ""}>
             {p.nom ?? "Sans nom"}
@@ -77,18 +87,23 @@ export function ProductCard({
           </p>
         </div>
 
-        <div className="flex items-end justify-between gap-2">
-          <div className="min-w-0">
-            <p className="text-muted-foreground text-[11px]">Coût livré</p>
-            <p className="truncate text-sm font-semibold">
-              {formatFCFA(p.cout_livre_estime)}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-muted-foreground text-[11px]">Marge est.</p>
-            <p className={`text-sm font-semibold ${margeColorClass(marge ?? null)}`}>
-              {marge == null ? "—" : `${marge.toFixed(0)}%`}
-            </p>
+        {/* Bloc data : closing (anneau) + marge (jauge) + coût */}
+        <div className="flex items-center gap-3">
+          <ProgressRing value={hasClosing ? closing! : null} size={48} stroke={5} sublabel="closing" />
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-muted-foreground text-[11px]">Marge est.</span>
+              <span className={`text-sm font-bold tabular-nums ${margeColorClass(marge ?? null)}`}>
+                {hasMarge ? `${marge!.toFixed(0)}%` : "—"}
+              </span>
+            </div>
+            <MeterBar value={hasMarge ? marge! : 0} tone={hasMarge ? margeTone(marge) : "muted"} height={6} />
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-muted-foreground text-[11px]">Coût livré</span>
+              <span className="text-foreground truncate text-xs font-semibold">
+                {formatFCFA(p.cout_livre_estime)}
+              </span>
+            </div>
           </div>
         </div>
 

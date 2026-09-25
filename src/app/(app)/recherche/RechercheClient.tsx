@@ -7,18 +7,21 @@ import { FilterBar } from "@/components/FilterBar";
 import { StatsStrip, type Stat } from "@/components/StatsStrip";
 import { AddProductPanel } from "@/components/AddProductPanel";
 import { PageHeader } from "@/components/ui";
+import { EmptyPreview } from "@/components/dataviz";
 import { Icon } from "@/components/Icon";
 import { type Produit, type Tri } from "@/lib/produits";
 
 export function RechercheClient({
   produits,
   marges,
+  closings,
   scores,
   stats,
   addError,
 }: {
   produits: Produit[];
   marges: Record<string, number>;
+  closings: Record<string, number>;
   scores: Record<string, number>;
   stats: Stat[];
   addError?: string;
@@ -109,17 +112,28 @@ export function RechercheClient({
       )}
 
       {filtered.length === 0 ? (
-        <div className="border-border bg-surface rounded-xl border border-dashed p-12 text-center">
-          <p className="text-muted-foreground text-sm">
-            Aucun produit pour ces filtres.
-          </p>
-          <Link
-            href="/recherche?add=1"
-            className="text-primary mt-3 inline-block text-sm font-medium hover:underline"
-          >
-            Ajouter ton premier produit
-          </Link>
-        </div>
+        produits.length === 0 ? (
+          <EmptyPreview
+            icon="search"
+            title="Ta bibliothèque de produits est vide"
+            description="Ajoute un produit ou importe-en un depuis le Spy — score, closing et marge s'afficheront ici."
+            ctaHref="/recherche?add=1"
+            ctaLabel="Ajouter un produit"
+            variant="cards"
+          />
+        ) : (
+          <div className="border-border bg-surface rounded-xl border border-dashed p-12 text-center">
+            <p className="text-muted-foreground text-sm">
+              Aucun produit pour ces filtres.
+            </p>
+            <Link
+              href="/recherche?add=1"
+              className="text-primary mt-3 inline-block text-sm font-medium hover:underline"
+            >
+              Ajouter ton premier produit
+            </Link>
+          </div>
+        )
       ) : (
         <div className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((p) => (
@@ -127,6 +141,7 @@ export function RechercheClient({
               key={p.id}
               p={p}
               marge={marges[p.id] ?? null}
+              closing={closings[p.id] ?? null}
               score={scores[p.id] ?? null}
             />
           ))}

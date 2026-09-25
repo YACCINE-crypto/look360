@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { SidebarNav } from "./Nav";
 import { Icon } from "./Icon";
+import { MobileTabBar } from "./MobileTabBar";
 import { NotifBell } from "./NotifBell";
 import { logout } from "@/app/login/actions";
 import { formatCredits, planLabel } from "@/lib/billing";
@@ -205,7 +206,10 @@ export function AppShell({
           <CreditsBadge credits={credits} plan={plan} compact />
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 pb-24 lg:p-6 lg:pb-6">{children}</main>
+
+        {/* Barre d'onglets basse (mobile) — feel appli native */}
+        <MobileTabBar onMenu={() => setMobileOpen(true)} />
       </div>
     </div>
   );

@@ -179,6 +179,40 @@ export function margeParProduit(tests: Test[]): Record<string, number> {
   return map;
 }
 
+/**
+ * Construit une map produit_id -> taux de closing (%) du test le plus récent.
+ * `tests` doit être trié du plus récent au plus ancien.
+ */
+export function closingParProduit(tests: Test[]): Record<string, number> {
+  const map: Record<string, number> = {};
+  for (const t of tests) {
+    if (t.produit_id in map) continue; // on garde le plus récent
+    const taux = computeTest({
+      prix_vente_prevu: t.prix_vente_prevu,
+      commandes_recues: t.commandes_recues,
+      commandes_confirmees: t.commandes_confirmees,
+      depense_pub: t.depense_pub,
+      cout_produit_estime: t.cout_produit_estime,
+      frais_livraison_prevu: t.frais_livraison_prevu,
+    }).tauxConfirmation;
+    if (taux !== null) map[t.produit_id] = taux;
+  }
+  return map;
+}
+
+/** Palier de closing exposé (vert ≥ 60 / ambre 35-60 / rouge < 35 côté UI). */
+export function closingTier(taux: number): ConfirmationTier {
+  return confirmationTier(taux);
+}
+
+/** Couleur signal (token) pour un % de closing donné. */
+export function closingColorClass(taux: number | null): string {
+  if (taux === null) return "text-muted-foreground";
+  if (taux >= 60) return "text-success";
+  if (taux >= 35) return "text-warning";
+  return "text-danger";
+}
+
 /** Classe de couleur signal pour un % de marge (vert/ambre/rouge). */
 export function margeColorClass(margePct: number | null): string {
   if (margePct === null) return "text-muted-foreground";

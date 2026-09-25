@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
+import { ProgressRing, MeterBar, VerdictBadge, closingTone, margeTone, type Tone } from "@/components/dataviz";
 import { computeTest, type ConfirmationTier } from "@/lib/testing";
 import { marcheLabel, externalUrl } from "@/lib/produits";
 import { saveTest, validerProduit, abandonnerProduit } from "../actions";
@@ -68,8 +69,6 @@ export function TestClient({ produit, initial }: Props) {
     frais_livraison_prevu: n(frais),
   });
 
-  const taux = r.tauxConfirmation ?? 0;
-  const barWidth = Math.max(0, Math.min(100, taux));
   const duree = joursDepuis(produit.date_lancement_testing);
   const reco = recommandation(r);
 
@@ -140,56 +139,62 @@ export function TestClient({ produit, initial }: Props) {
             </div>
 
             {r.verdict ? (
-              <span
-                className={`mt-3 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-base font-semibold ${verdictPill(r.verdict.tier)}`}
-              >
-                <span className="text-lg leading-none">●</span>
-                {r.verdict.label}
-              </span>
+              <div className="mt-3">
+                <VerdictBadge label={r.verdict.label} tone={verdictTone(r.verdict.tier)} size="lg" />
+              </div>
             ) : (
               <span className="text-muted-foreground mt-3 inline-block text-sm">
                 Renseigne les chiffres →
               </span>
             )}
 
-            {/* Taux de confirmation */}
-            <div className="mt-6">
-              <p className="text-muted-foreground text-sm">
-                Taux de confirmation (closing)
-              </p>
-              <div className="flex items-baseline justify-between">
-                <span
-                  className={`text-4xl font-bold tabular-nums ${confColor(r.confirmation?.tier)}`}
-                >
-                  {r.tauxConfirmation === null
-                    ? "—"
-                    : `${r.tauxConfirmation.toFixed(0)}%`}
-                </span>
-                {r.confirmation && (
-                  <span
-                    className={`text-sm font-semibold ${confColor(r.confirmation.tier)}`}
-                  >
-                    {CONFIRMATION_SHORT[r.confirmation.tier]}
-                  </span>
-                )}
+            {/* Data-viz : anneau closing + jauge marge */}
+            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {/* Closing = anneau de progression coloré */}
+              <div className="border-border bg-background flex items-center gap-4 rounded-xl border p-4">
+                <ProgressRing
+                  value={r.tauxConfirmation}
+                  tone={closingTone(r.tauxConfirmation)}
+                  size={92}
+                  stroke={9}
+                  sublabel="closing"
+                />
+                <div className="min-w-0">
+                  <p className="text-muted-foreground text-xs">Taux de confirmation</p>
+                  <p className={`text-lg font-bold leading-tight ${confColor(r.confirmation?.tier)}`}>
+                    {r.confirmation ? CONFIRMATION_SHORT[r.confirmation.tier] : "À chiffrer"}
+                  </p>
+                  <p className="text-muted-foreground/80 mt-0.5 text-[11px]">Objectif ≥ 60 %</p>
+                </div>
               </div>
 
-              {/* Barre objectif 60% */}
-              <div className="bg-muted relative mt-2 h-2 w-full overflow-hidden rounded-full">
-                <div
-                  className={`h-full rounded-full ${confBar(r.confirmation?.tier)}`}
-                  style={{ width: `${barWidth}%` }}
-                />
-              </div>
-              <div className="text-muted-foreground mt-1 flex justify-between text-xs">
-                <span>0%</span>
-                <span>Objectif 60%</span>
-                <span>100%</span>
+              {/* Marge = jauge */}
+              <div className="border-border bg-background flex flex-col justify-center rounded-xl border p-4">
+                <div className="flex items-baseline justify-between">
+                  <p className="text-muted-foreground text-xs">Marge nette</p>
+                  <span className={`text-2xl font-bold tabular-nums ${marginColor(r.margePct)}`}>
+                    {r.margePct === null ? "—" : `${r.margePct.toFixed(0)}%`}
+                  </span>
+                </div>
+                <div className="mt-2">
+                  <MeterBar
+                    value={r.margePct}
+                    tone={r.margePct == null ? "muted" : margeTone(r.margePct)}
+                    target={30}
+                    targetLabel="Objectif 30 %"
+                    height={10}
+                  />
+                  <div className="text-muted-foreground/70 mt-1 flex justify-between text-[10px]">
+                    <span>0 %</span>
+                    <span>Objectif 30 %</span>
+                    <span>100 %</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* 4 cartes */}
-            <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {/* 3 cartes chiffres */}
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
               <Metric label="Bénéfice projeté" hint="FCFA">
                 <span
                   className={
@@ -203,11 +208,6 @@ export function TestClient({ produit, initial }: Props) {
                     : new Intl.NumberFormat("fr-FR", {
                         maximumFractionDigits: 0,
                       }).format(r.beneficeProjete)}
-                </span>
-              </Metric>
-              <Metric label="Marge nette" hint="sur prix de vente">
-                <span className={marginColor(r.margePct)}>
-                  {r.margePct === null ? "—" : `${r.margePct.toFixed(0)}%`}
                 </span>
               </Metric>
               <Metric label="ROAS" hint="retour sur budget pub">
@@ -375,21 +375,16 @@ function confColor(tier?: ConfirmationTier): string {
   if (tier === "correct") return "text-warning";
   return "text-success";
 }
-function confBar(tier?: ConfirmationTier): string {
-  if (tier === "faible") return "bg-danger";
-  if (tier === "correct") return "bg-warning";
-  return "bg-success";
-}
 function marginColor(margePct: number | null): string {
   if (margePct === null) return "";
   if (margePct >= 30) return "text-success";
   if (margePct >= 15) return "text-warning";
   return "text-danger";
 }
-function verdictPill(tier: string): string {
-  if (tier === "rentable") return "border-success/40 bg-success-bg text-success";
-  if (tier === "moyen") return "border-warning/40 bg-warning-bg text-warning";
-  return "border-danger/40 bg-danger-bg text-danger";
+function verdictTone(tier: string): Tone {
+  if (tier === "rentable") return "success";
+  if (tier === "moyen") return "warning";
+  return "danger";
 }
 
 function recommandation(r: ReturnType<typeof computeTest>): string {
