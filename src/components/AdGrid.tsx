@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { SpyCard, VideoModal } from "@/app/(app)/spy/SpyClient";
+import { SpyCard } from "@/app/(app)/spy/SpyClient";
+import { VideoLightbox } from "@/components/VideoLightbox";
 import type { SpyAd } from "@/lib/spy";
 
 const MEDAL = ["🥇", "🥈", "🥉"];
@@ -19,7 +20,7 @@ function rankClass(i: number): string {
  */
 export function AdGrid({ ads, ranked = false }: { ads: SpyAd[]; ranked?: boolean }) {
   const router = useRouter();
-  const [playing, setPlaying] = useState<string | null>(null);
+  const [playing, setPlaying] = useState<{ url: string; adLibraryUrl?: string } | null>(null);
 
   return (
     <>
@@ -46,7 +47,13 @@ export function AdGrid({ ads, ranked = false }: { ads: SpyAd[]; ranked?: boolean
           </div>
         ))}
       </div>
-      {playing && <VideoModal url={playing} onClose={() => setPlaying(null)} />}
+      {playing && (
+        <VideoLightbox
+          url={playing.url}
+          adLibraryUrl={playing.adLibraryUrl}
+          onClose={() => setPlaying(null)}
+        />
+      )}
     </>
   );
 }

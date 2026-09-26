@@ -8,6 +8,7 @@ import { Icon } from "@/components/Icon";
 import { Select, type SelectOption } from "@/components/Select";
 import { CountryMultiSelect } from "@/components/CountryMultiSelect";
 import { CreativeMedia } from "@/components/CreativeMedia";
+import { VideoLightbox } from "@/components/VideoLightbox";
 import { ajouterAuxProduits } from "./actions";
 import { suivreConcurrent } from "../surveillance/actions";
 import {
@@ -96,7 +97,7 @@ export function SpyClient({ balance }: { balance: number; plan?: string }) {
   const [ads, setAds] = useState<SpyAd[]>([]);
   const [cached, setCached] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [playing, setPlaying] = useState<string | null>(null);
+  const [playing, setPlaying] = useState<{ url: string; adLibraryUrl?: string } | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [limit, setLimit] = useState(DEFAULT_LIMIT);
   const [progress, setProgress] = useState(0);
@@ -459,7 +460,13 @@ export function SpyClient({ balance }: { balance: number; plan?: string }) {
           onCancel={() => setConfirmOpen(false)}
         />
       )}
-      {playing && <VideoModal url={playing} onClose={() => setPlaying(null)} />}
+      {playing && (
+        <VideoLightbox
+          url={playing.url}
+          adLibraryUrl={playing.adLibraryUrl}
+          onClose={() => setPlaying(null)}
+        />
+      )}
     </div>
   );
 }
@@ -566,7 +573,7 @@ export function SpyCard({
 }: {
   ad: SpyAd;
   onAnalyze?: (ad: SpyAd) => void;
-  onPlay?: (url: string) => void;
+  onPlay?: (v: { url: string; adLibraryUrl?: string }) => void;
 }) {
   const [pending, startTransition] = useTransition();
   const [followed, setFollowed] = useState(false);
@@ -621,7 +628,7 @@ export function SpyCard({
         alt={pageName ?? ""}
         isVideo={ad.media_type === "video"}
         playUrl={ad.media_url}
-        onPlay={onPlay}
+        onPlay={(u) => onPlay?.({ url: u, adLibraryUrl: ad.ad_library_url })}
       >
         <span
           className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-semibold ${scoreBadge(ad.score_label)}`}
@@ -736,7 +743,7 @@ export function SpyCard({
           {ad.media_type === "video" && ad.media_url && (
             <div className="flex gap-2">
               <button
-                onClick={() => onPlay?.(ad.media_url!)}
+                onClick={() => onPlay?.({ url: ad.media_url!, adLibraryUrl: ad.ad_library_url })}
                 className="border-border hover:bg-input flex flex-1 items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors"
               >
                 <Icon name="play" size={12} /> Regarder
@@ -783,40 +790,6 @@ function AddButton() {
     >
       <Icon name="plus" size={14} /> Ajouter à mes produits
     </button>
-  );
-}
-
-export function VideoModal({ url, onClose }: { url: string; onClose: () => void }) {
-  const canDownload = useCanDownload();
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70" onClick={onClose} aria-hidden="true" />
-      <div className="relative z-10 w-full max-w-2xl">
-        <button
-          onClick={onClose}
-          className="bg-surface text-foreground absolute -top-3 -right-3 grid h-9 w-9 place-items-center rounded-full shadow"
-          aria-label="Fermer"
-        >
-          <Icon name="x" size={18} />
-        </button>
-        <video src={url} controls autoPlay className="max-h-[80vh] w-full rounded-lg bg-black" />
-        {canDownload ? (
-          <a
-            href={`/api/spy/video?url=${encodeURIComponent(url)}`}
-            className="bg-primary text-primary-foreground mt-3 inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold"
-          >
-            <Icon name="download" size={16} /> Télécharger la vidéo
-          </a>
-        ) : (
-          <Link
-            href="/offres"
-            className="bg-input text-muted-foreground mt-3 inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold"
-          >
-            <Icon name="lock" size={16} /> Télécharger — inclus à partir de Starter
-          </Link>
-        )}
-      </div>
-    </div>
   );
 }
 
