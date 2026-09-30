@@ -1,0 +1,105 @@
+/* design-systems/dashboard/tokens.css
+ * Structured token bindings for Dashboard.
+ * analytics dashboard with compact cards, cool surfaces, and status-first information design.
+ */
+
+:root {
+  --bg: #f4f7fb;
+  --surface: #ffffff;
+  --surface-warm: #eef6ff;
+  --fg: #111827;
+  --fg-2: #334155;
+  --muted: #64748b;
+  --meta: #0ea5e9;
+  --border: #d8e2ee;
+  --border-soft: #edf3f8;
+  /* Accent / primaire = BLEU Look360 (override, cf. section Look360 ci-dessous). */
+  --accent: #1a56db;
+  --accent-on: #ffffff;
+  --accent-hover: color-mix(in oklab, var(--accent), black 8%);
+  --accent-active: color-mix(in oklab, var(--accent), black 14%);
+  --success: #10b981;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  /* Police = marque Look360 (DM Sans, chargée via next/font) — source de vérité. */
+  --font-display: var(--font-dm-sans), Inter, system-ui, sans-serif;
+  --font-body: var(--font-dm-sans), Inter, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-lg: 17px;
+  --text-xl: 22px;
+  --text-2xl: 30px;
+  --text-3xl: 42px;
+  --text-4xl: 56px;
+  --leading-body: 1.48;
+  --leading-tight: 1.1;
+  --tracking-display: -0.015em;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --section-y-desktop: 84px;
+  --section-y-tablet: 60px;
+  --section-y-phone: 42px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 9999px;
+  --elev-flat: none;
+  --elev-ring: 0 0 0 1px var(--border);
+  --elev-raised: 0 18px 46px rgba(15, 23, 42, 0.10);
+  --focus-ring: 0 0 0 4px rgba(26, 86, 219, 0.22);
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --container-max: 1280px;
+  --container-gutter-desktop: 36px;
+  --container-gutter-tablet: 24px;
+  --container-gutter-phone: 16px;
+}
+
+/* ==========================================================================
+   Extension Look360 — tokens ajoutés au design system OpenDesign.
+   (Marque : accent bleu #1a56db défini plus haut, police DM Sans.)
+   Sidebar navy foncée + contenu clair. Ces tokens font partie de la SOURCE DE
+   VÉRITÉ : tout nouvel écran/composant les utilise, jamais de valeurs en dur.
+   ========================================================================== */
+:root {
+  /* Champs & surfaces secondaires */
+  --input: color-mix(in srgb, var(--fg) 5%, var(--surface));
+  --secondary: color-mix(in oklab, var(--accent), white 86%);
+  --secondary-on: var(--accent);
+  --accent-light: color-mix(in srgb, var(--accent) 55%, white);
+
+  /* Fonds « doux » des signaux (pastilles, alertes) */
+  --success-bg: color-mix(in srgb, var(--success) 16%, white);
+  --warn-bg: color-mix(in srgb, var(--warn) 18%, white);
+  --danger-bg: color-mix(in srgb, var(--danger) 15%, white);
+
+  /* Chips de statut produit */
+  --chip-idee: #ede9fe;
+  --chip-idee-fg: #6d28d9;
+  --chip-bleu: var(--secondary);
+  --chip-bleu-fg: var(--accent);
+  --chip-valide: var(--success-bg);
+  --chip-valide-fg: color-mix(in srgb, var(--success), black 12%);
+
+  /* Sidebar navy foncée (chrome de l'app) */
+  --sidebar-bg: #0f1e3a;
+  --sidebar-fg: #e8eef7;
+  --sidebar-muted: #93a4c3;
+  --sidebar-border: #1e304f;
+  --sidebar-active-bg: color-mix(in srgb, var(--accent) 26%, transparent);
+  --sidebar-active-fg: #ffffff;
+  --sidebar-hover-bg: color-mix(in srgb, #ffffff 8%, transparent);
+
+  /* Ombre de carte douce (élévation par défaut du contenu clair) */
+  --elev-card: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 4px 12px -4px rgb(15 23 42 / 0.06);
+  --elev-lift: 0 12px 28px -10px rgb(15 23 42 / 0.16), 0 4px 10px -6px rgb(15 23 42 / 0.10);
+}

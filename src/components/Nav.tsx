@@ -63,8 +63,8 @@ export function SidebarNav({
             onClick={onNavigate}
             className={`relative flex min-h-[44px] items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-all ${
               active
-                ? "from-secondary to-secondary/40 text-primary font-semibold shadow-sm before:absolute before:left-0 before:top-1/2 before:h-5 before:w-1 before:-translate-y-1/2 before:rounded-full before:bg-primary bg-gradient-to-r"
-                : "text-muted-foreground hover:bg-input hover:text-foreground"
+                ? "bg-sidebar-active-bg text-sidebar-active-fg font-semibold before:absolute before:left-0 before:top-1/2 before:h-5 before:w-1 before:-translate-y-1/2 before:rounded-full before:bg-accent-light"
+                : "text-sidebar-muted hover:bg-sidebar-hover-bg hover:text-sidebar-fg"
             }`}
           >
             <Icon name={it.icon} size={18} className="shrink-0" />
@@ -73,7 +73,7 @@ export function SidebarNav({
               <Icon
                 name="lock"
                 size={13}
-                className="text-muted-foreground/70 ml-auto shrink-0"
+                className="text-sidebar-muted ml-auto shrink-0"
                 aria-label="Réservé à une offre supérieure"
               />
             )}

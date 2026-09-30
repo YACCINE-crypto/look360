@@ -22,9 +22,9 @@ const COLUMN_ICON: Record<string, Parameters<typeof Icon>[0]["name"]> = {
 const COLUMN_ACCENT: Record<string, string> = {
   idee: "bg-chip-idee text-chip-idee-fg",
   a_tester: "bg-chip-bleu text-chip-bleu-fg",
-  en_test: "bg-secondary text-primary",
+  en_test: "bg-secondary text-accent",
   valide: "bg-success-bg text-success",
-  production: "bg-primary text-primary-foreground",
+  production: "bg-accent text-accent-on",
 };
 
 export function PipelineColumn({
@@ -70,7 +70,7 @@ export function PipelineColumn({
 
         <Link
           href="/recherche?add=1"
-          className="border-border text-muted-foreground hover:text-primary hover:border-primary/40 mt-auto flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-dashed py-2 text-sm font-medium transition-colors"
+          className="border-border text-muted-foreground hover:text-accent hover:border-accent/40 mt-auto flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-dashed py-2 text-sm font-medium transition-colors"
         >
           <Icon name="plus" size={14} />
           Ajouter
@@ -91,14 +91,14 @@ function PipelineCard({
 }) {
   const statut = p.statut as Statut;
   return (
-    <div className="group border-border bg-surface shadow-card hover:border-primary/40 flex h-full flex-col overflow-hidden rounded-lg border transition-all hover:shadow-lift">
+    <div className="group border-border bg-surface shadow-card hover:border-accent/40 flex h-full flex-col overflow-hidden rounded-lg border transition-all hover:shadow-lift">
       <div className="relative">
         <CreativeMedia image={p.media_cdn_url ?? p.image_url} alt={p.nom ?? "Produit"} ratio="portrait" />
         <div className="absolute left-1.5 top-1.5 z-10">
           <StatusChip statut={statut} />
         </div>
         {p.marche && (
-          <span className="bg-surface/90 text-foreground absolute right-1.5 top-1.5 z-10 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold shadow-sm backdrop-blur">
+          <span className="bg-surface/90 text-fg absolute right-1.5 top-1.5 z-10 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold shadow-sm backdrop-blur">
             <CountryFlag code={p.marche} /> {p.marche}
           </span>
         )}

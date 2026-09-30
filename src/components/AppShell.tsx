@@ -61,14 +61,20 @@ function Sidebar({
   onClose?: () => void;
 }) {
   return (
-    <aside className="border-border bg-surface flex h-full w-sidebar flex-col border-r">
-      {/* Marque */}
-      <div className="border-border flex items-center justify-between border-b px-4 py-4">
-        <Brand />
+    <aside className="bg-sidebar-bg text-sidebar-fg border-sidebar-border flex h-full w-sidebar flex-col border-r">
+      {/* Marque (wordmark blanc lisible sur navy) */}
+      <div className="border-sidebar-border flex items-center justify-between border-b px-4 py-4">
+        <span className="flex items-center gap-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/look360-icon.svg" alt="" className="h-8 w-8" />
+          <span className="text-sidebar-fg text-lg font-extrabold tracking-tight">
+            Look<span className="text-accent-light">360</span>
+          </span>
+        </span>
         {onClose && (
           <button
             onClick={onClose}
-            className="text-muted-foreground hover:text-foreground -mr-2 inline-flex h-11 w-11 items-center justify-center lg:hidden"
+            className="text-sidebar-muted hover:text-sidebar-fg -mr-2 inline-flex h-11 w-11 items-center justify-center lg:hidden"
             aria-label="Fermer le menu"
           >
             <Icon name="x" size={18} />
@@ -87,14 +93,14 @@ function Sidebar({
       </nav>
 
       {/* Profil */}
-      <div className="border-border border-t px-3 py-3">
+      <div className="border-sidebar-border border-t px-3 py-3">
         <div className="mb-2 flex items-center gap-2.5">
-          <span className="bg-secondary text-secondary-foreground grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-semibold">
+          <span className="bg-sidebar-hover-bg text-sidebar-fg grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-semibold">
             {initials}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">{displayName}</p>
-            <p className="text-muted-foreground text-xs capitalize">{role}</p>
+            <p className="text-sidebar-fg truncate text-sm font-medium">{displayName}</p>
+            <p className="text-sidebar-muted text-xs capitalize">{role}</p>
           </div>
         </div>
         <div className="mb-2">
@@ -105,7 +111,7 @@ function Sidebar({
           <Link
             href="/admin"
             onClick={onClose}
-            className="text-primary hover:bg-secondary flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-colors"
+            className="text-sidebar-fg hover:bg-sidebar-hover-bg flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-colors"
           >
             <Icon name="trending" size={16} />
             Panneau admin
@@ -114,7 +120,7 @@ function Sidebar({
         <Link
           href="/parametres"
           onClick={onClose}
-          className="text-muted-foreground hover:bg-input hover:text-foreground flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors"
+          className="text-sidebar-muted hover:bg-sidebar-hover-bg hover:text-sidebar-fg flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors"
         >
           <Icon name="settings" size={16} />
           Paramètres
@@ -122,7 +128,7 @@ function Sidebar({
         <form action={logout}>
           <button
             type="submit"
-            className="text-muted-foreground hover:bg-input hover:text-danger flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors"
+            className="text-sidebar-muted hover:bg-sidebar-hover-bg hover:text-danger flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors"
           >
             <Icon name="logout" size={16} />
             Déconnexion

@@ -1,62 +1,90 @@
 @import "tailwindcss";
+/* SOURCE DE VÉRITÉ des tokens = design system OpenDesign (dashboard).
+   Voir /design-system/tokens.css. NE PAS redéfinir de couleurs/tailles ailleurs. */
+@import "../../design-system/tokens.css";
 
 /* ==========================================================================
-   Look360 — Design system.
-   Accent de marque = BLEU. Vert / ambre / rouge = signaux uniquement.
-   COULEURS + POLICE = thème Look360 (inchangés).
-   ÉCHELLES (typo, rayons, ombre, espacements) = système de layout Kimba.
+   Look360 — Design system (OpenDesign · dashboard).
+   Les tokens vivent dans /design-system/tokens.css. Ce bloc @theme ne fait que
+   les EXPOSER en utilitaires Tailwind :
+   - noms canoniques OpenDesign (bg-surface, text-fg, text-accent, bg-accent…)
+   - + alias de compatibilité (bg-primary, text-foreground…) pour les écrans pas
+     encore migrés (migration progressive, un écran à la fois). Une seule source
+     de valeurs : les var(--…) d'OpenDesign.
    ========================================================================== */
 @theme {
-  /* Surfaces & texte — COULEURS THÈME (inchangées) */
-  --color-background: #f7f8fa;
-  --color-surface: #ffffff;
-  --color-foreground: #111827;
-  --color-border: #e5e8ef;
-  --color-input: #f0f2f7;
-  --color-muted: #e5e8ef;
-  --color-muted-foreground: #6b7280;
+  /* --- Couleurs canoniques OpenDesign --- */
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-warm: var(--surface-warm);
+  --color-fg: var(--fg);
+  --color-fg-2: var(--fg-2);
+  --color-meta: var(--meta);
+  --color-border: var(--border);
+  --color-border-soft: var(--border-soft);
+  --color-accent: var(--accent);
+  --color-accent-on: var(--accent-on);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-active: var(--accent-active);
+  --color-accent-light: var(--accent-light);
+  --color-success: var(--success);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
 
-  /* Marque — COULEURS THÈME (inchangées) */
-  --color-primary: #1a56db;
-  --color-primary-foreground: #ffffff;
-  --color-secondary: #dbeafe;
-  --color-secondary-foreground: #1a56db;
+  /* Extensions Look360 (définies dans tokens.css) */
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-on);
+  --color-input: var(--input);
+  --color-success-bg: var(--success-bg);
+  --color-warn-bg: var(--warn-bg);
+  --color-danger-bg: var(--danger-bg);
+  --color-chip-idee: var(--chip-idee);
+  --color-chip-idee-fg: var(--chip-idee-fg);
+  --color-chip-bleu: var(--chip-bleu);
+  --color-chip-bleu-fg: var(--chip-bleu-fg);
+  --color-chip-valide: var(--chip-valide);
+  --color-chip-valide-fg: var(--chip-valide-fg);
 
-  /* Signaux — COULEURS THÈME (inchangées) */
-  --color-success: #16a34a;
-  --color-success-bg: #dcfce7;
-  --color-warning: #d97706;
-  --color-warning-bg: #fef3c7;
-  --color-danger: #dc2626;
-  --color-danger-bg: #fee2e2;
+  /* Sidebar navy */
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-fg: var(--sidebar-fg);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-active-bg: var(--sidebar-active-bg);
+  --color-sidebar-active-fg: var(--sidebar-active-fg);
+  --color-sidebar-hover-bg: var(--sidebar-hover-bg);
 
-  /* Chips de statut — COULEURS THÈME (inchangées) */
-  --color-chip-idee: #ede9fe;
-  --color-chip-idee-fg: #6d28d9;
-  --color-chip-bleu: #dbeafe;
-  --color-chip-bleu-fg: #1a56db;
-  --color-chip-valide: #dcfce7;
-  --color-chip-valide-fg: #16a34a;
+  /* --- Alias de compatibilité (écrans non encore migrés) --- */
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --color-muted: var(--border);              /* surface claire (rails, hover) */
+  --color-muted-foreground: var(--muted);    /* texte atténué OpenDesign #64748b */
+  --color-primary: var(--accent);
+  --color-primary-foreground: var(--accent-on);
+  --color-warning: var(--warn);
+  --color-warning-bg: var(--warn-bg);
 
-  /* Rayons — ÉCHELLE KIMBA (boutons/inputs 8 · chips 12 · cartes 16).
-     Les classes existantes (rounded-md/lg/xl) sont remappées ici, une fois. */
-  --radius-sm: 8px;   /* rounded-sm  → boutons/inputs (Kimba rounded-lg) */
-  --radius-md: 8px;   /* rounded-md  → boutons/inputs/chips */
-  --radius-lg: 12px;  /* rounded-lg  → petites cartes (Kimba rounded-xl) */
-  --radius-xl: 16px;  /* rounded-xl  → cartes standard (Kimba rounded-2xl) */
-  --radius-2xl: 16px; /* rounded-2xl → cartes standard */
+  /* --- Rayons (OpenDesign : 8 / 12 / 18) --- */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 18px;
+  --radius-2xl: 22px;
+  --radius-pill: 9999px;
 
-  /* Typo — TAILLES KIMBA (= échelle Tailwind par défaut). Police = thème. */
-  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
-  /* (plus d'override --text-* : text-xs=12 · text-sm=14 · text-base=16
-      · text-lg=18 · text-2xl=24 · text-4xl=36, comme Kimba) */
+  /* --- Police (marque = DM Sans, cf. tokens.css) --- */
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
 
-  /* Ombres — profondeur douce (moins plat), toujours neutres. */
-  --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 4px 12px -4px rgb(15 23 42 / 0.06);
-  --shadow-lift: 0 12px 28px -10px rgb(15 23 42 / 0.16), 0 4px 10px -6px rgb(15 23 42 / 0.10);
-  --shadow-glow: 0 6px 20px -6px color-mix(in srgb, var(--color-primary) 45%, transparent);
+  /* --- Ombres (OpenDesign + douces Look360) --- */
+  --shadow-card: var(--elev-card);
+  --shadow-lift: var(--elev-lift);
+  --shadow-raised: var(--elev-raised);
+  --shadow-ring: var(--elev-ring);
+  --shadow-glow: 0 6px 20px -6px color-mix(in srgb, var(--accent) 45%, transparent);
 
-  /* Largeur canonique de la sidebar (Kimba = 224px) */
+  /* Largeur canonique de la sidebar */
   --spacing-sidebar: 14rem;
 }
 
