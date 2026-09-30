@@ -300,7 +300,7 @@ export function SpyClient({ balance }: { balance: number; plan?: string }) {
           </label>
           <label className="flex flex-col gap-1.5">
             <span className={labelCls}>
-              Reach min. {!euDispo && <span className="text-warning">(UE only)</span>}
+              Reach min. {!euDispo && <span className="text-warn">(UE only)</span>}
             </span>
             <Select
               value={reachMin}
@@ -337,7 +337,7 @@ export function SpyClient({ balance }: { balance: number; plan?: string }) {
           <span
             className={`rounded-full px-2.5 py-1 text-xs font-medium ${
               nbSearches > SPY_COUNTRIES_SOFT
-                ? "bg-warning-bg text-warning"
+                ? "bg-warn-bg text-warn"
                 : "bg-input text-muted-foreground"
             }`}
             title="Coût débité uniquement si la recherche n'est pas déjà en cache"
@@ -350,7 +350,7 @@ export function SpyClient({ balance }: { balance: number; plan?: string }) {
           <button
             type="submit"
             disabled={status === "loading"}
-            className="bg-primary text-primary-foreground ml-auto inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-5 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
+            className="bg-accent text-accent-on ml-auto inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-5 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
           >
             <Icon name="search" size={16} />
             {status === "loading" ? "Recherche…" : "Rechercher"}
@@ -367,7 +367,7 @@ export function SpyClient({ balance }: { balance: number; plan?: string }) {
       {/* Bandeau de progression (streaming) */}
       {status === "loading" && (
         <div className="border-border bg-surface flex items-center gap-3 rounded-xl border p-3 text-sm shadow-card">
-          <span className="border-primary/30 border-t-primary h-4 w-4 shrink-0 animate-spin rounded-full border-2" />
+          <span className="border-accent/30 border-t-primary h-4 w-4 shrink-0 animate-spin rounded-full border-2" />
           <span className="text-muted-foreground">
             {ads.length > 0
               ? `Recherche en cours — ${ads.length} pub${ads.length > 1 ? "s" : ""} déjà affichée${ads.length > 1 ? "s" : ""}…`
@@ -390,7 +390,7 @@ export function SpyClient({ balance }: { balance: number; plan?: string }) {
 
       {status === "idle" && (
         <div className="border-border bg-surface rounded-xl border border-dashed p-12 text-center">
-          <span className="bg-secondary text-primary mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full">
+          <span className="bg-secondary text-accent mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full">
             <Icon name="eye" size={24} />
           </span>
           <p className="font-medium">Lance une recherche</p>
@@ -496,7 +496,7 @@ function ConfirmSearch({
           <h3 className="font-bold">Confirmer la recherche</h3>
         </div>
         <p className="text-muted-foreground text-sm">
-          Cette recherche coûtera <b className="text-foreground">{formatCredits(cost)} crédits</b>
+          Cette recherche coûtera <b className="text-fg">{formatCredits(cost)} crédits</b>
           {countries.length > 1
             ? ` (${countries.length} pays × ${formatCredits(SEARCH_COST_PER_COUNTRY)})`
             : ""}{" "}
@@ -521,13 +521,13 @@ function ConfirmSearch({
             <div className="flex gap-2">
               <Link
                 href="/offres"
-                className="bg-primary text-primary-foreground inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-md px-4 text-sm font-semibold"
+                className="bg-accent text-accent-on inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-md px-4 text-sm font-semibold"
               >
                 Recharger
               </Link>
               <button
                 onClick={onCancel}
-                className="bg-input text-foreground inline-flex min-h-[44px] items-center justify-center rounded-md px-4 text-sm font-semibold"
+                className="bg-input text-fg inline-flex min-h-[44px] items-center justify-center rounded-md px-4 text-sm font-semibold"
               >
                 Annuler
               </button>
@@ -537,13 +537,13 @@ function ConfirmSearch({
           <div className="mt-5 flex gap-2">
             <button
               onClick={onConfirm}
-              className="bg-primary text-primary-foreground inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
+              className="bg-accent text-accent-on inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
             >
               <Icon name="search" size={16} /> Continuer
             </button>
             <button
               onClick={onCancel}
-              className="bg-input text-foreground inline-flex min-h-[44px] items-center justify-center rounded-md px-4 text-sm font-semibold"
+              className="bg-input text-fg inline-flex min-h-[44px] items-center justify-center rounded-md px-4 text-sm font-semibold"
             >
               Annuler
             </button>
@@ -556,7 +556,7 @@ function ConfirmSearch({
 
 function scoreBadge(label: SpyAd["score_label"]): string {
   if (label === "Fort potentiel") return "bg-success-bg text-success";
-  if (label === "Moyen") return "bg-warning-bg text-warning";
+  if (label === "Moyen") return "bg-warn-bg text-warn";
   return "bg-input text-muted-foreground";
 }
 function ancienneteBadge(j: number | null): string {
@@ -648,8 +648,8 @@ export function SpyCard({
           aria-label={saved ? "Sauvegardée" : "Sauvegarder la pub"}
           className={`absolute bottom-2 left-2 grid h-9 w-9 place-items-center rounded-full border shadow-sm backdrop-blur transition-colors ${
             saved
-              ? "bg-success text-primary-foreground border-transparent"
-              : "bg-surface/90 text-foreground border-border hover:bg-muted"
+              ? "bg-success text-accent-on border-transparent"
+              : "bg-surface/90 text-fg border-border hover:bg-muted"
           }`}
         >
           <Icon name={saved ? "check" : "bookmark"} size={16} />
@@ -725,14 +725,14 @@ export function SpyCard({
             <button
               onClick={() => onAnalyze?.(ad)}
               disabled={!ad.page_id}
-              className="bg-input text-foreground hover:bg-muted flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+              className="bg-input text-fg hover:bg-muted flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
             >
               <Icon name="search" size={12} /> Analyser
             </button>
             <button
               onClick={follow}
               disabled={!ad.page_id || followed || pending}
-              className="bg-input text-foreground hover:bg-muted flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors disabled:opacity-60"
+              className="bg-input text-fg hover:bg-muted flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors disabled:opacity-60"
             >
               <Icon name={followed ? "check" : "bell"} size={12} />
               {followed ? "Surveillé" : pending ? "…" : "Surveiller"}
@@ -786,7 +786,7 @@ function AddButton() {
   return (
     <button
       type="submit"
-      className="bg-primary text-primary-foreground flex min-h-[38px] w-full items-center justify-center gap-1.5 rounded-md text-xs font-semibold transition-opacity hover:opacity-90"
+      className="bg-accent text-accent-on flex min-h-[38px] w-full items-center justify-center gap-1.5 rounded-md text-xs font-semibold transition-opacity hover:opacity-90"
     >
       <Icon name="plus" size={14} /> Ajouter à mes produits
     </button>
