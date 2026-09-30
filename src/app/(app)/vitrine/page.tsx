@@ -57,7 +57,7 @@ export default async function VitrinePage() {
         title="Vitrine des winners validés"
         subtitle="Les produits validés par la communauté (≥ 10 commandes reçues), 100 % anonymisés — inspirez-vous de ce qui gagne."
       >
-        <span className="bg-secondary text-primary inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold">
+        <span className="bg-secondary text-accent inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold">
           <Icon name="store" size={14} /> Business
         </span>
       </PageHeader>
@@ -84,7 +84,7 @@ export default async function VitrinePage() {
                 className="bg-surface border-border shadow-card flex flex-col gap-3 rounded-xl border p-4"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-foreground font-semibold">
+                  <span className="text-fg font-semibold">
                     {w.categorie ?? "Catégorie"}
                   </span>
                   <span className="bg-success-bg text-success inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold">
@@ -95,7 +95,7 @@ export default async function VitrinePage() {
                   Marché : {marcheLabel(w.marche)}
                 </p>
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-background rounded-lg p-2.5 text-center">
+                  <div className="bg-bg rounded-lg p-2.5 text-center">
                     <p className="text-success text-lg font-extrabold tabular-nums">
                       {w.closing_pct ?? "—"} %
                     </p>
@@ -103,8 +103,8 @@ export default async function VitrinePage() {
                       Taux de closing
                     </p>
                   </div>
-                  <div className="bg-background rounded-lg p-2.5 text-center">
-                    <p className="text-primary text-lg font-extrabold tabular-nums">
+                  <div className="bg-bg rounded-lg p-2.5 text-center">
+                    <p className="text-accent text-lg font-extrabold tabular-nums">
                       {w.marge_pct ?? "—"} %
                     </p>
                     <p className="text-muted-foreground text-[10px]">

@@ -65,7 +65,7 @@ export default async function EquipePage() {
                 <span
                   className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
                     m.role === "superadmin"
-                      ? "bg-primary text-primary-foreground"
+                      ? "bg-accent text-accent-on"
                       : "bg-input text-muted-foreground"
                   }`}
                 >

@@ -143,7 +143,7 @@ export default async function SauvegardesPage() {
                       <input type="hidden" name="marche" value={ad.pays_cible ?? ""} />
                       <button
                         type="submit"
-                        className="bg-primary text-primary-foreground flex min-h-[36px] w-full items-center justify-center gap-1.5 rounded-md text-xs font-semibold transition-opacity hover:opacity-90"
+                        className="bg-accent text-accent-on flex min-h-[36px] w-full items-center justify-center gap-1.5 rounded-md text-xs font-semibold transition-opacity hover:opacity-90"
                       >
                         <Icon name="plus" size={14} /> Ajouter à mes produits
                       </button>

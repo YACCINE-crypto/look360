@@ -27,25 +27,25 @@ export default async function SuspenduPage() {
   if (!profile?.suspended) redirect("/recherche");
 
   return (
-    <main className="bg-background flex min-h-screen items-center justify-center px-4 py-16">
+    <main className="bg-bg flex min-h-screen items-center justify-center px-4 py-16">
       <div className="w-full max-w-sm text-center">
         <img src="/look360-logo.svg" alt="Look360" className="mx-auto mb-6 h-10 w-auto" />
         <span className="bg-danger-bg text-danger mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl">
           <Icon name="lock" size={26} />
         </span>
-        <h1 className="text-foreground text-xl font-bold">Compte suspendu</h1>
+        <h1 className="text-fg text-xl font-bold">Compte suspendu</h1>
         <p className="text-muted-foreground mt-2 text-sm">
           L&apos;accès à ton compte est temporairement suspendu. Pour toute
           question, contacte le support.
         </p>
         <a
           href="mailto:look360app@gmail.com"
-          className="bg-primary text-primary-foreground mt-5 inline-flex min-h-[46px] items-center justify-center rounded-full px-6 text-sm font-semibold"
+          className="bg-accent text-accent-on mt-5 inline-flex min-h-[46px] items-center justify-center rounded-full px-6 text-sm font-semibold"
         >
           Contacter le support
         </a>
         <form action={logout} className="mt-3">
-          <button className="text-muted-foreground hover:text-foreground text-sm">
+          <button className="text-muted-foreground hover:text-fg text-sm">
             Se déconnecter
           </button>
         </form>

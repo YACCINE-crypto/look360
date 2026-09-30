@@ -47,7 +47,7 @@ function features(p: Plan): Feat[] {
     {
       label: (
         <>
-          <b className="text-foreground font-semibold">
+          <b className="text-fg font-semibold">
             {formatCredits(c.monthlyCredits)}
           </b>{" "}
           crédits / mois
@@ -61,7 +61,7 @@ function features(p: Plan): Feat[] {
     {
       label: (
         <>
-          <b className="text-foreground font-semibold">Testing &amp; validation produit</b>{" "}
+          <b className="text-fg font-semibold">Testing &amp; validation produit</b>{" "}
           — taux de closing, marge nette, verdict
         </>
       ),
@@ -72,7 +72,7 @@ function features(p: Plan): Feat[] {
       label: (
         <>
           Suivi de{" "}
-          <b className="text-foreground font-semibold">{c.competitorSlots}</b>{" "}
+          <b className="text-fg font-semibold">{c.competitorSlots}</b>{" "}
           concurrent{s}
         </>
       ),
@@ -82,7 +82,7 @@ function features(p: Plan): Feat[] {
       label: c.winnerEnabled ? (
         <>
           Winner Agent auto —{" "}
-          <b className="text-foreground font-semibold">
+          <b className="text-fg font-semibold">
             {c.winnerKeywords} mots-clés
           </b>{" "}
           × {c.winnerCountries} pays
@@ -97,7 +97,7 @@ function features(p: Plan): Feat[] {
     {
       label: (
         <>
-          Support <b className="text-foreground font-semibold">{SUPPORT[p]}</b>
+          Support <b className="text-fg font-semibold">{SUPPORT[p]}</b>
         </>
       ),
       on: true,
@@ -205,7 +205,7 @@ export default function OffresClient({
               ? "bg-success-bg text-success border-success/30"
               : payReturn === "failed"
                 ? "bg-danger-bg text-danger border-danger/30"
-                : "bg-secondary text-secondary-foreground border-primary/20"
+                : "bg-secondary text-secondary-foreground border-accent/20"
           }`}
         >
           {payReturn === "pending" && <Loader2 size={16} className="animate-spin" />}
@@ -247,8 +247,8 @@ export default function OffresClient({
           — {formatCredits(PLANS[current].monthlyCredits)} crédits / mois
         </span>
         <span className="text-border mx-1">·</span>
-        <span className="text-primary inline-flex items-center gap-1 font-semibold">
-          <Zap size={14} className="fill-primary text-primary" /> Solde{" "}
+        <span className="text-accent inline-flex items-center gap-1 font-semibold">
+          <Zap size={14} className="fill-primary text-accent" /> Solde{" "}
           {formatCredits(balance)}
         </span>
       </motion.div>
@@ -284,14 +284,14 @@ export default function OffresClient({
               animate="show"
               className={`relative flex flex-col rounded-3xl border p-6 ${
                 isPopular
-                  ? "border-primary/40 bg-gradient-to-b from-secondary/60 to-surface ring-primary shadow-xl shadow-primary/10 ring-2 md:-my-2 md:py-8"
+                  ? "border-accent/40 bg-gradient-to-b from-secondary/60 to-surface ring-accent shadow-xl shadow-accent/10 ring-2 md:-my-2 md:py-8"
                   : "border-border bg-surface shadow-card"
               }`}
             >
               {/* Badge populaire */}
               {isPopular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="from-primary inline-flex items-center gap-1 rounded-full bg-gradient-to-r to-blue-500 px-3 py-1 text-xs font-bold text-white shadow-md">
+                  <span className="from-accent inline-flex items-center gap-1 rounded-full bg-gradient-to-r to-blue-500 px-3 py-1 text-xs font-bold text-white shadow-md">
                     <Crown size={13} /> Populaire
                   </span>
                 </div>
@@ -323,13 +323,13 @@ export default function OffresClient({
                   </span>
                 </div>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-primary text-4xl font-extrabold tabular-nums">
+                  <span className="text-accent text-4xl font-extrabold tabular-nums">
                     <NumberFlow
                       value={mounted ? (cfg.priceFirst ?? 0) : 0}
                       locales="fr-FR"
                     />
                   </span>
-                  <span className="text-primary text-base font-bold">FCFA</span>
+                  <span className="text-accent text-base font-bold">FCFA</span>
                 </div>
                 <p className="text-muted-foreground mt-1 text-xs font-medium">
                   le 1<sup>er</sup> mois, puis {fcfa(cfg.priceNormal)}/mois
@@ -405,7 +405,7 @@ export default function OffresClient({
             >
               <div>
                 <p className="flex items-center justify-center gap-1.5 text-2xl font-bold tabular-nums whitespace-nowrap">
-                  <Zap size={18} className="fill-primary text-primary" />
+                  <Zap size={18} className="fill-primary text-accent" />
                   {formatCredits(pack.credits)}
                 </p>
                 <p className="text-muted-foreground text-sm">crédits</p>
@@ -420,7 +420,7 @@ export default function OffresClient({
                   })
                 }
                 disabled={busy === `pack:${pack.credits}`}
-                className="bg-primary text-primary-foreground inline-flex min-h-[40px] w-full items-center justify-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
+                className="bg-accent text-accent-on inline-flex min-h-[40px] w-full items-center justify-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
               >
                 {busy === `pack:${pack.credits}` ? (
                   <>
@@ -467,8 +467,8 @@ function PlanButton({
       disabled={busy}
       className={`mt-5 inline-flex min-h-[46px] w-full items-center justify-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-70 ${
         isPopular
-          ? "from-primary bg-gradient-to-t to-blue-500 text-white shadow-lg shadow-primary/25"
-          : "bg-foreground text-background"
+          ? "from-accent bg-gradient-to-t to-blue-500 text-white shadow-lg shadow-accent/25"
+          : "bg-fg text-bg"
       }`}
     >
       {busy ? (

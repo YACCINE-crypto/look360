@@ -30,7 +30,7 @@ export function SuivreButton({
     <button
       onClick={follow}
       disabled={followed || pending}
-      className="bg-input text-foreground hover:bg-muted inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-colors disabled:opacity-60"
+      className="bg-input text-fg hover:bg-muted inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-colors disabled:opacity-60"
     >
       <Icon name={followed ? "check" : "bell"} size={16} />
       {followed ? "Surveillé" : pending ? "…" : "Surveiller"}

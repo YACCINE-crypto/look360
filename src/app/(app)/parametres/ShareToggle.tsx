@@ -20,7 +20,7 @@ export function ShareToggle({ initial }: { initial: boolean }) {
         start(() => setVitrineShare(v));
       }}
       className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors disabled:opacity-60 ${
-        on ? "bg-primary" : "bg-input"
+        on ? "bg-accent" : "bg-input"
       }`}
     >
       <span

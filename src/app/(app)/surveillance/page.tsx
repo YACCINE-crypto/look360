@@ -70,7 +70,7 @@ export default async function SurveillancePage() {
       >
         <Link
           href="/spy"
-          className="bg-primary text-primary-foreground inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
+          className="bg-accent text-accent-on inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
         >
           <Icon name="eye" size={16} /> Spy Facebook
         </Link>
@@ -78,7 +78,7 @@ export default async function SurveillancePage() {
 
       {rows.length === 0 ? (
         <div className="border-border bg-surface rounded-xl border border-dashed p-12 text-center">
-          <span className="bg-secondary text-primary mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full">
+          <span className="bg-secondary text-accent mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full">
             <Icon name="eye" size={24} />
           </span>
           <p className="font-medium">Aucun concurrent suivi</p>
@@ -96,15 +96,15 @@ export default async function SurveillancePage() {
               <Card
                 key={c.id}
                 className={`relative flex flex-col gap-3 p-4 ${
-                  nouvelles > 0 ? "ring-primary/40 ring-1" : ""
+                  nouvelles > 0 ? "ring-accent/40 ring-1" : ""
                 }`}
               >
                 {/* Badge "nouvelle pub détectée" */}
                 {nouvelles > 0 && (
-                  <span className="bg-primary text-primary-foreground absolute -top-2 right-3 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold shadow-sm">
+                  <span className="bg-accent text-accent-on absolute -top-2 right-3 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold shadow-sm">
                     <span className="relative flex h-1.5 w-1.5">
-                      <span className="bg-primary-foreground absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" />
-                      <span className="bg-primary-foreground relative inline-flex h-1.5 w-1.5 rounded-full" />
+                      <span className="bg-accent-on absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" />
+                      <span className="bg-accent-on relative inline-flex h-1.5 w-1.5 rounded-full" />
                     </span>
                     {nouvelles > 1 ? `${nouvelles} nouvelles pubs` : "Nouvelle pub"}
                   </span>
@@ -112,7 +112,7 @@ export default async function SurveillancePage() {
 
                 <div className="flex items-start gap-3">
                   {/* Avatar initiales */}
-                  <span className="bg-secondary text-primary grid h-11 w-11 shrink-0 place-items-center rounded-full text-sm font-bold">
+                  <span className="bg-secondary text-accent grid h-11 w-11 shrink-0 place-items-center rounded-full text-sm font-bold">
                     {initials(pageName)}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -146,7 +146,7 @@ export default async function SurveillancePage() {
                 <div className="flex items-center gap-2 pt-1">
                   <Link
                     href={`/analyse/${encodeURIComponent(c.page_id)}?country=${encodeURIComponent(c.country ?? "FR")}&name=${encodeURIComponent(c.page_name ?? "")}`}
-                    className="bg-primary text-primary-foreground inline-flex min-h-[38px] flex-1 items-center justify-center gap-1.5 rounded-md px-3 text-sm font-semibold transition-opacity hover:opacity-90"
+                    className="bg-accent text-accent-on inline-flex min-h-[38px] flex-1 items-center justify-center gap-1.5 rounded-md px-3 text-sm font-semibold transition-opacity hover:opacity-90"
                   >
                     <Icon name="search" size={14} /> Analyser
                   </Link>

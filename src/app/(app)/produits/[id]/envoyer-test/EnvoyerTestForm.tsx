@@ -16,7 +16,7 @@ import {
 } from "@/lib/produits";
 
 const inputCls =
-  "w-full min-h-[44px] rounded-md border border-border bg-input px-3 py-2 text-sm outline-none focus:border-primary";
+  "w-full min-h-[44px] rounded-md border border-border bg-input px-3 py-2 text-sm outline-none focus:border-accent";
 const labelCls = "text-xs font-medium text-muted-foreground";
 
 type Produit = {
@@ -72,7 +72,7 @@ export function EnvoyerTestForm({ produit }: { produit: Produit }) {
       <div>
         <Link
           href={`/produits/${produit.id}`}
-          className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
+          className="text-muted-foreground hover:text-fg flex items-center gap-1 text-sm"
         >
           <Icon name="chevronRight" size={14} className="rotate-180" />
           {produit.nom ?? "Produit"}
@@ -99,7 +99,7 @@ export function EnvoyerTestForm({ produit }: { produit: Produit }) {
                 onClick={() => setTypeAppro(t.code)}
                 className={`min-h-[38px] flex-1 rounded-[6px] text-sm font-medium transition-colors ${
                   typeAppro === t.code
-                    ? "bg-surface text-foreground shadow-sm"
+                    ? "bg-surface text-fg shadow-sm"
                     : "text-muted-foreground"
                 }`}
               >
@@ -214,13 +214,13 @@ export function EnvoyerTestForm({ produit }: { produit: Produit }) {
         <div className="flex items-center gap-3 pt-1">
           <button
             type="submit"
-            className="bg-primary text-primary-foreground inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-md px-5 text-sm font-semibold transition-opacity hover:opacity-90"
+            className="bg-accent text-accent-on inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-md px-5 text-sm font-semibold transition-opacity hover:opacity-90"
           >
             <Icon name="flask" size={16} /> Lancer le test
           </button>
           <Link
             href={`/produits/${produit.id}`}
-            className="bg-input text-foreground inline-flex min-h-[44px] items-center justify-center rounded-md px-5 text-sm font-semibold"
+            className="bg-input text-fg inline-flex min-h-[44px] items-center justify-center rounded-md px-5 text-sm font-semibold"
           >
             Annuler
           </Link>

@@ -84,7 +84,7 @@ export function ProduitDetailView({ p, tests }: { p: Produit; tests: Test[] }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           href="/recherche"
-          className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
+          className="text-muted-foreground hover:text-fg flex items-center gap-1 text-sm"
         >
           <Icon name="chevronRight" size={14} className="rotate-180" />
           Recherche produit
@@ -94,7 +94,7 @@ export function ProduitDetailView({ p, tests }: { p: Produit; tests: Test[] }) {
           {p.statut === "idee" || p.statut === "a_tester" ? (
             <Link
               href={`/produits/${p.id}/envoyer-test`}
-              className="bg-primary text-primary-foreground inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
+              className="bg-accent text-accent-on inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
             >
               <Icon name="flask" size={15} />
               Envoyer en test
@@ -102,7 +102,7 @@ export function ProduitDetailView({ p, tests }: { p: Produit; tests: Test[] }) {
           ) : (
             <Link
               href={`/testing/${p.id}`}
-              className="bg-primary text-primary-foreground inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
+              className="bg-accent text-accent-on inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
             >
               <Icon name="flask" size={15} />
               {p.statut === "en_test" ? "Voir le verdict" : "Ouvrir la fiche test"}
@@ -242,7 +242,7 @@ export function ProduitDetailView({ p, tests }: { p: Produit; tests: Test[] }) {
                   rel="noopener noreferrer"
                   className="border-border hover:bg-input flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm transition-colors"
                 >
-                  <span className="text-primary flex items-center gap-2 font-medium">
+                  <span className="text-accent flex items-center gap-2 font-medium">
                     <Icon name="chevronRight" size={14} />
                     {l.label}
                   </span>

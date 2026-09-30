@@ -21,7 +21,7 @@ import { margeColorClass } from "@/lib/testing";
 /* eslint-disable @next/next/no-img-element */
 
 const inputCls =
-  "w-full min-h-[44px] rounded-md border border-border bg-input px-3 py-2 text-sm outline-none focus:border-primary";
+  "w-full min-h-[44px] rounded-md border border-border bg-input px-3 py-2 text-sm outline-none focus:border-accent";
 const labelCls = "text-xs font-medium text-muted-foreground";
 
 const s = (v: number | null | undefined) => (v == null ? "" : String(v));
@@ -97,7 +97,7 @@ export function EditProductForm({ produit }: { produit: Produit }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="bg-input text-foreground hover:bg-muted inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-colors"
+        className="bg-input text-fg hover:bg-muted inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-colors"
       >
         <Icon name="tag" size={15} /> Modifier
       </button>
@@ -111,7 +111,7 @@ export function EditProductForm({ produit }: { produit: Produit }) {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="text-muted-foreground hover:text-foreground -mr-2 inline-flex h-11 w-11 items-center justify-center rounded-md"
+                className="text-muted-foreground hover:text-fg -mr-2 inline-flex h-11 w-11 items-center justify-center rounded-md"
                 aria-label="Fermer"
               >
                 <Icon name="x" size={18} />
@@ -143,7 +143,7 @@ export function EditProductForm({ produit }: { produit: Produit }) {
                       type="button"
                       onClick={() => fileRef.current?.click()}
                       disabled={uploading}
-                      className="bg-input text-foreground inline-flex min-h-[44px] items-center rounded-md px-3 py-1.5 text-sm font-medium disabled:opacity-60"
+                      className="bg-input text-fg inline-flex min-h-[44px] items-center rounded-md px-3 py-1.5 text-sm font-medium disabled:opacity-60"
                     >
                       {uploading ? "Envoi…" : imageUrl ? "Changer" : "Téléverser"}
                     </button>
@@ -212,7 +212,7 @@ export function EditProductForm({ produit }: { produit: Produit }) {
                         type="button"
                         onClick={() => setTypeAppro(t.code)}
                         className={`min-h-[38px] flex-1 rounded-[6px] text-sm font-medium transition-colors ${
-                          typeAppro === t.code ? "bg-surface text-foreground shadow-sm" : "text-muted-foreground"
+                          typeAppro === t.code ? "bg-surface text-fg shadow-sm" : "text-muted-foreground"
                         }`}
                       >
                         {t.label}
@@ -299,14 +299,14 @@ export function EditProductForm({ produit }: { produit: Produit }) {
                 <button
                   type="submit"
                   disabled={uploading}
-                  className="bg-primary text-primary-foreground inline-flex min-h-[44px] items-center justify-center rounded-md px-5 py-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
+                  className="bg-accent text-accent-on inline-flex min-h-[44px] items-center justify-center rounded-md px-5 py-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
                 >
                   Enregistrer
                 </button>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="bg-input text-foreground inline-flex min-h-[44px] items-center justify-center rounded-md px-5 py-2 text-sm font-semibold"
+                  className="bg-input text-fg inline-flex min-h-[44px] items-center justify-center rounded-md px-5 py-2 text-sm font-semibold"
                 >
                   Annuler
                 </button>

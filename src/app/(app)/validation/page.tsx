@@ -55,7 +55,7 @@ export default async function ValidationPage() {
 
       {rows.length === 0 ? (
         <div className="border-border bg-surface rounded-xl border border-dashed p-12 text-center">
-          <span className="bg-secondary text-primary mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full">
+          <span className="bg-secondary text-accent mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full">
             <Icon name="check" size={24} />
           </span>
           <p className="text-muted-foreground text-sm">
@@ -80,7 +80,7 @@ export default async function ValidationPage() {
                 </div>
                 <p className="text-muted-foreground mt-0.5 text-sm">
                   Soumis par{" "}
-                  <span className="text-foreground font-medium">
+                  <span className="text-fg font-medium">
                     {p.auteur?.nom ?? "—"}
                   </span>{" "}
                   · {marcheLabel(p.marche)} · {formatFCFA(p.cout_livre_estime)}
@@ -109,7 +109,7 @@ export default async function ValidationPage() {
                 </form>
                 <form action={approuver}>
                   <input type="hidden" name="id" value={p.id} />
-                  <button className="bg-success text-primary-foreground inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-3 text-sm font-semibold transition-opacity hover:opacity-90">
+                  <button className="bg-success text-accent-on inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-3 text-sm font-semibold transition-opacity hover:opacity-90">
                     <Icon name="check" size={15} /> Approuver
                   </button>
                 </form>

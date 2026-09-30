@@ -30,17 +30,17 @@ export default async function ParametresPage() {
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="bg-secondary text-primary grid h-8 w-8 shrink-0 place-items-center rounded-lg">
+              <span className="bg-secondary text-accent grid h-8 w-8 shrink-0 place-items-center rounded-lg">
                 <Icon name="store" size={16} />
               </span>
-              <p className="text-foreground font-semibold">
+              <p className="text-fg font-semibold">
                 Partager mes tests validés à la communauté
               </p>
             </div>
             <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
               Quand tu valides un produit (≥ 10 commandes reçues), il peut
-              apparaître dans la <b className="text-foreground">vitrine communautaire</b>{" "}
-              des offres Business — <b className="text-foreground">100 % anonymisé</b> :
+              apparaître dans la <b className="text-fg">vitrine communautaire</b>{" "}
+              des offres Business — <b className="text-fg">100 % anonymisé</b> :
               seulement la catégorie, le pays, le taux de closing et la marge.
               Jamais ton nom, jamais le nom exact de ton produit, jamais un lien
               vers ta boutique. Tu peux désactiver ce partage à tout moment.

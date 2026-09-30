@@ -130,7 +130,7 @@ export default async function AnalysePage({
     <div className="space-y-5">
       <Link
         href="/spy"
-        className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
+        className="text-muted-foreground hover:text-fg flex items-center gap-1 text-sm"
       >
         <Icon name="chevronRight" size={14} className="rotate-180" />
         Spy Facebook
@@ -173,7 +173,7 @@ export default async function AnalysePage({
                   </span>
                 )}
                 {platforms.map((pl) => (
-                  <span key={pl} className="bg-secondary text-primary rounded-full px-2 py-0.5 text-xs font-medium">
+                  <span key={pl} className="bg-secondary text-accent rounded-full px-2 py-0.5 text-xs font-medium">
                     {pl}
                   </span>
                 ))}
@@ -192,7 +192,7 @@ export default async function AnalysePage({
                 <input type="hidden" name="marche" value={top.country ?? ""} />
                 <button
                   type="submit"
-                  className="bg-primary text-primary-foreground inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
+                  className="bg-accent text-accent-on inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
                 >
                   <Icon name="plus" size={16} /> Ajouter à mes produits
                 </button>
@@ -294,11 +294,11 @@ function KpiTile({
     <Card className="card-lift p-4">
       <div className="flex items-start justify-between gap-2">
         <span className="text-muted-foreground text-xs font-medium">{label}</span>
-        <span className="bg-secondary text-primary grid h-8 w-8 shrink-0 place-items-center rounded-lg">
+        <span className="bg-secondary text-accent grid h-8 w-8 shrink-0 place-items-center rounded-lg">
           <Icon name={icon} size={16} />
         </span>
       </div>
-      <p className={`mt-1 text-2xl font-extrabold tabular-nums ${accent ? "text-primary" : "text-foreground"}`}>
+      <p className={`mt-1 text-2xl font-extrabold tabular-nums ${accent ? "text-accent" : "text-fg"}`}>
         {value}
       </p>
       {hint && <p className="text-muted-foreground mt-0.5 text-[11px]">{hint}</p>}
@@ -322,7 +322,7 @@ function BreakRow({
   return (
     <div className="mb-2 last:mb-0">
       <div className="mb-1 flex items-center justify-between text-xs">
-        <span className="text-foreground font-medium">{label}</span>
+        <span className="text-fg font-medium">{label}</span>
         <span className="text-muted-foreground tabular-nums">
           {n} · {pct}%
         </span>
@@ -353,7 +353,7 @@ function AnalyseGate({
 
   return (
     <div className="mx-auto max-w-md space-y-4 py-8">
-      <Link href="/spy" className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm">
+      <Link href="/spy" className="text-muted-foreground hover:text-fg flex items-center gap-1 text-sm">
         <Icon name="chevronRight" size={14} className="rotate-180" />
         Spy Facebook
       </Link>
@@ -379,7 +379,7 @@ function AnalyseGate({
         {enough ? (
           <Link
             href={go}
-            className="bg-primary text-primary-foreground inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
+            className="bg-accent text-accent-on inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
           >
             <Icon name="search" size={16} /> Analyser ({formatCredits(ANALYZE_COST)} crédits)
           </Link>
@@ -390,7 +390,7 @@ function AnalyseGate({
             </div>
             <Link
               href="/offres"
-              className="bg-primary text-primary-foreground inline-flex min-h-[44px] w-full items-center justify-center rounded-md px-4 text-sm font-semibold"
+              className="bg-accent text-accent-on inline-flex min-h-[44px] w-full items-center justify-center rounded-md px-4 text-sm font-semibold"
             >
               Recharger
             </Link>

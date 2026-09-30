@@ -4,7 +4,7 @@ import { useActionState, useEffect, useRef } from "react";
 import { creerAgent } from "./actions";
 
 const inputCls =
-  "w-full min-h-[44px] rounded-md border border-border bg-input px-3 py-2 text-sm outline-none focus:border-primary";
+  "w-full min-h-[44px] rounded-md border border-border bg-input px-3 py-2 text-sm outline-none focus:border-accent";
 const labelCls = "text-xs font-medium text-muted-foreground";
 
 export function EquipeForm() {
@@ -61,7 +61,7 @@ export function EquipeForm() {
       <button
         type="submit"
         disabled={pending}
-        className="bg-primary text-primary-foreground inline-flex min-h-[44px] items-center rounded-md px-5 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
+        className="bg-accent text-accent-on inline-flex min-h-[44px] items-center rounded-md px-5 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
       >
         {pending ? "Création…" : "Créer le compte"}
       </button>

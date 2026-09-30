@@ -50,8 +50,8 @@ export function AnglesClient({
             onClick={() => setEmotion("")}
             className={`inline-flex min-h-[44px] shrink-0 items-center whitespace-nowrap rounded-md px-3.5 text-sm font-medium transition-colors ${
               emotion === ""
-                ? "bg-primary text-primary-foreground"
-                : "bg-input text-muted-foreground hover:text-foreground"
+                ? "bg-accent text-accent-on"
+                : "bg-input text-muted-foreground hover:text-fg"
             }`}
           >
             Toutes ({angles.length})
@@ -63,8 +63,8 @@ export function AnglesClient({
               onClick={() => setEmotion(e.code)}
               className={`inline-flex min-h-[44px] shrink-0 items-center whitespace-nowrap rounded-md px-3.5 text-sm font-medium transition-colors ${
                 emotion === e.code
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-input text-muted-foreground hover:text-foreground"
+                  ? "bg-accent text-accent-on"
+                  : "bg-input text-muted-foreground hover:text-fg"
               }`}
             >
               {e.label} ({e.count})
@@ -89,11 +89,11 @@ export function AnglesClient({
               className="border-border bg-surface shadow-card flex flex-col gap-3 rounded-xl border p-4"
             >
               <div className="flex items-start justify-between gap-3">
-                <p className="text-foreground flex-1 text-sm leading-relaxed">
+                <p className="text-fg flex-1 text-sm leading-relaxed">
                   <Icon
                     name="tag"
                     size={14}
-                    className="text-primary mr-1.5 inline-block align-[-2px]"
+                    className="text-accent mr-1.5 inline-block align-[-2px]"
                   />
                   {a.angle}
                 </p>
@@ -106,7 +106,7 @@ export function AnglesClient({
               </div>
 
               <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                <span className="text-foreground font-medium">{a.nom}</span>
+                <span className="text-fg font-medium">{a.nom}</span>
                 <span>· {a.marche}</span>
                 {a.emotion && (
                   <span className="bg-chip-idee text-chip-idee-fg rounded px-1.5 py-0.5 font-medium">
