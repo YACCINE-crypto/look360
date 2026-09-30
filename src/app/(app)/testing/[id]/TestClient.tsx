@@ -16,7 +16,7 @@ const CONFIRMATION_SHORT: Record<ConfirmationTier, string> = {
 };
 
 const inputCls =
-  "w-full min-h-[44px] rounded-md border border-border bg-input px-3 py-2 text-sm outline-none focus:border-primary";
+  "w-full min-h-[44px] rounded-md border border-border bg-input px-3 py-2 text-sm outline-none focus:border-accent";
 const fieldLabel = "text-xs font-medium text-muted-foreground";
 
 type Props = {
@@ -78,11 +78,11 @@ export function TestClient({ produit, initial }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           href="/testing"
-          className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
+          className="text-muted-foreground hover:text-fg flex items-center gap-1 text-sm"
         >
           <Icon name="chevronRight" size={14} className="rotate-180" />
           Recherche <span className="text-muted-foreground">/</span>
-          <span className="text-foreground font-medium">
+          <span className="text-fg font-medium">
             {produit.nom ?? "Sans nom"}
           </span>
         </Link>
@@ -92,7 +92,7 @@ export function TestClient({ produit, initial }: Props) {
           </span>
           <form action={validerProduit}>
             <input type="hidden" name="produit_id" value={produit.id} />
-            <button className="bg-success text-primary-foreground inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-90">
+            <button className="bg-success text-accent-on inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-90">
               <Icon name="check" size={15} /> Valider le produit
             </button>
           </form>
@@ -151,7 +151,7 @@ export function TestClient({ produit, initial }: Props) {
             {/* Data-viz : anneau closing + jauge marge */}
             <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
               {/* Closing = anneau de progression coloré */}
-              <div className="border-border bg-background flex items-center gap-4 rounded-xl border p-4">
+              <div className="border-border bg-bg flex items-center gap-4 rounded-xl border p-4">
                 <ProgressRing
                   value={r.tauxConfirmation}
                   tone={closingTone(r.tauxConfirmation)}
@@ -169,7 +169,7 @@ export function TestClient({ produit, initial }: Props) {
               </div>
 
               {/* Marge = jauge */}
-              <div className="border-border bg-background flex flex-col justify-center rounded-xl border p-4">
+              <div className="border-border bg-bg flex flex-col justify-center rounded-xl border p-4">
                 <div className="flex items-baseline justify-between">
                   <p className="text-muted-foreground text-xs">Marge nette</p>
                   <span className={`text-2xl font-bold tabular-nums ${marginColor(r.margePct)}`}>
@@ -211,7 +211,7 @@ export function TestClient({ produit, initial }: Props) {
                 </span>
               </Metric>
               <Metric label="ROAS" hint="retour sur budget pub">
-                <span className="text-warning">
+                <span className="text-warn">
                   {r.roas === null ? "—" : `${r.roas.toFixed(1)}x`}
                 </span>
               </Metric>
@@ -302,7 +302,7 @@ export function TestClient({ produit, initial }: Props) {
 
             <button
               type="submit"
-              className="bg-primary text-primary-foreground flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md py-2.5 text-sm font-semibold transition-opacity hover:opacity-90"
+              className="bg-accent text-accent-on flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md py-2.5 text-sm font-semibold transition-opacity hover:opacity-90"
             >
               <Icon name="clock" size={15} /> Recalculer &amp; enregistrer
             </button>
@@ -321,7 +321,7 @@ function ExternalLink({ href, label }: { href: string | null; label: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-primary flex items-center gap-2 hover:underline"
+      className="text-accent flex items-center gap-2 hover:underline"
     >
       <Icon name="chevronRight" size={14} /> {label}
     </a>
@@ -372,13 +372,13 @@ function Field({
 
 function confColor(tier?: ConfirmationTier): string {
   if (tier === "faible") return "text-danger";
-  if (tier === "correct") return "text-warning";
+  if (tier === "correct") return "text-warn";
   return "text-success";
 }
 function marginColor(margePct: number | null): string {
   if (margePct === null) return "";
   if (margePct >= 30) return "text-success";
-  if (margePct >= 15) return "text-warning";
+  if (margePct >= 15) return "text-warn";
   return "text-danger";
 }
 function verdictTone(tier: string): Tone {

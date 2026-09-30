@@ -12,14 +12,14 @@ import { dernierTestParProduit } from "@/lib/score";
 // Verdict → pastille (tokens signal : vert / ambre / rouge).
 function verdictPill(tier: string | null): { label: string; cls: string } {
   if (tier === "rentable") return { label: "Rentable", cls: "bg-success-bg text-success" };
-  if (tier === "moyen") return { label: "Moyen", cls: "bg-warning-bg text-warning" };
+  if (tier === "moyen") return { label: "Moyen", cls: "bg-warn-bg text-warn" };
   if (tier === "pas_rentable" || tier === "marge_faible")
     return { label: "Pas rentable", cls: "bg-danger-bg text-danger" };
   return { label: "À chiffrer", cls: "bg-input text-muted-foreground" };
 }
 function closingColor(tier: string | undefined): string {
   if (tier === "faible") return "text-danger";
-  if (tier === "correct") return "text-warning";
+  if (tier === "correct") return "text-warn";
   if (tier === "normal" || tier === "super") return "text-success";
   return "text-muted-foreground";
 }
@@ -75,7 +75,7 @@ export default async function TestingPage() {
               <Link
                 key={p.id}
                 href={`/testing/${p.id}`}
-                className="group border-border bg-surface hover:border-primary/40 hover:shadow-md flex gap-3 rounded-xl border p-3 shadow-card transition-all"
+                className="group border-border bg-surface hover:border-accent/40 hover:shadow-md flex gap-3 rounded-xl border p-3 shadow-card transition-all"
               >
                 {/* Vignette */}
                 <div className="bg-input relative h-24 w-24 shrink-0 overflow-hidden rounded-lg">
@@ -101,7 +101,7 @@ export default async function TestingPage() {
                         <CountryFlag code={p.marche} /> {marcheLabel(p.marche)}
                       </p>
                     </div>
-                    <Icon name="chevronRight" size={16} className="text-muted-foreground group-hover:text-foreground shrink-0" />
+                    <Icon name="chevronRight" size={16} className="text-muted-foreground group-hover:text-fg shrink-0" />
                   </div>
 
                   <div className="mt-auto flex items-end justify-between gap-2 pt-2">
@@ -132,7 +132,7 @@ export default async function TestingPage() {
                             r.confirmation?.tier === "faible"
                               ? "bg-danger"
                               : r.confirmation?.tier === "correct"
-                                ? "bg-warning"
+                                ? "bg-warn"
                                 : "bg-success"
                           }`}
                           style={{ width: `${Math.max(0, Math.min(100, r.tauxConfirmation))}%` }}
