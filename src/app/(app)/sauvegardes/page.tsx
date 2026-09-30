@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/ui";
-import { EmptyPreview } from "@/components/dataviz";
+import { EmptyState } from "@/components/EmptyState";
+import { Bookmark } from "lucide-react";
 import { Icon } from "@/components/Icon";
 import { CreativeMedia } from "@/components/CreativeMedia";
 import { ajouterAuxProduits, retirerPub } from "../spy/actions";
@@ -24,13 +25,12 @@ export default async function SauvegardesPage() {
       />
 
       {rows.length === 0 ? (
-        <EmptyPreview
-          icon="bookmark"
+        <EmptyState
+          icon={Bookmark}
           title="Aucune pub sauvegardée"
           description="Depuis le Spy, clique le marque-page sur une pub pour l'archiver ici — ta bibliothèque de créatives."
           ctaHref="/spy"
           ctaLabel="Explorer le Spy"
-          variant="cards"
         />
       ) : (
         <div className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

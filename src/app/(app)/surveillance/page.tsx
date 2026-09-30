@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader, Card } from "@/components/ui";
 import { Icon } from "@/components/Icon";
 import { CountryFlag } from "@/components/dataviz";
+import { EmptyState } from "@/components/EmptyState";
+import { BellRing } from "lucide-react";
 import { countryLabel, cleanField } from "@/lib/spy";
 import { getSubscription } from "@/lib/credits";
 import { planConfig } from "@/lib/billing";
@@ -77,16 +79,13 @@ export default async function SurveillancePage() {
       </PageHeader>
 
       {rows.length === 0 ? (
-        <div className="border-border bg-surface rounded-xl border border-dashed p-12 text-center">
-          <span className="bg-secondary text-accent mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full">
-            <Icon name="eye" size={24} />
-          </span>
-          <p className="font-medium">Aucun concurrent suivi</p>
-          <p className="text-muted-foreground mx-auto mt-1 max-w-md text-sm">
-            Depuis le Spy, clique « Surveiller » sur une page pour être alerté
-            dès qu&apos;elle lance une nouvelle pub.
-          </p>
-        </div>
+        <EmptyState
+          icon={BellRing}
+          title="Aucun concurrent suivi"
+          description="Depuis le Spy, clique « Surveiller » sur une page pour être alerté dès qu'elle lance une nouvelle pub."
+          ctaHref="/spy"
+          ctaLabel="Explorer le Spy"
+        />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {rows.map((c) => {

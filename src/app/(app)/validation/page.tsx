@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/ui";
 import { Icon } from "@/components/Icon";
+import { EmptyState } from "@/components/EmptyState";
+import { Inbox } from "lucide-react";
 import {
   marcheLabel,
   formatFCFA,
@@ -54,14 +56,11 @@ export default async function ValidationPage() {
       />
 
       {rows.length === 0 ? (
-        <div className="border-border bg-surface rounded-xl border border-dashed p-12 text-center">
-          <span className="bg-secondary text-accent mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full">
-            <Icon name="check" size={24} />
-          </span>
-          <p className="text-muted-foreground text-sm">
-            Rien à valider — toutes les soumissions sont traitées.
-          </p>
-        </div>
+        <EmptyState
+          icon={Inbox}
+          title="Rien à valider"
+          description="Toutes les soumissions ont été traitées. Les nouveaux produits soumis apparaîtront ici."
+        />
       ) : (
         <div className="space-y-3">
           {rows.map((p) => (

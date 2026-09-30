@@ -9,6 +9,8 @@ import { Select, type SelectOption } from "@/components/Select";
 import { CountryMultiSelect } from "@/components/CountryMultiSelect";
 import { CreativeMedia } from "@/components/CreativeMedia";
 import { VideoLightbox } from "@/components/VideoLightbox";
+import { EmptyState } from "@/components/EmptyState";
+import { Search } from "lucide-react";
 import { ajouterAuxProduits } from "./actions";
 import { suivreConcurrent } from "../surveillance/actions";
 import {
@@ -389,16 +391,11 @@ export function SpyClient({ balance }: { balance: number; plan?: string }) {
       )}
 
       {status === "idle" && (
-        <div className="border-border bg-surface rounded-xl border border-dashed p-12 text-center">
-          <span className="bg-secondary text-accent mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full">
-            <Icon name="eye" size={24} />
-          </span>
-          <p className="font-medium">Lance une recherche</p>
-          <p className="text-muted-foreground mx-auto mt-1 max-w-md text-sm">
-            Choisis un mot-clé et un ou plusieurs pays. Les pubs qui tournent depuis
-            longtemps (et à fort reach en UE) sont les meilleurs signaux.
-          </p>
-        </div>
+        <EmptyState
+          icon={Search}
+          title="Lance une recherche"
+          description="Choisis un mot-clé et un ou plusieurs pays. Les pubs qui tournent depuis longtemps (et à fort reach en UE) sont les meilleurs signaux."
+        />
       )}
 
       {status === "done" && ads.length === 0 && (

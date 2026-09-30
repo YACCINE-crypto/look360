@@ -7,7 +7,8 @@ import { FilterBar } from "@/components/FilterBar";
 import { StatsStrip, type Stat } from "@/components/StatsStrip";
 import { AddProductPanel } from "@/components/AddProductPanel";
 import { PageHeader } from "@/components/ui";
-import { EmptyPreview } from "@/components/dataviz";
+import { EmptyState } from "@/components/EmptyState";
+import { PackageSearch } from "lucide-react";
 import { Icon } from "@/components/Icon";
 import { type Produit, type Tri } from "@/lib/produits";
 
@@ -113,13 +114,12 @@ export function RechercheClient({
 
       {filtered.length === 0 ? (
         produits.length === 0 ? (
-          <EmptyPreview
-            icon="search"
+          <EmptyState
+            icon={PackageSearch}
             title="Ta bibliothèque de produits est vide"
             description="Ajoute un produit ou importe-en un depuis le Spy — score, closing et marge s'afficheront ici."
             ctaHref="/recherche?add=1"
             ctaLabel="Ajouter un produit"
-            variant="cards"
           />
         ) : (
           <div className="border-border bg-surface rounded-xl border border-dashed p-12 text-center">

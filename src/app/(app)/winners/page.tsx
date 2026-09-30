@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/ui";
-import { EmptyPreview } from "@/components/dataviz";
+import { EmptyState } from "@/components/EmptyState";
+import { Trophy } from "lucide-react";
 import { Icon } from "@/components/Icon";
 import { AdGrid } from "@/components/AdGrid";
 import { FeatureLock } from "@/components/FeatureLock";
@@ -78,13 +79,12 @@ export default async function WinnersPage() {
       <WinnerConfigForm config={config} />
 
       {ads.length === 0 ? (
-        <EmptyPreview
-          icon="trophy"
+        <EmptyState
+          icon={Trophy}
           title="Aucun winner aujourd'hui pour l'instant"
           description="L'agent tourne chaque jour. Ajuste tes critères ci-dessus puis lance un repérage, ou explore le Spy en attendant."
           ctaHref="/spy"
           ctaLabel="Explorer le Spy"
-          variant="cards"
         />
       ) : (
         <>

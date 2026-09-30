@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/ui";
 import { Icon } from "@/components/Icon";
+import { EmptyState } from "@/components/EmptyState";
+import { Tag } from "lucide-react";
 import { emotionLabel } from "@/lib/produits";
 import { scoreMeta } from "@/lib/score";
 import { margeColorClass } from "@/lib/testing";
@@ -74,13 +76,13 @@ export function AnglesClient({
       )}
 
       {filtered.length === 0 ? (
-        <div className="border-border bg-surface rounded-xl border border-dashed p-12 text-center">
-          <p className="text-muted-foreground text-sm">
-            Aucun angle renseigné pour l&apos;instant. Ajoute un{" "}
-            <span className="font-medium">angle marketing</span> à tes produits
-            pour construire ta bibliothèque.
-          </p>
-        </div>
+        <EmptyState
+          icon={Tag}
+          title="Aucun angle renseigné pour l'instant"
+          description="Ajoute un angle marketing à tes produits pour construire ta bibliothèque d'accroches."
+          ctaHref="/recherche"
+          ctaLabel="Voir mes produits"
+        />
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {filtered.map((a) => (

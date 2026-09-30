@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { PipelineColumn } from "@/components/PipelineColumn";
 import { PageHeader } from "@/components/ui";
-import { EmptyPreview } from "@/components/dataviz";
+import { EmptyState } from "@/components/EmptyState";
+import { PackagePlus } from "lucide-react";
 import { margeParProduit, closingParProduit } from "@/lib/testing";
 import { type Produit, type Statut } from "@/lib/produits";
 
@@ -36,13 +37,12 @@ export default async function PipelinePage() {
       />
 
       {(produits?.length ?? 0) === 0 ? (
-        <EmptyPreview
-          icon="pipeline"
+        <EmptyState
+          icon={PackagePlus}
           title="Ton pipeline est vide"
           description="Chaque produit avance ici de l'idée à la production. Ajoute-en un pour voir le flux se remplir."
           ctaHref="/recherche?add=1"
           ctaLabel="Ajouter un produit"
-          variant="board"
         />
       ) : (
         /* Desktop : colonnes horizontales scrollables ; mobile : empilé */

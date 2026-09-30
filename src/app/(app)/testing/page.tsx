@@ -2,7 +2,9 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Icon } from "@/components/Icon";
 import { PageHeader } from "@/components/ui";
-import { EmptyPreview, CountryFlag } from "@/components/dataviz";
+import { CountryFlag } from "@/components/dataviz";
+import { EmptyState } from "@/components/EmptyState";
+import { FlaskConical } from "lucide-react";
 import { marcheLabel, formatFCFA } from "@/lib/produits";
 import { computeTest, margeColorClass, type Test } from "@/lib/testing";
 import { dernierTestParProduit } from "@/lib/score";
@@ -46,13 +48,12 @@ export default async function TestingPage() {
       />
 
       {total === 0 ? (
-        <EmptyPreview
-          icon="flask"
+        <EmptyState
+          icon={FlaskConical}
           title="Aucun produit en test"
           description="Envoie un produit en test depuis la Recherche : closing, marge et verdict s'afficheront ici en direct."
           ctaHref="/recherche"
           ctaLabel="Aller à la Recherche"
-          variant="list"
         />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

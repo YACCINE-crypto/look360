@@ -3,7 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getSubscription } from "@/lib/credits";
 import { planConfig } from "@/lib/billing";
 import { PageHeader } from "@/components/ui";
-import { EmptyPreview } from "@/components/dataviz";
+import { EmptyState } from "@/components/EmptyState";
+import { Store } from "lucide-react";
 import { Icon } from "@/components/Icon";
 import { FeatureLock } from "@/components/FeatureLock";
 import { marcheLabel } from "@/lib/produits";
@@ -63,13 +64,12 @@ export default async function VitrinePage() {
       </PageHeader>
 
       {rows.length === 0 ? (
-        <EmptyPreview
-          icon="store"
+        <EmptyState
+          icon={Store}
           title="Aucun winner validé pour l'instant"
           description="Dès que des commerçants valident des produits (≥ 10 commandes reçues), ils apparaissent ici — sans jamais révéler leur identité."
           ctaHref="/recherche"
           ctaLabel="Explorer les produits"
-          variant="cards"
         />
       ) : (
         <>
