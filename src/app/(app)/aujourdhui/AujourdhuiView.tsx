@@ -35,10 +35,10 @@ export type AujourdhuiData = {
 // Couleur signal (tokens Kimba) selon le tier de verdict.
 function verdictColor(tier: string | null): { badge: string; text: string } {
   if (tier === "rentable") return { badge: "bg-success-bg text-success", text: "text-success" };
-  if (tier === "moyen") return { badge: "bg-warning-bg text-warning", text: "text-warning" };
+  if (tier === "moyen") return { badge: "bg-warn-bg text-warn", text: "text-warn" };
   if (tier === "pas_rentable" || tier === "marge_faible")
     return { badge: "bg-danger-bg text-danger", text: "text-danger" };
-  return { badge: "bg-input text-muted-foreground", text: "text-foreground" };
+  return { badge: "bg-input text-muted-foreground", text: "text-fg" };
 }
 
 const CLOSING_LABEL: Record<string, string> = {
@@ -62,17 +62,17 @@ export function AujourdhuiView({ data }: { data: AujourdhuiData }) {
   return (
     <div className="space-y-6">
       {/* En-tête — bandeau vivant */}
-      <div className="from-primary/10 via-secondary/40 border-border relative overflow-hidden rounded-2xl border bg-gradient-to-r to-transparent p-5">
+      <div className="from-accent/10 via-secondary/40 border-border relative overflow-hidden rounded-2xl border bg-gradient-to-r to-transparent p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
-            <span className="from-primary to-primary/40 mt-0.5 h-9 w-1.5 shrink-0 rounded-full bg-gradient-to-b" />
+            <span className="from-accent to-accent/40 mt-0.5 h-9 w-1.5 shrink-0 rounded-full bg-gradient-to-b" />
             <div>
               <h1 className="text-2xl font-extrabold tracking-tight">Aujourd&apos;hui</h1>
               <p className="text-muted-foreground mt-0.5 text-sm capitalize">
                 {data.dateLabel}
                 <span className="lowercase">
                   {" · "}
-                  <span className={data.pendingCount > 0 ? "text-warning font-semibold" : ""}>
+                  <span className={data.pendingCount > 0 ? "text-warn font-semibold" : ""}>
                     {data.pendingCount} décision{data.pendingCount > 1 ? "s" : ""} en attente
                   </span>
                 </span>
@@ -125,10 +125,10 @@ export function AujourdhuiView({ data }: { data: AujourdhuiData }) {
           </p>
           <div className="grid grid-cols-4 gap-2">
             {[
-              { v: data.semaine.lances, l: "Tests lancés", c: "text-foreground" },
+              { v: data.semaine.lances, l: "Tests lancés", c: "text-fg" },
               { v: data.semaine.valides, l: "Validés", c: "text-success" },
               { v: data.semaine.rejetes, l: "Rejetés", c: "text-danger" },
-              { v: data.semaine.attente, l: "En attente", c: "text-warning" },
+              { v: data.semaine.attente, l: "En attente", c: "text-warn" },
             ].map((s, i) => (
               <div
                 key={s.l}
@@ -146,7 +146,7 @@ export function AujourdhuiView({ data }: { data: AujourdhuiData }) {
             <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
               Prochaines échéances
             </p>
-            <Link href="/recherche" className="text-primary text-xs font-medium hover:underline">
+            <Link href="/recherche" className="text-accent text-xs font-medium hover:underline">
               Voir tout
             </Link>
           </div>
@@ -174,9 +174,9 @@ const QUICK_ACTIONS: {
   icon: Parameters<typeof Icon>[0]["name"];
   tone: string;
 }[] = [
-  { href: "/spy", label: "Spy Facebook", desc: "Trouver des pubs gagnantes", icon: "eye", tone: "bg-secondary text-primary" },
+  { href: "/spy", label: "Spy Facebook", desc: "Trouver des pubs gagnantes", icon: "eye", tone: "bg-secondary text-accent" },
   { href: "/recherche?add=1", label: "Nouveau produit", desc: "Ajouter à évaluer", icon: "plus", tone: "bg-success-bg text-success" },
-  { href: "/winners", label: "Winners du jour", desc: "Le repérage du jour", icon: "trophy", tone: "bg-warning-bg text-warning" },
+  { href: "/winners", label: "Winners du jour", desc: "Le repérage du jour", icon: "trophy", tone: "bg-warn-bg text-warn" },
   { href: "/pipeline", label: "Pipeline", desc: "Suivre le flux produits", icon: "pipeline", tone: "bg-chip-idee text-chip-idee-fg" },
 ];
 
@@ -194,7 +194,7 @@ function QuickActions() {
             <Icon name={a.icon} size={20} />
           </span>
           <span className="min-w-0">
-            <span className="text-foreground block truncate text-sm font-semibold">{a.label}</span>
+            <span className="text-fg block truncate text-sm font-semibold">{a.label}</span>
             <span className="text-muted-foreground block truncate text-xs">{a.desc}</span>
           </span>
           <Icon
@@ -255,13 +255,13 @@ function ProduitDuJour({
             <h3 className="text-xl font-bold leading-tight">{p.nom ?? "Sans nom"}</h3>
             <p className="text-muted-foreground mt-0.5 text-sm">
               Coût livré :{" "}
-              <span className="text-foreground font-medium">
+              <span className="text-fg font-medium">
                 {formatFCFA(p.cout_livre_estime)}
               </span>
               {ech && (
                 <>
                   {" · Échéance : "}
-                  <span className="text-foreground font-medium">{echeanceLabel(ech)}</span>
+                  <span className="text-fg font-medium">{echeanceLabel(ech)}</span>
                 </>
               )}
             </p>
@@ -278,7 +278,7 @@ function ProduitDuJour({
 
         {/* Métriques */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <div className="bg-background rounded-lg px-4 py-3">
+          <div className="bg-bg rounded-lg px-4 py-3">
             <p className="text-muted-foreground mb-1 text-xs">Taux de closing</p>
             <p className={`text-2xl font-bold tabular-nums ${closingColor}`}>
               {r.tauxConfirmation === null ? "—" : `${r.tauxConfirmation.toFixed(0)}%`}
@@ -289,14 +289,14 @@ function ProduitDuJour({
               </p>
             )}
           </div>
-          <div className="bg-background rounded-lg px-4 py-3">
+          <div className="bg-bg rounded-lg px-4 py-3">
             <p className="text-muted-foreground mb-1 text-xs">Bénéfice projeté</p>
             <p className="text-2xl font-bold tabular-nums">
               {r.beneficeProjete === null ? "—" : nf.format(Math.round(r.beneficeProjete))}
             </p>
             <p className="text-muted-foreground mt-0.5 text-xs">FCFA</p>
           </div>
-          <div className="bg-background rounded-lg px-4 py-3">
+          <div className="bg-bg rounded-lg px-4 py-3">
             <p className="text-muted-foreground mb-1 text-xs">Marge nette</p>
             <p className={`text-2xl font-bold tabular-nums ${vc.text}`}>
               {r.margePct === null ? "—" : `${r.margePct.toFixed(0)}%`}
@@ -309,7 +309,7 @@ function ProduitDuJour({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
           <Link
             href={`/testing/${p.id}`}
-            className="bg-success text-primary-foreground inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg px-5 text-sm font-semibold transition-opacity hover:opacity-90"
+            className="bg-success text-accent-on inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg px-5 text-sm font-semibold transition-opacity hover:opacity-90"
           >
             <Icon name="check" size={16} />
             Prendre la décision
@@ -343,7 +343,7 @@ function EcheanceRow({ p, ech }: { p: Produit; ech: string | null }) {
       <div className="flex flex-col items-end gap-1">
         <StatusChip statut={p.statut as Statut} />
         <span
-          className={`flex items-center gap-1 text-xs ${urgent ? "text-warning font-medium" : "text-muted-foreground"}`}
+          className={`flex items-center gap-1 text-xs ${urgent ? "text-warn font-medium" : "text-muted-foreground"}`}
         >
           <Icon name="clock" size={11} />
           {echeanceLabel(ech)}

@@ -14,9 +14,9 @@ type Kpi = {
 };
 
 const TONE: Record<Kpi["tone"], { badge: string; val: string }> = {
-  primary: { badge: "bg-secondary text-primary", val: "text-foreground" },
+  primary: { badge: "bg-secondary text-accent", val: "text-fg" },
   success: { badge: "bg-success-bg text-success", val: "text-success" },
-  warning: { badge: "bg-warning-bg text-warning", val: "text-warning" },
+  warning: { badge: "bg-warn-bg text-warn", val: "text-warn" },
 };
 
 /** Rangée de KPI animés (count-up) du tableau de bord. */
