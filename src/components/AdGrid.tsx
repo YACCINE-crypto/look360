@@ -11,7 +11,7 @@ function rankClass(i: number): string {
   if (i === 0) return "bg-amber-100 text-amber-700";
   if (i === 1) return "bg-slate-200 text-slate-700";
   if (i === 2) return "bg-orange-100 text-orange-700";
-  return "bg-primary text-primary-foreground";
+  return "bg-accent text-accent-on";
 }
 
 /**

@@ -68,7 +68,7 @@ export default async function WinnersPage() {
         <form action={lancerWinnerMaintenant}>
           <button
             type="submit"
-            className="bg-primary text-primary-foreground inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
+            className="bg-accent text-accent-on inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
           >
             <Icon name="trophy" size={16} /> Lancer maintenant
           </button>

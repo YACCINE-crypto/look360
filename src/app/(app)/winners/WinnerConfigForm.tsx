@@ -7,7 +7,7 @@ import { CountryMultiSelect } from "@/components/CountryMultiSelect";
 import { enregistrerConfigWinner } from "./actions";
 
 const inputCls =
-  "w-full min-h-[40px] rounded-md border border-border bg-input px-3 text-sm outline-none focus:border-primary";
+  "w-full min-h-[40px] rounded-md border border-border bg-input px-3 text-sm outline-none focus:border-accent";
 const labelCls = "text-xs font-medium text-muted-foreground";
 
 export type WinnerConfig = {
@@ -35,7 +35,7 @@ export function WinnerConfigForm({ config }: { config: WinnerConfig }) {
         className="flex w-full items-center justify-between gap-2 p-4 text-left"
       >
         <span className="flex items-center gap-2 text-sm font-semibold">
-          <Icon name="trophy" size={16} className="text-warning" />
+          <Icon name="trophy" size={16} className="text-warn" />
           Critères du Winner Agent
           <span
             className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
@@ -117,7 +117,7 @@ export function WinnerConfigForm({ config }: { config: WinnerConfig }) {
 
           <button
             type="submit"
-            className="bg-primary text-primary-foreground inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
+            className="bg-accent text-accent-on inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
           >
             <Icon name="check" size={15} /> Enregistrer les critères
           </button>

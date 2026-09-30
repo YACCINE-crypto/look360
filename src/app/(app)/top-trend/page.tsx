@@ -59,7 +59,7 @@ export default async function TopTrendPage({
 
       {ads.length === 0 ? (
         <div className="border-border bg-surface rounded-xl border border-dashed p-12 text-center">
-          <span className="bg-secondary text-primary mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full">
+          <span className="bg-secondary text-accent mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full">
             <Icon name="trending" size={24} />
           </span>
           <p className="font-medium">Pas encore de tendances</p>
