@@ -43,7 +43,7 @@ const planBadge = (p: string) =>
   p === "business"
     ? "bg-emerald-100 text-emerald-700"
     : p === "pro"
-      ? "bg-secondary text-primary"
+      ? "bg-secondary text-accent"
       : p === "starter"
         ? "bg-blue-100 text-blue-700"
         : "bg-input text-muted-foreground";
@@ -85,7 +85,7 @@ export default async function AdminClientsPage({
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-foreground text-2xl font-extrabold tracking-tight">Clients</h1>
+        <h1 className="text-fg text-2xl font-extrabold tracking-tight">Clients</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           {total} compte{total > 1 ? "s" : ""} — recherche, filtres, actions.
         </p>
@@ -99,7 +99,7 @@ export default async function AdminClientsPage({
             name="q"
             defaultValue={q}
             placeholder="email ou nom…"
-            className="border-border bg-input focus:border-primary mt-1 min-h-[42px] w-full rounded-lg border px-3 text-sm outline-none"
+            className="border-border bg-input focus:border-accent mt-1 min-h-[42px] w-full rounded-lg border px-3 text-sm outline-none"
           />
         </div>
         <div>
@@ -120,7 +120,7 @@ export default async function AdminClientsPage({
             <option value="expired">Expiré</option>
           </select>
         </div>
-        <button className="bg-primary text-primary-foreground inline-flex min-h-[42px] items-center gap-1.5 rounded-lg px-4 text-sm font-semibold">
+        <button className="bg-accent text-accent-on inline-flex min-h-[42px] items-center gap-1.5 rounded-lg px-4 text-sm font-semibold">
           <Icon name="search" size={15} /> Filtrer
         </button>
       </form>
@@ -152,7 +152,7 @@ export default async function AdminClientsPage({
                 <tr key={r.user_id} className="hover:bg-input/50 transition-colors">
                   <td className="px-4 py-3">
                     <Link href={`/admin/clients/${r.user_id}`} className="block">
-                      <span className="text-foreground font-medium">
+                      <span className="text-fg font-medium">
                         {r.email ?? r.nom ?? "—"}
                       </span>
                       {r.suspended && (
@@ -256,7 +256,7 @@ function PagerLink({
   return (
     <Link
       href={`/admin/clients${href}`}
-      className="border-border text-foreground hover:bg-input rounded-lg border px-4 py-2 text-sm font-medium"
+      className="border-border text-fg hover:bg-input rounded-lg border px-4 py-2 text-sm font-medium"
     >
       {label}
     </Link>

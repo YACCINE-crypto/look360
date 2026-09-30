@@ -32,10 +32,10 @@ export function Charts({
         <div className="border-border bg-surface shadow-card rounded-2xl border p-5 lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <p className="text-foreground font-bold">Revenus dans le temps</p>
+              <p className="text-fg font-bold">Revenus dans le temps</p>
               <p className="text-muted-foreground text-xs">12 derniers mois (FCFA)</p>
             </div>
-            <span className="bg-secondary text-primary grid h-9 w-9 place-items-center rounded-xl">
+            <span className="bg-secondary text-accent grid h-9 w-9 place-items-center rounded-xl">
               <Icon name="trending" size={17} />
             </span>
           </div>
@@ -45,10 +45,10 @@ export function Charts({
         <div className="border-border bg-surface shadow-card rounded-2xl border p-5">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <p className="text-foreground font-bold">Clients par offre</p>
+              <p className="text-fg font-bold">Clients par offre</p>
               <p className="text-muted-foreground text-xs">Répartition actuelle</p>
             </div>
-            <span className="bg-secondary text-primary grid h-9 w-9 place-items-center rounded-xl">
+            <span className="bg-secondary text-accent grid h-9 w-9 place-items-center rounded-xl">
               <Icon name="users" size={17} />
             </span>
           </div>
@@ -59,10 +59,10 @@ export function Charts({
       <div className="border-border bg-surface shadow-card rounded-2xl border p-5">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <p className="text-foreground font-bold">Inscriptions dans le temps</p>
+            <p className="text-fg font-bold">Inscriptions dans le temps</p>
             <p className="text-muted-foreground text-xs">12 derniers mois</p>
           </div>
-          <span className="bg-secondary text-primary grid h-9 w-9 place-items-center rounded-xl">
+          <span className="bg-secondary text-accent grid h-9 w-9 place-items-center rounded-xl">
             <Icon name="users" size={17} />
           </span>
         </div>
@@ -90,7 +90,7 @@ function AreaChart({ data, unit = "" }: { data: MonthPoint[]; unit?: string }) {
   const total = data.reduce((s, d) => s + d.value, 0);
 
   return (
-    <div className="text-primary">
+    <div className="text-accent">
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="h-48 w-full"
@@ -131,7 +131,7 @@ function AreaChart({ data, unit = "" }: { data: MonthPoint[]; unit?: string }) {
         ))}
       </svg>
       <p className="text-muted-foreground mt-1 text-[11px]">
-        Max mensuel : <span className="text-foreground font-semibold">{nf.format(max)}{unit}</span>
+        Max mensuel : <span className="text-fg font-semibold">{nf.format(max)}{unit}</span>
       </p>
     </div>
   );
@@ -151,7 +151,7 @@ function Bars({ data }: { data: MonthPoint[] }) {
   const total = data.reduce((s, d) => s + d.value, 0);
 
   return (
-    <div className="text-primary">
+    <div className="text-accent">
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="h-44 w-full"
@@ -180,7 +180,7 @@ function Bars({ data }: { data: MonthPoint[] }) {
         })}
       </svg>
       <p className="text-muted-foreground mt-1 text-[11px]">
-        Total sur 12 mois : <span className="text-foreground font-semibold">{total}</span>
+        Total sur 12 mois : <span className="text-fg font-semibold">{total}</span>
       </p>
     </div>
   );
@@ -240,7 +240,7 @@ function Donut({
           <li key={s.label} className="flex items-center gap-2 text-sm">
             <span className="h-2.5 w-2.5 rounded-full" style={{ background: s.color }} />
             <span className="text-muted-foreground flex-1">{s.label}</span>
-            <span className="text-foreground font-bold tabular-nums">{s.value}</span>
+            <span className="text-fg font-bold tabular-nums">{s.value}</span>
           </li>
         ))}
       </ul>

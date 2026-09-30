@@ -126,13 +126,13 @@ function KpiCard({
     format === "fcfa" ? `${nf.format(v)} FCFA` : format === "pct" ? `${v} %` : nf.format(v);
 
   const valueColor =
-    tone === "success" ? "text-success" : tone === "danger" ? "text-danger" : "text-foreground";
+    tone === "success" ? "text-success" : tone === "danger" ? "text-danger" : "text-fg";
 
   return (
     <div
       className={`rounded-2xl border p-5 transition-shadow hover:shadow-md ${
         highlight
-          ? "border-primary/30 from-secondary/40 to-surface bg-gradient-to-b shadow-lg"
+          ? "border-accent/30 from-secondary/40 to-surface bg-gradient-to-b shadow-lg"
           : "border-border bg-surface shadow-card"
       }`}
     >
@@ -143,7 +143,7 @@ function KpiCard({
             <p className="text-muted-foreground/70 mt-0.5 text-[11px]">{period}</p>
           )}
         </div>
-        <span className="bg-secondary text-primary grid h-9 w-9 shrink-0 place-items-center rounded-xl">
+        <span className="bg-secondary text-accent grid h-9 w-9 shrink-0 place-items-center rounded-xl">
           <Icon name={icon} size={17} />
         </span>
       </div>
@@ -169,7 +169,7 @@ function PlanBreakdown({
   const rows = [
     { label: "Gratuit", n: plans.free, c: "bg-muted-foreground/40" },
     { label: "Starter", n: plans.starter, c: "bg-blue-400" },
-    { label: "Pro", n: plans.pro, c: "bg-primary" },
+    { label: "Pro", n: plans.pro, c: "bg-accent" },
     { label: "Business", n: plans.business, c: "bg-emerald-500" },
   ];
   const max = Math.max(1, ...rows.map((r) => r.n));
@@ -177,7 +177,7 @@ function PlanBreakdown({
     <div className="border-border bg-surface shadow-card rounded-2xl border p-5">
       <div className="flex items-center justify-between">
         <p className="text-muted-foreground text-sm font-medium">Répartition par offre</p>
-        <span className="bg-secondary text-primary grid h-9 w-9 place-items-center rounded-xl">
+        <span className="bg-secondary text-accent grid h-9 w-9 place-items-center rounded-xl">
           <Icon name="users" size={17} />
         </span>
       </div>
@@ -191,7 +191,7 @@ function PlanBreakdown({
                 style={{ width: `${(r.n / max) * 100}%` }}
               />
             </div>
-            <span className="text-foreground w-8 shrink-0 text-right text-xs font-bold tabular-nums">
+            <span className="text-fg w-8 shrink-0 text-right text-xs font-bold tabular-nums">
               {r.n}
             </span>
           </div>

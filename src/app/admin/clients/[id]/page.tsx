@@ -54,7 +54,7 @@ export default async function AdminClientDetailPage({
 
   return (
     <div className="space-y-5">
-      <Link href="/admin/clients" className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm">
+      <Link href="/admin/clients" className="text-muted-foreground hover:text-fg inline-flex items-center gap-1 text-sm">
         <Icon name="chevronRight" size={15} className="rotate-180" /> Clients
       </Link>
 
@@ -62,7 +62,7 @@ export default async function AdminClientDetailPage({
       <div className="border-border bg-surface shadow-card rounded-2xl border p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-foreground truncate text-xl font-extrabold">
+            <h1 className="text-fg truncate text-xl font-extrabold">
               {c.email ?? c.nom ?? "—"}
             </h1>
             <p className="text-muted-foreground mt-0.5 text-sm">
@@ -71,7 +71,7 @@ export default async function AdminClientDetailPage({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="bg-secondary text-primary rounded-full px-2.5 py-1 text-xs font-semibold">
+            <span className="bg-secondary text-accent rounded-full px-2.5 py-1 text-xs font-semibold">
               {planLabel(c.plan)}
             </span>
             <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${c.suspended ? "bg-danger-bg text-danger" : c.status === "active" ? "bg-success-bg text-success" : "bg-input text-muted-foreground"}`}>
@@ -82,7 +82,7 @@ export default async function AdminClientDetailPage({
         {c.current_period_end && (
           <p className="text-muted-foreground mt-2 text-xs">
             {c.status === "active" ? "Prochaine échéance : " : "Abonnement terminé le "}
-            <span className="text-foreground font-medium">
+            <span className="text-fg font-medium">
               {new Date(c.current_period_end).toLocaleDateString("fr-FR")}
             </span>
           </p>
@@ -100,7 +100,7 @@ export default async function AdminClientDetailPage({
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Offrir des crédits */}
         <div className="border-border bg-surface shadow-card rounded-2xl border p-5">
-          <p className="text-foreground font-semibold">Offrir des crédits</p>
+          <p className="text-fg font-semibold">Offrir des crédits</p>
           <form action={grantCredits} className="mt-3 space-y-2">
             <input type="hidden" name="user" value={c.user_id} />
             <input
@@ -109,15 +109,15 @@ export default async function AdminClientDetailPage({
               min={1}
               required
               placeholder="Nombre de crédits"
-              className="border-border bg-input focus:border-primary min-h-[42px] w-full rounded-lg border px-3 text-sm outline-none"
+              className="border-border bg-input focus:border-accent min-h-[42px] w-full rounded-lg border px-3 text-sm outline-none"
             />
             <input
               name="reason"
               type="text"
               placeholder="Motif (optionnel)"
-              className="border-border bg-input focus:border-primary min-h-[42px] w-full rounded-lg border px-3 text-sm outline-none"
+              className="border-border bg-input focus:border-accent min-h-[42px] w-full rounded-lg border px-3 text-sm outline-none"
             />
-            <button className="bg-primary text-primary-foreground min-h-[42px] w-full rounded-lg text-sm font-semibold">
+            <button className="bg-accent text-accent-on min-h-[42px] w-full rounded-lg text-sm font-semibold">
               Créditer
             </button>
           </form>
@@ -125,7 +125,7 @@ export default async function AdminClientDetailPage({
 
         {/* Changer l'offre */}
         <div className="border-border bg-surface shadow-card rounded-2xl border p-5">
-          <p className="text-foreground font-semibold">Changer l&apos;offre</p>
+          <p className="text-fg font-semibold">Changer l&apos;offre</p>
           <form action={setPlan} className="mt-3 space-y-2">
             <input type="hidden" name="user" value={c.user_id} />
             <select name="plan" defaultValue={c.plan} className="border-border bg-input min-h-[42px] w-full rounded-lg border px-3 text-sm outline-none">
@@ -137,7 +137,7 @@ export default async function AdminClientDetailPage({
             <p className="text-muted-foreground text-[11px]">
               Applique l&apos;offre + les crédits mensuels correspondants.
             </p>
-            <button className="bg-foreground text-background min-h-[42px] w-full rounded-lg text-sm font-semibold">
+            <button className="bg-fg text-bg min-h-[42px] w-full rounded-lg text-sm font-semibold">
               Appliquer l&apos;offre
             </button>
           </form>
@@ -145,7 +145,7 @@ export default async function AdminClientDetailPage({
 
         {/* Suspendre / réactiver */}
         <div className="border-border bg-surface shadow-card rounded-2xl border p-5">
-          <p className="text-foreground font-semibold">
+          <p className="text-fg font-semibold">
             {c.suspended ? "Réactiver le compte" : "Suspendre le compte"}
           </p>
           <p className="text-muted-foreground mt-1 text-xs">
@@ -159,8 +159,8 @@ export default async function AdminClientDetailPage({
             <button
               className={`min-h-[42px] w-full rounded-lg text-sm font-semibold ${
                 c.suspended
-                  ? "bg-success text-primary-foreground"
-                  : "bg-danger text-primary-foreground"
+                  ? "bg-success text-accent-on"
+                  : "bg-danger text-accent-on"
               }`}
             >
               {c.suspended ? "Réactiver" : "Suspendre"}
@@ -214,9 +214,9 @@ function detailText(detail: Record<string, unknown>): string {
 
 function Fig({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-background rounded-lg p-3">
+    <div className="bg-bg rounded-lg p-3">
       <p className="text-muted-foreground text-[11px]">{label}</p>
-      <p className="text-foreground text-base font-bold tabular-nums">{value}</p>
+      <p className="text-fg text-base font-bold tabular-nums">{value}</p>
     </div>
   );
 }
@@ -224,7 +224,7 @@ function Fig({ label, value }: { label: string; value: string }) {
 function HistoryCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="border-border bg-surface shadow-card rounded-2xl border">
-      <p className="border-border text-foreground border-b px-4 py-3 text-sm font-bold">{title}</p>
+      <p className="border-border text-fg border-b px-4 py-3 text-sm font-bold">{title}</p>
       <div className="divide-border divide-y">{children}</div>
     </div>
   );
@@ -248,12 +248,12 @@ function Row({
   return (
     <div className="flex items-center justify-between gap-3 px-4 py-2.5">
       <div className="min-w-0">
-        <p className="text-foreground truncate text-sm">{left}</p>
+        <p className="text-fg truncate text-sm">{left}</p>
         <p className="text-muted-foreground text-[11px]">
           {new Date(date).toLocaleString("fr-FR")}
         </p>
       </div>
-      <span className={`shrink-0 text-sm font-semibold tabular-nums ${tone === "success" ? "text-success" : "text-foreground"}`}>
+      <span className={`shrink-0 text-sm font-semibold tabular-nums ${tone === "success" ? "text-success" : "text-fg"}`}>
         {right}
       </span>
     </div>

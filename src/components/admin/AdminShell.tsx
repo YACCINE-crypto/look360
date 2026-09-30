@@ -31,8 +31,8 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
             onClick={onNavigate}
             className={`flex min-h-[44px] items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
               active
-                ? "bg-secondary text-primary font-medium"
-                : "text-muted-foreground hover:bg-input hover:text-foreground"
+                ? "bg-secondary text-accent font-medium"
+                : "text-muted-foreground hover:bg-input hover:text-fg"
             }`}
           >
             <Icon name={it.icon} size={18} className="shrink-0" />
@@ -56,14 +56,14 @@ function Sidebar({
       <div className="border-border flex items-center justify-between border-b px-4 py-4">
         <div className="flex items-center gap-2">
           <img src="/look360-icon.svg" alt="Look360" className="h-7 w-7" />
-          <span className="text-foreground text-sm font-bold">
-            Admin<span className="text-primary">·</span>360
+          <span className="text-fg text-sm font-bold">
+            Admin<span className="text-accent">·</span>360
           </span>
         </div>
         {onClose && (
           <button
             onClick={onClose}
-            className="text-muted-foreground hover:text-foreground -mr-2 inline-flex h-11 w-11 items-center justify-center lg:hidden"
+            className="text-muted-foreground hover:text-fg -mr-2 inline-flex h-11 w-11 items-center justify-center lg:hidden"
             aria-label="Fermer le menu"
           >
             <Icon name="x" size={18} />
@@ -77,7 +77,7 @@ function Sidebar({
 
       <div className="border-border border-t px-3 py-3">
         <div className="mb-2 flex items-center gap-2.5">
-          <span className="bg-primary text-primary-foreground grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-semibold">
+          <span className="bg-accent text-accent-on grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-semibold">
             {displayName.slice(0, 2).toUpperCase()}
           </span>
           <div className="min-w-0 flex-1">
@@ -88,7 +88,7 @@ function Sidebar({
         <Link
           href="/aujourdhui"
           onClick={onClose}
-          className="text-muted-foreground hover:bg-input hover:text-foreground flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors"
+          className="text-muted-foreground hover:bg-input hover:text-fg flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors"
         >
           <Icon name="chevronRight" size={16} className="rotate-180" />
           Retour à l&apos;app
@@ -116,7 +116,7 @@ export function AdminShell({
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-bg min-h-screen">
       {/* Sidebar desktop */}
       <div className="fixed inset-y-0 left-0 hidden lg:block">
         <Sidebar displayName={displayName} />
@@ -141,13 +141,13 @@ export function AdminShell({
         <header className="border-border bg-surface sticky top-0 z-30 flex items-center gap-3 border-b px-4 py-3 lg:hidden">
           <button
             onClick={() => setOpen(true)}
-            className="text-foreground hover:bg-input inline-flex h-11 w-11 items-center justify-center rounded-lg"
+            className="text-fg hover:bg-input inline-flex h-11 w-11 items-center justify-center rounded-lg"
             aria-label="Ouvrir le menu"
           >
             <Icon name="menu" size={20} />
           </button>
           <span className="text-sm font-bold">
-            Admin<span className="text-primary">·</span>360
+            Admin<span className="text-accent">·</span>360
           </span>
         </header>
 

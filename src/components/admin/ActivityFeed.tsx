@@ -32,7 +32,7 @@ function meta(e: ActivityEvent): {
 } {
   switch (e.type) {
     case "signup":
-      return { icon: "users", label: "Nouvelle inscription", tint: "bg-secondary text-primary" };
+      return { icon: "users", label: "Nouvelle inscription", tint: "bg-secondary text-accent" };
     case "upgrade":
       return {
         icon: "trending",
@@ -99,13 +99,13 @@ export function ActivityFeed({ initial }: { initial: ActivityEvent[] }) {
   return (
     <div className="border-border bg-surface shadow-card rounded-2xl border">
       <div className="border-border flex items-center justify-between border-b px-5 py-3.5">
-        <p className="text-foreground font-bold">Flux d&apos;activité</p>
+        <p className="text-fg font-bold">Flux d&apos;activité</p>
         <span className="text-muted-foreground inline-flex items-center gap-1.5 text-xs">
           <span className="relative flex h-2 w-2">
             {live && (
               <span className="bg-success absolute inline-flex h-full w-full animate-ping rounded-full opacity-60" />
             )}
-            <span className={`relative inline-flex h-2 w-2 rounded-full ${live ? "bg-success" : "bg-warning"}`} />
+            <span className={`relative inline-flex h-2 w-2 rounded-full ${live ? "bg-success" : "bg-warn"}`} />
           </span>
           {live ? "En direct" : "Rafraîchissement auto"}
         </span>
@@ -124,7 +124,7 @@ export function ActivityFeed({ initial }: { initial: ActivityEvent[] }) {
                 <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${m.tint}`}>
                   <Icon name={m.icon} size={16} />
                 </span>
-                <span className="text-foreground min-w-0 flex-1 truncate text-sm">
+                <span className="text-fg min-w-0 flex-1 truncate text-sm">
                   {m.label}
                 </span>
                 <span className="text-muted-foreground shrink-0 text-xs">

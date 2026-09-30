@@ -59,7 +59,7 @@ export default async function AdminRevenusPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-foreground text-2xl font-extrabold tracking-tight">Revenus &amp; marge</h1>
+        <h1 className="text-fg text-2xl font-extrabold tracking-tight">Revenus &amp; marge</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           Revenu réel encaissé, coût estimé, marge en direct — et les alertes à traiter.
         </p>

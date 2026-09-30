@@ -95,10 +95,10 @@ export function Revenus({
         <div className="border-border bg-surface shadow-card rounded-2xl border p-5 lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <p className="text-foreground font-bold">Revenus encaissés</p>
+              <p className="text-fg font-bold">Revenus encaissés</p>
               <p className="text-muted-foreground text-xs">12 derniers mois — paiements réussis (FCFA)</p>
             </div>
-            <span className="bg-secondary text-primary grid h-9 w-9 place-items-center rounded-xl">
+            <span className="bg-secondary text-accent grid h-9 w-9 place-items-center rounded-xl">
               <Icon name="trending" size={17} />
             </span>
           </div>
@@ -106,7 +106,7 @@ export function Revenus({
         </div>
 
         <div className="border-border bg-surface shadow-card rounded-2xl border p-5">
-          <p className="text-foreground font-bold">Récapitulatif</p>
+          <p className="text-fg font-bold">Récapitulatif</p>
           <div className="mt-3 space-y-3">
             <MiniRow label="Revenu du mois" value={`${nf.format(k.revenueMonth)} FCFA`} />
             <MiniRow label="Mois précédent" value={`${nf.format(k.revenuePrevMonth)} FCFA`} muted />
@@ -136,7 +136,7 @@ export function Revenus({
           >
             <Icon name="bell" size={16} />
           </span>
-          <h2 className="text-foreground text-lg font-bold">
+          <h2 className="text-fg text-lg font-bold">
             Alertes {alertCount > 0 && <span className="text-danger">({alertCount})</span>}
           </h2>
         </div>
@@ -234,19 +234,19 @@ function Kpi({
   const v = useCountUp(Math.round(value), active, reduce, 1000);
   const display = fcfa ? `${nf.format(v)} FCFA` : nf.format(v);
   const valueColor =
-    tone === "success" ? "text-success" : tone === "danger" ? "text-danger" : "text-foreground";
+    tone === "success" ? "text-success" : tone === "danger" ? "text-danger" : "text-fg";
 
   return (
     <div
       className={`rounded-2xl border p-5 transition-shadow hover:shadow-md ${
         highlight
-          ? "border-primary/30 from-secondary/40 to-surface bg-gradient-to-b shadow-lg"
+          ? "border-accent/30 from-secondary/40 to-surface bg-gradient-to-b shadow-lg"
           : "border-border bg-surface shadow-card"
       }`}
     >
       <div className="flex items-start justify-between gap-3">
         <p className="text-muted-foreground truncate text-sm font-medium">{label}</p>
-        <span className="bg-secondary text-primary grid h-9 w-9 shrink-0 place-items-center rounded-xl">
+        <span className="bg-secondary text-accent grid h-9 w-9 shrink-0 place-items-center rounded-xl">
           <Icon name={icon} size={17} />
         </span>
       </div>
@@ -296,7 +296,7 @@ function Bars({ data }: { data: { month: string; total: number }[] }) {
           </span>
           <div className="flex w-full flex-1 items-end">
             <div
-              className={`w-full rounded-t-md transition-all ${d.total > 0 ? "bg-primary" : "bg-input"}`}
+              className={`w-full rounded-t-md transition-all ${d.total > 0 ? "bg-accent" : "bg-input"}`}
               style={{ height: `${Math.max(2, (d.total / max) * 100)}%` }}
               title={`${monthLabel(d.month)} : ${nf.format(d.total)} FCFA`}
             />
@@ -322,7 +322,7 @@ function MiniRow({
   tone?: "success" | "danger";
 }) {
   const color =
-    tone === "success" ? "text-success" : tone === "danger" ? "text-danger" : "text-foreground";
+    tone === "success" ? "text-success" : tone === "danger" ? "text-danger" : "text-fg";
   return (
     <div className="flex items-center justify-between gap-3">
       <span className="text-muted-foreground text-sm">{label}</span>
@@ -358,7 +358,7 @@ function AlertCard({
             <Icon name={icon} size={15} />
           </span>
           <div>
-            <p className="text-foreground text-sm font-bold">{title}</p>
+            <p className="text-fg text-sm font-bold">{title}</p>
             <p className="text-muted-foreground text-[11px]">{hint}</p>
           </div>
         </div>
@@ -395,7 +395,7 @@ function AlertRow({
   return (
     <Link href={href} className="hover:bg-input/50 flex items-center justify-between gap-3 px-4 py-2.5 transition-colors">
       <div className="min-w-0">
-        <p className="text-foreground truncate text-sm font-medium">{left}</p>
+        <p className="text-fg truncate text-sm font-medium">{left}</p>
         <p className="text-muted-foreground text-[11px]">{sub}</p>
       </div>
       <span
