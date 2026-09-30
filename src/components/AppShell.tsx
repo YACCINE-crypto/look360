@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CircleUser, LogOut } from "lucide-react";
 import { SidebarNav } from "./Nav";
 import { Icon } from "./Icon";
 import { MobileTabBar } from "./MobileTabBar";
-import { NotifBell } from "./NotifBell";
 import { logout } from "@/app/login/actions";
 import { formatCredits, planLabel } from "@/lib/billing";
 
@@ -43,20 +43,17 @@ function Brand({ compact = false }: { compact?: boolean }) {
 
 function Sidebar({
   displayName,
-  initials,
-  role,
   isAdmin,
   pendingCount,
-  credits,
   plan,
   onClose,
 }: {
   displayName: string;
-  initials: string;
-  role: string;
+  initials?: string;
+  role?: string;
   isAdmin: boolean;
   pendingCount: number;
-  credits: number;
+  credits?: number;
   plan: string;
   onClose?: () => void;
 }) {
@@ -92,45 +89,29 @@ function Sidebar({
         />
       </nav>
 
-      {/* Profil */}
-      <div className="border-sidebar-border border-t px-3 py-3">
-        <div className="mb-2 flex items-center gap-2.5">
-          <span className="bg-sidebar-hover-bg text-sidebar-fg grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-semibold">
-            {initials}
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sidebar-fg truncate text-sm font-medium">{displayName}</p>
-            <p className="text-sidebar-muted text-xs capitalize">{role}</p>
-          </div>
-        </div>
-        <div className="mb-2">
-          <CreditsBadge credits={credits} plan={plan} />
-        </div>
-        <NotifBell />
-        {role === "superadmin" && (
-          <Link
-            href="/admin"
-            onClick={onClose}
-            className="text-sidebar-fg hover:bg-sidebar-hover-bg flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium transition-colors"
-          >
-            <Icon name="trending" size={16} />
-            Panneau admin
-          </Link>
-        )}
+      {/* Bas compact : compte (→ Paramètres) + déconnexion. Tout le reste est
+          dans la page Paramètres. */}
+      <div className="border-sidebar-border border-t p-2">
         <Link
           href="/parametres"
           onClick={onClose}
-          className="text-sidebar-muted hover:bg-sidebar-hover-bg hover:text-sidebar-fg flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors"
+          className="hover:bg-sidebar-hover-bg flex items-center gap-2.5 rounded-lg p-2 transition-colors"
+          title="Mon compte · Paramètres"
         >
-          <Icon name="settings" size={16} />
-          Paramètres
+          <span className="bg-sidebar-hover-bg text-sidebar-fg grid h-9 w-9 shrink-0 place-items-center rounded-full">
+            <CircleUser size={22} strokeWidth={1.75} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="text-sidebar-fg block truncate text-sm font-medium">{displayName}</span>
+            <span className="text-sidebar-muted block text-xs">{planLabel(plan)}</span>
+          </span>
         </Link>
         <form action={logout}>
           <button
             type="submit"
-            className="text-sidebar-muted hover:bg-sidebar-hover-bg hover:text-danger flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors"
+            className="text-sidebar-muted hover:text-danger flex min-h-[40px] w-full items-center gap-2 rounded-lg px-2 text-sm transition-colors"
           >
-            <Icon name="logout" size={16} />
+            <LogOut size={15} />
             Déconnexion
           </button>
         </form>
