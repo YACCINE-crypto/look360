@@ -78,7 +78,7 @@ export function SidebarNav({
               />
             )}
             {it.href === "/validation" && pendingCount > 0 && (
-              <span className="bg-primary text-primary-foreground ml-auto rounded-full px-1.5 py-0.5 text-xs font-semibold">
+              <span className="bg-accent text-accent-on ml-auto rounded-full px-1.5 py-0.5 text-xs font-semibold">
                 {pendingCount}
               </span>
             )}

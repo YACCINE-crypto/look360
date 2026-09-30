@@ -160,7 +160,7 @@ export function AppShell({
   const isAdmin = role === "superadmin";
 
   return (
-    <div className="bg-background flex h-screen overflow-hidden">
+    <div className="bg-bg flex h-screen overflow-hidden">
       {/* Sidebar desktop */}
       <div className="hidden h-full lg:flex">
         <Sidebar
@@ -203,7 +203,7 @@ export function AppShell({
         <header className="border-border bg-surface flex items-center justify-between border-b px-4 py-3 lg:hidden">
           <button
             onClick={() => setMobileOpen(true)}
-            className="text-muted-foreground hover:text-foreground -ml-2 inline-flex h-11 w-11 items-center justify-center"
+            className="text-muted-foreground hover:text-fg -ml-2 inline-flex h-11 w-11 items-center justify-center"
             aria-label="Ouvrir le menu"
           >
             <Icon name="menu" size={22} />

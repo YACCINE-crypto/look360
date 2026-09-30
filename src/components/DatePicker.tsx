@@ -83,8 +83,8 @@ export function DatePicker({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={`border-border bg-input focus:border-primary flex min-h-[44px] w-full items-center justify-between gap-2 rounded-md border px-3 text-sm outline-none transition-colors ${
-          open ? "border-primary" : ""
+        className={`border-border bg-input focus:border-accent flex min-h-[44px] w-full items-center justify-between gap-2 rounded-md border px-3 text-sm outline-none transition-colors ${
+          open ? "border-accent" : ""
         }`}
       >
         <span className={value ? "" : "text-muted-foreground"}>{value ? fmt(value) : placeholder}</span>
@@ -137,9 +137,9 @@ export function DatePicker({
                   }}
                   className={`grid h-9 place-items-center rounded-md text-sm transition-colors ${
                     isSel
-                      ? "bg-primary text-primary-foreground font-semibold"
+                      ? "bg-accent text-accent-on font-semibold"
                       : isToday
-                        ? "text-primary font-semibold hover:bg-input"
+                        ? "text-accent font-semibold hover:bg-input"
                         : "hover:bg-input"
                   }`}
                 >
@@ -156,7 +156,7 @@ export function DatePicker({
                 setValue("");
                 setOpen(false);
               }}
-              className="text-muted-foreground hover:text-foreground text-xs font-medium"
+              className="text-muted-foreground hover:text-fg text-xs font-medium"
             >
               Effacer
             </button>
@@ -167,7 +167,7 @@ export function DatePicker({
                 setView(new Date());
                 setOpen(false);
               }}
-              className="text-primary text-xs font-semibold"
+              className="text-accent text-xs font-semibold"
             >
               Aujourd&apos;hui
             </button>

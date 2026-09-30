@@ -74,8 +74,8 @@ export function Select({
         aria-expanded={open}
         aria-controls={open ? listId : undefined}
         onClick={() => !disabled && setOpen((o) => !o)}
-        className={`border-border bg-input focus:border-primary flex min-h-[44px] w-full items-center justify-between gap-2 rounded-md border px-3 text-sm outline-none transition-colors disabled:opacity-50 ${
-          open ? "border-primary" : ""
+        className={`border-border bg-input focus:border-accent flex min-h-[44px] w-full items-center justify-between gap-2 rounded-md border px-3 text-sm outline-none transition-colors disabled:opacity-50 ${
+          open ? "border-accent" : ""
         }`}
       >
         <span className={`truncate ${current ? "" : "text-muted-foreground"}`}>
@@ -146,7 +146,7 @@ function Row({
         {o.label}
         {o.hint && <span className="text-muted-foreground ml-1 text-xs">{o.hint}</span>}
       </span>
-      {selected && <Icon name="check" size={15} className="text-primary shrink-0" />}
+      {selected && <Icon name="check" size={15} className="text-accent shrink-0" />}
     </button>
   );
 }

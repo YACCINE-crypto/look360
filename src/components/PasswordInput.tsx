@@ -33,14 +33,14 @@ export function PasswordInput({
         required={required}
         minLength={minLength}
         placeholder={placeholder}
-        className="border-border bg-input focus:border-primary w-full min-h-[46px] rounded-lg border px-3 py-2 pr-11 text-sm outline-none transition-colors"
+        className="border-border bg-input focus:border-accent w-full min-h-[46px] rounded-lg border px-3 py-2 pr-11 text-sm outline-none transition-colors"
       />
       <button
         type="button"
         onClick={() => setShow((s) => !s)}
         aria-label={show ? "Masquer le mot de passe" : "Afficher le mot de passe"}
         aria-pressed={show}
-        className="text-muted-foreground hover:text-foreground absolute right-1 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-md"
+        className="text-muted-foreground hover:text-fg absolute right-1 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-md"
       >
         <Icon name={show ? "eyeOff" : "eye"} size={18} />
       </button>

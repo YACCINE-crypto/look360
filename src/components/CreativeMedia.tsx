@@ -53,13 +53,13 @@ export function CreativeMedia({
             className="absolute inset-0 grid place-items-center bg-black/10 transition-colors hover:bg-black/25"
             aria-label="Regarder la vidéo"
           >
-            <span className="bg-surface/90 text-foreground grid h-12 w-12 place-items-center rounded-full shadow">
+            <span className="bg-surface/90 text-fg grid h-12 w-12 place-items-center rounded-full shadow">
               <Icon name="play" size={20} />
             </span>
           </button>
         ) : (
           <span className="pointer-events-none absolute inset-0 grid place-items-center">
-            <span className="bg-surface/90 text-foreground grid h-12 w-12 place-items-center rounded-full shadow">
+            <span className="bg-surface/90 text-fg grid h-12 w-12 place-items-center rounded-full shadow">
               <Icon name="play" size={20} />
             </span>
           </span>

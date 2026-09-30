@@ -40,7 +40,7 @@ export function ProductCard({
   return (
     <article
       className={`group bg-surface relative flex h-full flex-col overflow-hidden rounded-xl border shadow-card transition-all hover:-translate-y-0.5 hover:shadow-lift ${
-        urgent ? "border-warning" : statut === "en_test" ? "border-accent/30" : "border-border"
+        urgent ? "border-warn" : statut === "en_test" ? "border-accent/30" : "border-border"
       }`}
     >
       {/* Toute la carte est cliquable vers la page détail (lien étiré).

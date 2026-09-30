@@ -91,8 +91,8 @@ export function CountryMultiSelect({
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className={`border-border bg-input focus:border-primary flex min-h-[44px] w-full items-center justify-between gap-2 rounded-md border px-3 text-sm outline-none transition-colors ${
-          open ? "border-primary" : ""
+        className={`border-border bg-input focus:border-accent flex min-h-[44px] w-full items-center justify-between gap-2 rounded-md border px-3 text-sm outline-none transition-colors ${
+          open ? "border-accent" : ""
         }`}
       >
         <span className={selected.length ? "" : "text-muted-foreground"}>
@@ -119,7 +119,7 @@ export function CountryMultiSelect({
               <button
                 type="button"
                 onClick={() => onChange(selected.filter((c) => c !== code))}
-                className="hover:bg-primary/15 grid h-4 w-4 place-items-center rounded-full"
+                className="hover:bg-accent/15 grid h-4 w-4 place-items-center rounded-full"
                 aria-label={`Retirer ${countryLabel(code)}`}
               >
                 <Icon name="x" size={11} />
@@ -130,7 +130,7 @@ export function CountryMultiSelect({
             <button
               type="button"
               onClick={() => onChange([])}
-              className="text-muted-foreground hover:text-foreground text-xs font-medium underline"
+              className="text-muted-foreground hover:text-fg text-xs font-medium underline"
             >
               Tout effacer
             </button>
@@ -159,14 +159,14 @@ export function CountryMultiSelect({
                 key={r}
                 type="button"
                 onClick={() => selectRegion(r)}
-                className="bg-input hover:bg-muted text-foreground rounded-full px-2.5 py-1 text-xs font-medium"
+                className="bg-input hover:bg-muted text-fg rounded-full px-2.5 py-1 text-xs font-medium"
               >
                 Tout · {SPY_REGION_LABELS[r]}
               </button>
             ))}
           </div>
 
-          {note && <p className="text-warning mb-2 px-1 text-xs">{note}</p>}
+          {note && <p className="text-warn mb-2 px-1 text-xs">{note}</p>}
 
           {/* Liste par région */}
           <div className="max-h-64 overflow-auto">
@@ -192,7 +192,7 @@ export function CountryMultiSelect({
                         <span
                           className={`grid h-4 w-4 shrink-0 place-items-center rounded border transition-colors ${
                             checked
-                              ? "bg-primary border-primary text-primary-foreground"
+                              ? "bg-accent border-accent text-accent-on"
                               : "border-border"
                           }`}
                         >

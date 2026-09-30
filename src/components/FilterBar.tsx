@@ -36,8 +36,8 @@ export function FilterBar({
               onClick={() => onStatut(p.value)}
               className={`inline-flex min-h-[44px] shrink-0 items-center whitespace-nowrap rounded-md px-3.5 text-sm font-medium transition-colors ${
                 active
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-input text-muted-foreground hover:text-foreground"
+                  ? "bg-accent text-accent-on"
+                  : "bg-input text-muted-foreground hover:text-fg"
               }`}
             >
               {p.label}

@@ -11,17 +11,17 @@ export type Tone = "success" | "warning" | "danger" | "muted" | "primary";
 
 const TONE_TEXT: Record<Tone, string> = {
   success: "text-success",
-  warning: "text-warning",
+  warning: "text-warn",
   danger: "text-danger",
   muted: "text-muted-foreground",
-  primary: "text-primary",
+  primary: "text-accent",
 };
 const TONE_SOFT: Record<Tone, string> = {
   success: "bg-success-bg text-success",
-  warning: "bg-warning-bg text-warning",
+  warning: "bg-warn-bg text-warn",
   danger: "bg-danger-bg text-danger",
   muted: "bg-input text-muted-foreground",
-  primary: "bg-secondary text-primary",
+  primary: "bg-secondary text-accent",
 };
 
 /** Palier de closing → tonalité (vert ≥60 / ambre 35-60 / rouge <35). */
@@ -91,7 +91,7 @@ export function ProgressRing({
       </svg>
       <div className="absolute inset-0 grid place-items-center text-center leading-none">
         <div>
-          <span className="text-foreground block text-sm font-bold tabular-nums">
+          <span className="text-fg block text-sm font-bold tabular-nums">
             {value == null ? "—" : `${Math.round(v)}%`}
           </span>
           {sublabel && (
@@ -122,14 +122,14 @@ export function MeterBar({
   const v = value == null ? 0 : Math.max(0, Math.min(100, value));
   const t = tone ?? margeTone(value);
   const fill =
-    t === "success" ? "bg-success" : t === "warning" ? "bg-warning" : t === "danger" ? "bg-danger" : "bg-primary";
+    t === "success" ? "bg-success" : t === "warning" ? "bg-warn" : t === "danger" ? "bg-danger" : "bg-accent";
   return (
     <div>
       <div className="bg-muted relative w-full overflow-hidden rounded-full" style={{ height }}>
         <div className={`h-full rounded-full ${fill} transition-all`} style={{ width: `${v}%` }} />
         {target != null && (
           <span
-            className="bg-foreground/60 absolute top-0 h-full w-px"
+            className="bg-fg/60 absolute top-0 h-full w-px"
             style={{ left: `${Math.max(0, Math.min(100, target))}%` }}
             title={targetLabel}
           />
@@ -253,14 +253,14 @@ export function EmptyPreview({
       <div className="from-surface/40 to-surface absolute inset-0 bg-gradient-to-b" />
       <div className="absolute inset-0 grid place-items-center p-6">
         <div className="text-center">
-          <span className="bg-secondary text-primary mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl shadow-sm">
+          <span className="bg-secondary text-accent mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl shadow-sm">
             <Icon name={icon} size={26} />
           </span>
-          <p className="text-foreground text-base font-bold">{title}</p>
+          <p className="text-fg text-base font-bold">{title}</p>
           <p className="text-muted-foreground mx-auto mt-1 max-w-xs text-sm">{description}</p>
           <Link
             href={ctaHref}
-            className="bg-primary text-primary-foreground shadow-primary/25 mt-4 inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-5 text-sm font-semibold shadow-lg transition-transform hover:scale-[1.03] active:scale-95"
+            className="bg-accent text-accent-on shadow-accent/25 mt-4 inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-5 text-sm font-semibold shadow-lg transition-transform hover:scale-[1.03] active:scale-95"
           >
             {ctaLabel} <Icon name="chevronRight" size={16} />
           </Link>

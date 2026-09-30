@@ -184,7 +184,7 @@ export function VideoLightbox({
       <div className="relative z-10 w-full" style={{ maxWidth: maxW }}>
         <button
           onClick={onClose}
-          className="bg-surface text-foreground absolute -right-2 -top-2 z-20 grid h-9 w-9 place-items-center rounded-full shadow-lg sm:-right-3 sm:-top-3"
+          className="bg-surface text-fg absolute -right-2 -top-2 z-20 grid h-9 w-9 place-items-center rounded-full shadow-lg sm:-right-3 sm:-top-3"
           aria-label="Fermer"
         >
           <Icon name="x" size={18} />
@@ -195,13 +195,13 @@ export function VideoLightbox({
             <span className="bg-danger-bg text-danger mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl">
               <Icon name="eyeOff" size={24} />
             </span>
-            <p className="text-foreground font-semibold">Lecture impossible</p>
+            <p className="text-fg font-semibold">Lecture impossible</p>
             <p className="text-muted-foreground mx-auto mt-1 max-w-xs text-sm">{status}</p>
             <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
               {canDownload ? (
                 <a
                   href={downloadHref(url)}
-                  className="bg-primary text-primary-foreground inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-lg px-4 text-sm font-semibold"
+                  className="bg-accent text-accent-on inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-lg px-4 text-sm font-semibold"
                 >
                   <Icon name="download" size={16} /> Télécharger la vidéo
                 </a>
@@ -218,7 +218,7 @@ export function VideoLightbox({
                   href={adLibraryUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="border-border text-foreground inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-lg border px-4 text-sm font-semibold"
+                  className="border-border text-fg inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-lg border px-4 text-sm font-semibold"
                 >
                   <Icon name="external" size={16} /> Ouvrir dans Ad Library
                 </a>
@@ -256,7 +256,7 @@ export function VideoLightbox({
         {phase === "playing" && canDownload && (
           <a
             href={downloadHref(url)}
-            className="bg-surface/90 text-foreground mt-3 inline-flex min-h-[38px] items-center gap-1.5 rounded-lg px-4 text-sm font-semibold backdrop-blur"
+            className="bg-surface/90 text-fg mt-3 inline-flex min-h-[38px] items-center gap-1.5 rounded-lg px-4 text-sm font-semibold backdrop-blur"
           >
             <Icon name="download" size={15} /> Télécharger
           </a>

@@ -33,7 +33,7 @@ export function PageHeader({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-start gap-3">
-        <span className="from-primary to-primary/40 mt-0.5 h-8 w-1.5 shrink-0 rounded-full bg-gradient-to-b" />
+        <span className="from-accent to-accent/40 mt-0.5 h-8 w-1.5 shrink-0 rounded-full bg-gradient-to-b" />
         <div>
           <h1 className="text-lg font-bold tracking-tight lg:text-xl">{title}</h1>
           {subtitle && (
@@ -68,7 +68,7 @@ export function StatCard({
     <Card className="card-lift p-4">
       <div className="flex items-start justify-between gap-2">
         <p className="text-muted-foreground text-xs font-medium">{label}</p>
-        <span className="bg-secondary text-primary grid h-8 w-8 shrink-0 place-items-center rounded-lg">
+        <span className="bg-secondary text-accent grid h-8 w-8 shrink-0 place-items-center rounded-lg">
           <Icon name={icon} size={16} />
         </span>
       </div>

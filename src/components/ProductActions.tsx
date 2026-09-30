@@ -6,7 +6,7 @@ import { DatePicker } from "./DatePicker";
 import { deleteProduit, updatePlanning } from "@/app/(app)/recherche/actions";
 
 const iconBtn =
-  "bg-surface/90 text-foreground grid h-8 w-8 place-items-center rounded-full border border-border shadow-sm backdrop-blur transition-colors hover:bg-muted";
+  "bg-surface/90 text-fg grid h-8 w-8 place-items-center rounded-full border border-border shadow-sm backdrop-blur transition-colors hover:bg-muted";
 
 /**
  * Actions sur une carte produit : planifier (dates à travailler / lancement
@@ -75,7 +75,7 @@ export function ProductActions({
               <button
                 type="button"
                 onClick={() => setPlanOpen(false)}
-                className="text-muted-foreground hover:text-foreground -mr-2 inline-flex h-9 w-9 items-center justify-center rounded-md"
+                className="text-muted-foreground hover:text-fg -mr-2 inline-flex h-9 w-9 items-center justify-center rounded-md"
                 aria-label="Fermer"
               >
                 <Icon name="x" size={18} />
@@ -102,14 +102,14 @@ export function ProductActions({
                 <button
                   type="submit"
                   onClick={() => setPlanOpen(false)}
-                  className="bg-primary text-primary-foreground inline-flex min-h-[44px] flex-1 items-center justify-center rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
+                  className="bg-accent text-accent-on inline-flex min-h-[44px] flex-1 items-center justify-center rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
                 >
                   Enregistrer
                 </button>
                 <button
                   type="button"
                   onClick={() => setPlanOpen(false)}
-                  className="bg-input text-foreground inline-flex min-h-[44px] items-center justify-center rounded-md px-4 text-sm font-semibold"
+                  className="bg-input text-fg inline-flex min-h-[44px] items-center justify-center rounded-md px-4 text-sm font-semibold"
                 >
                   Annuler
                 </button>
