@@ -23,3 +23,5 @@
 - **Migration progressive** : les écrans historiques utilisent encore des alias de
   compatibilité (`bg-primary`, `text-foreground`…) qui pointent vers les mêmes tokens ;
   on les migre un écran à la fois vers les noms canoniques (Pipeline déjà migré).
+- **La landing (`src/app/(marketing)/**`) N'EST PAS migrée** (choix produit) : elle
+  garde les alias de compat et son échelle typo actuelle. Ne pas la refondre.

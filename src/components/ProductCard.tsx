@@ -40,7 +40,7 @@ export function ProductCard({
   return (
     <article
       className={`group bg-surface relative flex h-full flex-col overflow-hidden rounded-xl border shadow-card transition-all hover:-translate-y-0.5 hover:shadow-lift ${
-        urgent ? "border-warning" : statut === "en_test" ? "border-primary/30" : "border-border"
+        urgent ? "border-warning" : statut === "en_test" ? "border-accent/30" : "border-border"
       }`}
     >
       {/* Toute la carte est cliquable vers la page détail (lien étiré).
@@ -64,7 +64,7 @@ export function ProductCard({
           </span>
         )}
         {p.marche && (
-          <span className="bg-surface/90 text-foreground absolute bottom-2 left-2 z-20 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold shadow-sm backdrop-blur">
+          <span className="bg-surface/90 text-fg absolute bottom-2 left-2 z-20 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold shadow-sm backdrop-blur">
             <CountryFlag code={p.marche} /> {p.marche}
           </span>
         )}
@@ -100,7 +100,7 @@ export function ProductCard({
             <MeterBar value={hasMarge ? marge! : 0} tone={hasMarge ? margeTone(marge) : "muted"} height={6} />
             <div className="flex items-baseline justify-between gap-2">
               <span className="text-muted-foreground text-[11px]">Coût livré</span>
-              <span className="text-foreground truncate text-xs font-semibold">
+              <span className="text-fg truncate text-xs font-semibold">
                 {formatFCFA(p.cout_livre_estime)}
               </span>
             </div>
@@ -118,7 +118,7 @@ export function ProductCard({
           {echLabel && (
             <span
               className={`inline-flex items-center gap-1 text-[11px] font-medium ${
-                urgent ? "text-warning" : "text-muted-foreground"
+                urgent ? "text-warn" : "text-muted-foreground"
               }`}
             >
               <Icon name="clock" size={11} />
@@ -131,21 +131,21 @@ export function ProductCard({
           {statut === "en_test" ? (
             <Link
               href={`/testing/${p.id}`}
-              className="bg-primary text-primary-foreground flex min-h-[40px] w-full items-center justify-center rounded-md text-center text-sm font-semibold transition-opacity hover:opacity-90"
+              className="bg-accent text-accent-on flex min-h-[40px] w-full items-center justify-center rounded-md text-center text-sm font-semibold transition-opacity hover:opacity-90"
             >
               Voir le verdict
             </Link>
           ) : statut === "idee" || statut === "a_tester" ? (
             <Link
               href={`/produits/${p.id}/envoyer-test`}
-              className="bg-primary text-primary-foreground flex min-h-[40px] w-full items-center justify-center rounded-md text-center text-sm font-semibold transition-opacity hover:opacity-90"
+              className="bg-accent text-accent-on flex min-h-[40px] w-full items-center justify-center rounded-md text-center text-sm font-semibold transition-opacity hover:opacity-90"
             >
               Envoyer en test
             </Link>
           ) : (
             <Link
               href={`/testing/${p.id}`}
-              className="bg-input text-foreground flex min-h-[40px] w-full items-center justify-center rounded-md text-center text-sm font-semibold transition-colors hover:bg-muted"
+              className="bg-input text-fg flex min-h-[40px] w-full items-center justify-center rounded-md text-center text-sm font-semibold transition-colors hover:bg-muted"
             >
               Voir le test
             </Link>

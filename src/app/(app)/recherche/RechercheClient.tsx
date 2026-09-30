@@ -128,7 +128,7 @@ export function RechercheClient({
             </p>
             <Link
               href="/recherche?add=1"
-              className="text-primary mt-3 inline-block text-sm font-medium hover:underline"
+              className="text-accent mt-3 inline-block text-sm font-medium hover:underline"
             >
               Ajouter ton premier produit
             </Link>
