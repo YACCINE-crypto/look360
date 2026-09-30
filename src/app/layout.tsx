@@ -37,7 +37,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="fr" className={`${dmSans.variable} h-full antialiased`}>
-      <body className="bg-background text-foreground min-h-full">
+      <body className="bg-bg text-fg min-h-full">
         {children}
       </body>
     </html>

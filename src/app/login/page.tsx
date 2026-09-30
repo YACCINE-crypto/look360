@@ -9,10 +9,10 @@ import { login } from "./actions";
 import { signup } from "@/app/signup/actions";
 
 const fieldCls =
-  "border-border bg-input focus:border-primary w-full min-h-[46px] rounded-lg border px-3 py-2 text-sm outline-none transition-colors";
+  "border-border bg-input focus:border-accent w-full min-h-[46px] rounded-lg border px-3 py-2 text-sm outline-none transition-colors";
 const labelCls = "text-sm font-medium";
 const pill =
-  "bg-primary text-primary-foreground inline-flex min-h-[48px] w-full items-center justify-center rounded-full px-4 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60";
+  "bg-accent text-accent-on inline-flex min-h-[48px] w-full items-center justify-center rounded-full px-4 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60";
 
 export default function LoginPage() {
   return (
@@ -38,7 +38,7 @@ function AuthCard() {
   // Écran « vérifie ta boîte mail » après inscription (confirmation email).
   if (sent) {
     return (
-      <main className="bg-background flex min-h-screen items-center justify-center px-4 py-12">
+      <main className="bg-bg flex min-h-screen items-center justify-center px-4 py-12">
         <div className="w-full max-w-sm">
           <div className="mb-6 flex flex-col items-center text-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -52,7 +52,7 @@ function AuthCard() {
             </p>
             <Link
               href="/login"
-              className="text-primary inline-block text-sm font-semibold hover:underline"
+              className="text-accent inline-block text-sm font-semibold hover:underline"
             >
               Aller à la connexion
             </Link>
@@ -63,7 +63,7 @@ function AuthCard() {
   }
 
   return (
-    <main className="bg-background flex min-h-screen items-center justify-center px-4 py-12">
+    <main className="bg-bg flex min-h-screen items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
         {/* Logo + sous-titre */}
         <div className="mb-6 flex flex-col items-center text-center">
@@ -106,7 +106,7 @@ function AuthCard() {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label htmlFor="login-password" className={labelCls}>Mot de passe</label>
-                  <Link href="/forgot-password" className="text-primary text-xs font-medium hover:underline">
+                  <Link href="/forgot-password" className="text-accent text-xs font-medium hover:underline">
                     Mot de passe oublié ?
                   </Link>
                 </div>
@@ -170,8 +170,8 @@ function TabButton({
       aria-selected={active}
       className={`-mb-px border-b-2 pb-2.5 pt-1 text-sm font-semibold transition-colors ${
         active
-          ? "border-primary text-primary"
-          : "text-muted-foreground hover:text-foreground border-transparent"
+          ? "border-accent text-accent"
+          : "text-muted-foreground hover:text-fg border-transparent"
       }`}
     >
       {children}

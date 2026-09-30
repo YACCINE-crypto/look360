@@ -8,7 +8,7 @@ export default function ResetPasswordPage() {
   const [error, formAction, pending] = useActionState(resetPassword, null);
 
   return (
-    <main className="bg-background flex min-h-screen items-center justify-center px-4 py-16">
+    <main className="bg-bg flex min-h-screen items-center justify-center px-4 py-16">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -31,7 +31,7 @@ export default function ResetPasswordPage() {
           <button
             type="submit"
             disabled={pending}
-            className="bg-primary text-primary-foreground inline-flex min-h-[44px] w-full items-center justify-center rounded-md px-3 py-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
+            className="bg-accent text-accent-on inline-flex min-h-[44px] w-full items-center justify-center rounded-md px-3 py-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
           >
             {pending ? "Enregistrement…" : "Mettre à jour"}
           </button>

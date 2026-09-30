@@ -21,16 +21,16 @@ export default function GlobalError({
 
   return (
     <html lang="fr">
-      <body className="bg-background flex min-h-screen items-center justify-center px-4">
+      <body className="bg-bg flex min-h-screen items-center justify-center px-4">
         <div className="w-full max-w-sm text-center">
-          <h1 className="text-foreground text-xl font-bold">Une erreur est survenue</h1>
+          <h1 className="text-fg text-xl font-bold">Une erreur est survenue</h1>
           <p className="text-muted-foreground mt-2 text-sm">
             Un problème inattendu s&apos;est produit. Notre équipe a été notifiée.
             Réessaie dans un instant.
           </p>
           <button
             onClick={() => reset()}
-            className="bg-primary text-primary-foreground mt-5 inline-flex min-h-[46px] items-center justify-center rounded-full px-6 text-sm font-semibold"
+            className="bg-accent text-accent-on mt-5 inline-flex min-h-[46px] items-center justify-center rounded-full px-6 text-sm font-semibold"
           >
             Réessayer
           </button>

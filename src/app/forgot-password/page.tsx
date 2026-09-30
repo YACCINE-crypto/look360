@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { forgotPassword } from "./actions";
 
 const inputCls =
-  "border-border bg-input focus:border-primary w-full min-h-[44px] rounded-md border px-3 py-2 text-sm outline-none";
+  "border-border bg-input focus:border-accent w-full min-h-[44px] rounded-md border px-3 py-2 text-sm outline-none";
 
 export default function ForgotPasswordPage() {
   return (
@@ -21,7 +21,7 @@ function ForgotPasswordForm() {
   const sent = useSearchParams().get("sent") === "1";
 
   return (
-    <main className="bg-background flex min-h-screen items-center justify-center px-4 py-16">
+    <main className="bg-bg flex min-h-screen items-center justify-center px-4 py-16">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -36,7 +36,7 @@ function ForgotPasswordForm() {
               Si un compte existe avec cet email, tu recevras un lien pour choisir
               un nouveau mot de passe.
             </p>
-            <Link href="/login" className="text-primary inline-block text-sm font-semibold hover:underline">
+            <Link href="/login" className="text-accent inline-block text-sm font-semibold hover:underline">
               Retour à la connexion
             </Link>
           </div>
@@ -52,13 +52,13 @@ function ForgotPasswordForm() {
             <button
               type="submit"
               disabled={pending}
-              className="bg-primary text-primary-foreground inline-flex min-h-[44px] w-full items-center justify-center rounded-md px-3 py-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
+              className="bg-accent text-accent-on inline-flex min-h-[44px] w-full items-center justify-center rounded-md px-3 py-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
             >
               {pending ? "Envoi…" : "Envoyer le lien"}
             </button>
 
             <p className="text-muted-foreground text-center text-sm">
-              <Link href="/login" className="text-primary font-semibold hover:underline">
+              <Link href="/login" className="text-accent font-semibold hover:underline">
                 Retour à la connexion
               </Link>
             </p>
