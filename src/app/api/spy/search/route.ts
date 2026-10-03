@@ -1,11 +1,29 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { searchSpyWithCache, searchSpyManyCountries } from "@/lib/spyCache";
-import { getSubscription, InsufficientCreditsError } from "@/lib/credits";
-import { SEARCH_COST_PER_COUNTRY } from "@/lib/billing";
+import { getSubscription } from "@/lib/credits";
+import { assertSearchAllowed, recordSearchUsage, QuotaError } from "@/lib/usage";
+import { planLimits } from "@/lib/billing";
 import type { SpyFilters, SpyMediaType, SpyPlatform, SpyStatut } from "@/lib/spy";
 
-const INSUFFICIENT = "Crédits insuffisants — recharge des crédits ou passe à une offre supérieure.";
+/** Message clair par type de quota atteint (jamais le mot « crédits »). */
+function quotaMessage(kind: QuotaError["kind"], plan: string): string {
+  const lim = planLimits(plan);
+  switch (kind) {
+    case "markets":
+      return lim.maxMarkets === 0
+        ? "Les recherches personnelles sont réservées aux offres payantes. Passe en Starter pour lancer tes propres recherches."
+        : `Ton offre permet jusqu'à ${lim.maxMarkets} marché${lim.maxMarkets > 1 ? "s" : ""} par recherche. Retire des marchés ou passe à une offre supérieure.`;
+    case "searches":
+      return lim.monthlySearches === 0
+        ? "Les recherches personnelles sont réservées aux offres payantes. Passe en Starter pour lancer tes propres recherches."
+        : "Tu as atteint ta limite de recherches ce mois-ci. Passe à une offre supérieure pour continuer.";
+    case "units":
+      return "Tu as atteint ta limite de recherche ce mois-ci. Passe à une offre supérieure pour continuer.";
+    default:
+      return "Limite atteinte pour ton offre.";
+  }
+}
 
 /** Extrait la liste de pays (multi-sélection) ; retombe sur `country` unique. */
 function parseCountries(src: Record<string, unknown>): string[] {
@@ -60,31 +78,41 @@ async function handle(filters: SpyFilters, countries: string[]) {
     return NextResponse.json({ error: "mot-clé ou pays requis" }, { status: 400 });
   }
 
-  // Coût = 10 crédits × nb de pays (débité par pays sur cache-miss). Pré-contrôle
-  // du solde pour un message clair avant de lancer quoi que ce soit.
-  const bill = { amount: SEARCH_COST_PER_COUNTRY, reason: "Recherche Spy" };
+  // Quotas v2 : on compte des market_search_units, pas des crédits. Garde-fou
+  // AVANT Apify (pire cas = tous les marchés en cache-miss) ; on enregistre
+  // ensuite la conso réelle (un hit de cache = 0 unit).
   const sub = await getSubscription(userId);
-  if ((sub?.credits_balance ?? 0) < SEARCH_COST_PER_COUNTRY) {
-    return NextResponse.json({ error: INSUFFICIENT, code: "insufficient_credits" }, { status: 402 });
+  const plan = sub?.plan ?? "free";
+  const markets = Math.max(1, countries.length);
+  try {
+    await assertSearchAllowed(userId, plan, markets);
+  } catch (e) {
+    if (e instanceof QuotaError) {
+      return NextResponse.json(
+        { error: quotaMessage(e.kind, plan), code: `quota_${e.kind}` },
+        { status: 402 },
+      );
+    }
+    throw e;
   }
 
   try {
     // Un seul pays (ou recherche annonceur) → chemin simple ; sinon fan-out.
+    // Pas de `bill` : la facturation passe par les quotas (ci-dessous), pas les crédits.
     const result =
       countries.length <= 1
-        ? await searchSpyWithCache({ ...filters, country: countries[0] ?? filters.country }, userId, bill)
-        : await searchSpyManyCountries(filters, countries, userId, bill);
+        ? await searchSpyWithCache({ ...filters, country: countries[0] ?? filters.country }, userId)
+        : await searchSpyManyCountries(filters, countries, userId);
     if (result.capped) {
       return NextResponse.json(
         { error: "Plafond de recherches Spy atteint pour aujourd'hui. Réessaie demain." },
         { status: 429 },
       );
     }
-    return NextResponse.json(result);
+    // Enregistre la conso réelle (units = marchés réellement scrappés).
+    const usage = await recordSearchUsage(userId, result.units);
+    return NextResponse.json({ ...result, usage });
   } catch (e) {
-    if (e instanceof InsufficientCreditsError) {
-      return NextResponse.json({ error: INSUFFICIENT, code: "insufficient_credits" }, { status: 402 });
-    }
     const msg = e instanceof Error ? e.message : "Erreur inconnue";
     return NextResponse.json({ error: msg }, { status: 502 });
   }

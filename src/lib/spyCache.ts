@@ -34,6 +34,8 @@ export type SpyCacheResult = {
   ads: SpyAd[];
   cached: boolean;
   capped?: boolean;
+  /** market_search_units réellement consommées (appels Apify réels). Cache = 0. */
+  units: number;
 };
 
 /** Résultat en cache pour ces filtres (ou null). Partagé (données Meta publiques). */
@@ -118,7 +120,7 @@ export async function searchSpyWithCache(
 
   if (hit) {
     const ads = applySpyFilters((hit.results as SpyAd[]) ?? [], filters);
-    return { url: hit.url ?? "", raw_count: hit.raw_count ?? 0, count: ads.length, ads, cached: true };
+    return { url: hit.url ?? "", raw_count: hit.raw_count ?? 0, count: ads.length, ads, cached: true, units: 0 };
   }
 
   // 2) Plafond journalier d'appels réels par utilisateur.
@@ -131,7 +133,7 @@ export async function searchSpyWithCache(
       .eq("user_id", userId)
       .gte("created_at", startDay.toISOString());
     if ((count ?? 0) >= DAILY_CAP) {
-      return { url: "", raw_count: 0, count: 0, ads: [], cached: false, capped: true };
+      return { url: "", raw_count: 0, count: 0, ads: [], cached: false, capped: true, units: 0 };
     }
   }
 
@@ -158,7 +160,7 @@ export async function searchSpyWithCache(
   });
 
   const ads = applySpyFilters(res.ads, filters);
-  return { url: res.url, raw_count: res.raw_count, count: ads.length, ads, cached: false };
+  return { url: res.url, raw_count: res.raw_count, count: ads.length, ads, cached: false, units: 1 };
 }
 
 export type SpyMultiResult = SpyCacheResult & {
@@ -196,7 +198,7 @@ export async function searchSpyManyCountries(
 
   if (uniq.length === 0) {
     return {
-      url: "", raw_count: 0, count: 0, ads: [], cached: false,
+      url: "", raw_count: 0, count: 0, ads: [], cached: false, units: 0,
       countries: [], countries_ok: [],
     };
   }
@@ -235,6 +237,7 @@ export async function searchSpyManyCountries(
     ads,
     cached,
     capped: capped || undefined,
+    units: ok.reduce((s, r) => s + (r.units ?? 0), 0),
     countries: uniq,
     countries_ok,
   };

@@ -7,11 +7,19 @@ import {
   fetchDatasetItems,
 } from "@/lib/apify";
 import { normalizeApifyItem, applySpyFilters } from "@/lib/spy";
-import { getSubscription, consumeCredits, refundCredits, InsufficientCreditsError } from "@/lib/credits";
-import { SEARCH_COST_PER_COUNTRY } from "@/lib/billing";
+import { getSubscription } from "@/lib/credits";
+import { assertSearchAllowed, recordSearchUsage, QuotaError } from "@/lib/usage";
+import { planLimits } from "@/lib/billing";
 import type { SpyFilters, SpyMediaType, SpyPlatform, SpyStatut } from "@/lib/spy";
 
-const INSUFFICIENT = "Crédits insuffisants — recharge des crédits ou passe à une offre supérieure.";
+/** Message clair par type de quota (jamais le mot « crédits »). */
+function quotaMessage(kind: QuotaError["kind"], plan: string): string {
+  const lim = planLimits(plan);
+  if (kind === "markets" || (kind === "searches" && lim.monthlySearches === 0)) {
+    return "Les recherches personnelles sont réservées aux offres payantes. Passe en Starter pour lancer tes propres recherches.";
+  }
+  return "Tu as atteint ta limite de recherche ce mois-ci. Passe à une offre supérieure pour continuer.";
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -99,18 +107,14 @@ export async function POST(request: Request) {
           return;
         }
 
-        // 3) Débit crédits (recherche 1 pays = 10). Cache-miss uniquement (on est ici).
+        // 3) Quota v2 (recherche 1 marché). Cache-miss uniquement (on est ici).
         const sub = await getSubscription(userId);
-        if ((sub?.credits_balance ?? 0) < SEARCH_COST_PER_COUNTRY) {
-          send({ type: "error", status: 402, message: INSUFFICIENT });
-          controller.close();
-          return;
-        }
+        const plan = sub?.plan ?? "free";
         try {
-          await consumeCredits(userId, SEARCH_COST_PER_COUNTRY, "Recherche Spy");
+          await assertSearchAllowed(userId, plan, 1);
         } catch (e) {
-          if (e instanceof InsufficientCreditsError) {
-            send({ type: "error", status: 402, message: INSUFFICIENT });
+          if (e instanceof QuotaError) {
+            send({ type: "error", status: 402, message: quotaMessage(e.kind, plan) });
             controller.close();
             return;
           }
@@ -118,13 +122,7 @@ export async function POST(request: Request) {
         }
 
         // 4) Run asynchrone + lecture progressive du dataset.
-        let runInfo;
-        try {
-          runInfo = await startSpyRun(filters);
-        } catch (e) {
-          await refundCredits(userId, SEARCH_COST_PER_COUNTRY, "Remboursement — recherche (échec)");
-          throw e;
-        }
+        const runInfo = await startSpyRun(filters);
         const { runId, datasetId, url } = runInfo;
         const accumulator: ReturnType<typeof normalizeApifyItem>[] = [];
         let offset = 0;
@@ -152,14 +150,16 @@ export async function POST(request: Request) {
           if (items.length === 0) await sleep(POLL_MS);
         }
 
-        // 5) Cache (jeu complet non filtré, comme le chemin classique).
+        // 5) Cache (jeu complet non filtré, comme le chemin classique) + conso.
         //    On ne met PAS en cache un résultat vide (throttling Meta transitoire
-        //    → sinon on servirait "0 pub" pendant 12 h) et on REMBOURSE le crédit
-        //    (recherche sans résultat = pas la faute de l'utilisateur).
+        //    → sinon on servirait "0 pub" pendant 12 h). Résultat vide = on ne
+        //    brûle PAS d'unit (recherche sans résultat ≠ faute de l'utilisateur),
+        //    mais la recherche reste comptée (anti-abus, borné par le cap/jour).
         if (accumulator.length > 0) {
           await persistSearch(filters, userId, url, accumulator, accumulator.length);
+          await recordSearchUsage(userId, 1);
         } else {
-          await refundCredits(userId, SEARCH_COST_PER_COUNTRY, "Remboursement — recherche sans résultat");
+          await recordSearchUsage(userId, 0);
         }
 
         const total = applySpyFilters(accumulator, filters).length;

@@ -72,12 +72,16 @@ export async function assertSearchAllowed(
 }
 
 /** Enregistre la conso d'une recherche : +1 search, +units (marchés scrappés). */
-export async function recordSearchUsage(userId: string, units: number): Promise<void> {
-  const { error } = await rpc("record_search_usage", {
+export async function recordSearchUsage(userId: string, units: number): Promise<Usage | null> {
+  const { data, error } = await rpc("record_search_usage", {
     p_user: userId,
     p_units: Math.max(0, Math.round(units)),
   });
-  if (error) console.error("record_search_usage failed:", error.message, "user:", userId);
+  if (error) {
+    console.error("record_search_usage failed:", error.message, "user:", userId);
+    return null;
+  }
+  return (data as Usage) ?? null;
 }
 
 /** Consomme 1 téléchargement vidéo (atomique). Lève QuotaError("downloads") si plafond. */

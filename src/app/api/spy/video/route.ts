@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getSubscription } from "@/lib/credits";
+import { consumeDownload, QuotaError } from "@/lib/usage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,14 +24,6 @@ export async function GET(request: Request) {
   // Mode lecture (inline) : autorisé à tous, proxy même origine avec Range pour
   // une lecture fiable in-app. Mode téléchargement (défaut) : offres payantes.
   const inline = params.get("inline") === "1";
-
-  if (!inline) {
-    // Téléchargement réservé aux offres payantes (Starter et plus).
-    const sub = await getSubscription(userId);
-    if ((sub?.plan ?? "free") === "free") {
-      return NextResponse.redirect(new URL("/offres?locked=video", request.url));
-    }
-  }
 
   if (!u) return NextResponse.json({ error: "url requise" }, { status: 400 });
 
@@ -78,6 +70,16 @@ export async function GET(request: Request) {
     headers["Content-Disposition"] = "inline";
     headers["Accept-Ranges"] = headers["accept-ranges"] || "bytes";
   } else {
+    // Téléchargement = consomme 1 du quota mensuel (free = 0 → bloqué). Compté
+    // seulement une fois l'amont confirmé OK, pour ne pas débiter un échec.
+    try {
+      await consumeDownload(userId);
+    } catch (e) {
+      if (e instanceof QuotaError) {
+        return NextResponse.redirect(new URL("/offres?locked=video", request.url));
+      }
+      throw e;
+    }
     headers["Content-Disposition"] = `attachment; filename="look360-pub-${Date.now()}.mp4"`;
   }
   return new NextResponse(upstream.body, { status: upstream.status, headers });

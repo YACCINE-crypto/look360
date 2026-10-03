@@ -9,7 +9,8 @@ import { AdActivityChart } from "./AdActivityChart";
 import { SuivreButton } from "./SuivreButton";
 import { ajouterAuxProduits } from "../../spy/actions";
 import { activityByMonth, countryLabel, formatReach, cleanField, type SpyAd } from "@/lib/spy";
-import { getSubscription, InsufficientCreditsError } from "@/lib/credits";
+import { getSubscription } from "@/lib/credits";
+import { assertSearchAllowed, recordSearchUsage, QuotaError } from "@/lib/usage";
 import { ANALYZE_COST, formatCredits } from "@/lib/billing";
 
 export const dynamic = "force-dynamic";
@@ -66,16 +67,27 @@ export default async function AnalysePage({
   let ads: SpyAd[] = [];
   let failed = false;
   let insufficient = false;
+  // Quota v2 : l'analyse = 1 recherche sur 1 marché (la source : pubs actives de
+  // l'annonceur). Garde-fou avant Apify, puis conso réelle (cache = 0 unit).
+  const plan = sub?.plan ?? "free";
   try {
-    const res = await searchSpyWithCache(
-      { q: "", country, pageId, statut: "active", tri: "anciennete", limit: 100, details: true },
-      userId,
-      { amount: ANALYZE_COST, reason: "Analyse concurrent" },
-    );
-    ads = res.ads;
+    if (userId) await assertSearchAllowed(userId, plan, 1);
+    else insufficient = true;
   } catch (e) {
-    if (e instanceof InsufficientCreditsError) insufficient = true;
+    if (e instanceof QuotaError) insufficient = true;
     else failed = true;
+  }
+  if (!insufficient && !failed) {
+    try {
+      const res = await searchSpyWithCache(
+        { q: "", country, pageId, statut: "active", tri: "anciennete", limit: 100, details: true },
+        userId,
+      );
+      ads = res.ads;
+      if (userId) await recordSearchUsage(userId, res.units);
+    } catch {
+      failed = true;
+    }
   }
 
   if (insufficient) {

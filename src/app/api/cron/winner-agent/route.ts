@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { runWinnerForConfig } from "@/lib/winnerAgent";
 import { WINNER_SEARCH_CAP } from "@/lib/spy";
+import { consumeWinnerRun, QuotaError } from "@/lib/usage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,8 +36,20 @@ export async function GET(request: Request) {
   let searchesLeft = WINNER_SEARCH_CAP;
   let notified = 0;
 
+  let skipped = 0;
   for (const cfg of configs) {
     if (searchesLeft <= 0 || Date.now() - start > 45_000) break;
+    // Quota v2 : plafond mensuel d'exécutions Winner Agent par utilisateur
+    // (free/starter = 0 → ignoré ; Pro = 30 ; Business = 60).
+    try {
+      await consumeWinnerRun(cfg.user_id);
+    } catch (e) {
+      if (e instanceof QuotaError) {
+        skipped++;
+        continue;
+      }
+      throw e;
+    }
     const { winners, searches } = await runWinnerForConfig(supabase, cfg, {
       sendPush: true,
       cap: searchesLeft,
@@ -46,5 +59,5 @@ export async function GET(request: Request) {
     if (winners > 0) notified++;
   }
 
-  return NextResponse.json({ ok: true, notified });
+  return NextResponse.json({ ok: true, notified, skipped });
 }
