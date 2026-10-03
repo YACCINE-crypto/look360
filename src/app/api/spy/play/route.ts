@@ -24,7 +24,9 @@ export const maxDuration = 30;
 const API = "https://video.bunnycdn.com";
 const LIBRARY = process.env.BUNNY_STREAM_LIBRARY_ID;
 const KEY = process.env.BUNNY_STREAM_API_KEY;
-const CDN = process.env.BUNNY_STREAM_CDN_HOST; // ex. vz-xxxx.b-cdn.net
+const CDN_RAW = process.env.BUNNY_STREAM_CDN_HOST; // ex. vz-xxxx.b-cdn.net
+// Nettoyage : tolère "https://…" et les "/" en trop → hôte nu.
+const CDN = (CDN_RAW || "").replace(/^https?:\/\//i, "").replace(/\/+$/, "");
 
 // Dédoublonnage best-effort par instance : source → guid (évite de recréer
 // une vidéo à chaque lecture).
@@ -105,6 +107,32 @@ export async function GET(request: Request) {
   const guidParam = sp.get("guid");
   const source = sp.get("url");
 
+  // Diagnostic sécurisé (aucune valeur secrète renvoyée) : vérifie que la clé +
+  // la librairie Stream répondent, et la forme de l'hôte CDN.
+  if (sp.get("diag") === "1") {
+    let bunnyListStatus = 0;
+    try {
+      const r = await fetch(`${API}/library/${LIBRARY}/videos?itemsPerPage=1&page=1`, {
+        headers: { AccessKey: KEY as string, accept: "application/json" },
+        cache: "no-store",
+      });
+      bunnyListStatus = r.status; // 200 = clé+librairie OK · 401 = clé · 404 = librairie
+    } catch {
+      bunnyListStatus = -1;
+    }
+    return NextResponse.json({
+      configured: configured(),
+      libraryIdLen: (LIBRARY || "").length,
+      keyLen: (KEY || "").length,
+      cdn: {
+        endsWithBCdn: CDN.endsWith(".b-cdn.net"),
+        startsWithVz: CDN.startsWith("vz-"),
+        hadProtocolOrSlash: /^https?:\/\//i.test(CDN_RAW || "") || /\/$/.test(CDN_RAW || ""),
+      },
+      bunnyListStatus,
+    });
+  }
+
   try {
     // Polling d'un transcodage en cours.
     if (guidParam) {
@@ -156,20 +184,33 @@ export async function GET(request: Request) {
       body: JSON.stringify({ title: titleFor(source) }),
     });
     if (!create.ok) {
+      console.error("[spy/play] create KO", create.status, (await create.text().catch(() => "")).slice(0, 300));
       return NextResponse.json({ configured: true, error: true }, { status: 502 });
     }
     const { guid } = (await create.json()) as { guid: string };
     cache.set(source, guid);
 
-    await fetch(`${API}/library/${LIBRARY}/videos/${guid}/fetch`, {
+    // Lance la récupération depuis la source (Bunny télécharge + transcode).
+    // On passe un User-Agent de navigateur : certaines origines (Meta) refusent
+    // les fetch sans UA.
+    const fetchRes = await fetch(`${API}/library/${LIBRARY}/videos/${guid}/fetch`, {
       method: "POST",
       headers: {
         AccessKey: KEY as string,
         "Content-Type": "application/json",
         accept: "application/json",
       },
-      body: JSON.stringify({ url: source }),
+      body: JSON.stringify({
+        url: source,
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36",
+        },
+      }),
     });
+    if (!fetchRes.ok) {
+      console.error("[spy/play] fetch KO", fetchRes.status, (await fetchRes.text().catch(() => "")).slice(0, 300));
+    }
 
     return NextResponse.json({
       configured: true,
