@@ -79,7 +79,14 @@ function sortAds(list: SpyAd[], t: string): SpyAd[] {
 
 type Status = "idle" | "loading" | "done" | "error";
 
-export function SpyClient({ balance }: { balance: number; plan?: string }) {
+export function SpyClient({
+  balance,
+  initialFeed = [],
+}: {
+  balance: number;
+  plan?: string;
+  initialFeed?: SpyAd[];
+}) {
   const params = useSearchParams();
   const [bal, setBal] = useState(balance);
   const [q, setQ] = useState("");
@@ -390,13 +397,41 @@ export function SpyClient({ balance }: { balance: number; plan?: string }) {
         </div>
       )}
 
-      {status === "idle" && (
-        <EmptyState
-          icon={Search}
-          title="Lance une recherche"
-          description="Choisis un mot-clé et un ou plusieurs pays. Les pubs qui tournent depuis longtemps (et à fort reach en UE) sont les meilleurs signaux."
-        />
-      )}
+      {status === "idle" &&
+        (initialFeed.length > 0 ? (
+          <div className="space-y-3">
+            <div className="border-border bg-surface shadow-card flex flex-wrap items-center justify-between gap-2 rounded-xl border p-4">
+              <div className="flex items-center gap-2.5">
+                <span className="bg-secondary text-accent grid h-9 w-9 shrink-0 place-items-center rounded-xl">
+                  <Icon name="sparkles" size={18} />
+                </span>
+                <div>
+                  <p className="text-fg text-sm font-bold">Feed du jour</p>
+                  <p className="text-muted-foreground text-xs">
+                    Les pubs gagnantes repérées automatiquement — mises à jour chaque jour.
+                  </p>
+                </div>
+              </div>
+              <span className="bg-success-bg text-success inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold">
+                <Icon name="check" size={13} /> Gratuit · 0 crédit
+              </span>
+            </div>
+            <div className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {initialFeed.map((ad) => (
+                <SpyCard key={ad.ad_archive_id} ad={ad} onAnalyze={analyze} onPlay={setPlaying} />
+              ))}
+            </div>
+            <p className="text-muted-foreground pt-1 text-xs">
+              Lance ta propre recherche ci-dessus pour explorer un mot-clé ou un marché précis.
+            </p>
+          </div>
+        ) : (
+          <EmptyState
+            icon={Search}
+            title="Lance une recherche"
+            description="Choisis un mot-clé et un ou plusieurs pays. Les pubs qui tournent depuis longtemps (et à fort reach en UE) sont les meilleurs signaux."
+          />
+        ))}
 
       {status === "done" && ads.length === 0 && (
         <div className="border-border bg-surface rounded-xl border border-dashed p-12 text-center">

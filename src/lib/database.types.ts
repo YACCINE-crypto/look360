@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      feed_ads: {
+        Row: {
+          id: string
+          ad_archive_id: string
+          page_name: string | null
+          page_id: string | null
+          score: number
+          score_label: string | null
+          jours_actifs: number | null
+          reach: number | null
+          platforms: string[]
+          country: string | null
+          variants_count: number
+          niche: string | null
+          media_type: string | null
+          media_cdn_url: string | null
+          thumbnail_cdn_url: string | null
+          ad_library_url: string | null
+          landing_domain: string | null
+          payload: Json
+          created_at: string
+          refreshed_at: string
+        }
+        Insert: {
+          id?: string
+          ad_archive_id: string
+          page_name?: string | null
+          page_id?: string | null
+          score?: number
+          score_label?: string | null
+          jours_actifs?: number | null
+          reach?: number | null
+          platforms?: string[]
+          country?: string | null
+          variants_count?: number
+          niche?: string | null
+          media_type?: string | null
+          media_cdn_url?: string | null
+          thumbnail_cdn_url?: string | null
+          ad_library_url?: string | null
+          landing_domain?: string | null
+          payload?: Json
+          created_at?: string
+          refreshed_at?: string
+        }
+        Update: {
+          id?: string
+          ad_archive_id?: string
+          page_name?: string | null
+          page_id?: string | null
+          score?: number
+          score_label?: string | null
+          jours_actifs?: number | null
+          reach?: number | null
+          platforms?: string[]
+          country?: string | null
+          variants_count?: number
+          niche?: string | null
+          media_type?: string | null
+          media_cdn_url?: string | null
+          thumbnail_cdn_url?: string | null
+          ad_library_url?: string | null
+          landing_domain?: string | null
+          payload?: Json
+          created_at?: string
+          refreshed_at?: string
+        }
+        Relationships: []
+      }
       competitors_watch: {
         Row: {
           country: string | null

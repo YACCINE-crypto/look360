@@ -7,6 +7,34 @@
 
 ---
 
+## 🔴 NOUVEAU — Feed commun : activer le cron quotidien
+
+Le **feed commun** (table `feed_ads`, page Spy) est codé et la table est en base,
+mais il reste **VIDE tant que le cron ne tourne pas**. Le cron appelle la route
+Next `/api/cron/feed-refresh` (scrape niches × marchés → archive Bunny → `feed_ads`).
+
+**À faire (👤) :**
+1. **Vercel** : ajouter la variable `CRON_SECRET` (même valeur que côté Supabase).
+   La route Next la lit via `process.env.CRON_SECRET`.
+2. **Supabase → SQL Editor** (pg_cron requis — cf. §3 plus bas) :
+   ```sql
+   select cron.schedule('look360-feed', '0 6 * * *', $$
+     select net.http_post(
+       url := 'https://look360.io/api/cron/feed-refresh',
+       headers := jsonb_build_object('x-cron-secret', '<CRON_SECRET>')
+     );
+   $$);
+   ```
+3. **Test immédiat** (remplir le feed tout de suite) — déclenchement manuel :
+   `GET https://look360.io/api/cron/feed-refresh` avec l'en-tête
+   `x-cron-secret: <CRON_SECRET>`.
+   (Nécessite que **Apify** et **Bunny Storage** soient configurés côté Vercel,
+   sinon le feed se remplit mais sans créatives archivées.)
+
+Tant que ce n'est pas fait, la page Spy affiche l'état « Lance une recherche ».
+
+---
+
 ## ✅ Déjà livré (rappel rapide)
 
 - **Phase 4** : landing + offres + onboarding + vitrine anonymisée.
