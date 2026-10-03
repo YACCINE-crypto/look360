@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
@@ -38,9 +39,42 @@ function hlsUrl(guid: string): string {
 function allowedSource(u: string): boolean {
   try {
     const h = new URL(u).hostname;
-    return h.endsWith("fbcdn.net") || h.endsWith("facebook.com");
+    // Sources Meta + nos archives média (CDN de stockage). Les créatives du feed
+    // commun ont leur URL réécrite vers le CDN d'archive : elles doivent aussi
+    // pouvoir être transcodées pour une lecture fiable.
+    const archiveHost = (process.env.BUNNY_CDN_HOST || "").replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+    return (
+      h.endsWith("fbcdn.net") ||
+      h.endsWith("facebook.com") ||
+      h.endsWith("b-cdn.net") ||
+      (archiveHost !== "" && h === archiveHost)
+    );
   } catch {
     return false;
+  }
+}
+
+// Titre déterministe par source → permet de RETROUVER une vidéo déjà transcodée
+// (même sur une autre instance serverless / après un cold start) au lieu d'en
+// recréer une à chaque lecture (évite les transcodages/coûts en double).
+function titleFor(source: string): string {
+  return `look360:${createHash("sha1").update(source).digest("hex")}`;
+}
+
+// Recherche une vidéo déjà créée pour cette source (par son titre déterministe).
+async function findExistingGuid(source: string): Promise<string | null> {
+  const title = titleFor(source);
+  try {
+    const r = await fetch(
+      `${API}/library/${LIBRARY}/videos?search=${encodeURIComponent(title)}&itemsPerPage=20&page=1`,
+      { headers: { AccessKey: KEY as string, accept: "application/json" }, cache: "no-store" },
+    );
+    if (!r.ok) return null;
+    const j = (await r.json()) as { items?: { guid?: string; title?: string }[] };
+    const hit = (j.items || []).find((v) => v.title === title && v.guid);
+    return hit?.guid ?? null;
+  } catch {
+    return null;
   }
 }
 async function statusOf(guid: string): Promise<number | null> {
@@ -93,9 +127,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "source non autorisée" }, { status: 400 });
     }
 
-    // Déjà connu → renvoyer son statut.
-    const known = cache.get(source);
+    // Déjà connu (cache instance) ou déjà transcodé (recherche par titre) →
+    // renvoyer son statut sans recréer de vidéo.
+    const known = cache.get(source) ?? (await findExistingGuid(source));
     if (known) {
+      cache.set(source, known);
       const status = await statusOf(known);
       const ready = readyFrom(status);
       return NextResponse.json({
@@ -108,7 +144,8 @@ export async function GET(request: Request) {
       });
     }
 
-    // Créer la vidéo puis lancer la récupération depuis la source (transcodage).
+    // Créer la vidéo (titre déterministe) puis lancer la récupération depuis la
+    // source (transcodage).
     const create = await fetch(`${API}/library/${LIBRARY}/videos`, {
       method: "POST",
       headers: {
@@ -116,7 +153,7 @@ export async function GET(request: Request) {
         "Content-Type": "application/json",
         accept: "application/json",
       },
-      body: JSON.stringify({ title: `spy-${Date.now()}` }),
+      body: JSON.stringify({ title: titleFor(source) }),
     });
     if (!create.ok) {
       return NextResponse.json({ configured: true, error: true }, { status: 502 });
