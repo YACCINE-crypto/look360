@@ -145,6 +145,74 @@ export async function refreshFeed(
   return { found: ranked.length, searches, stored: rows.length };
 }
 
+// Associe un mot-clé de recherche à un libellé de niche (best-effort, pour le
+// seeding depuis le cache où la niche n'est pas stockée telle quelle).
+function nicheFromKeyword(q: string): string {
+  const s = (q || "").toLowerCase();
+  const hit = FEED_NICHES.find((n) => s.includes(n.kw));
+  return hit?.niche ?? "Tendances";
+}
+
+/**
+ * Remplit le feed commun À PARTIR DU CACHE de recherches existant (`spy_searches`)
+ * — sans appeler Apify ni Bunny. Sert à afficher immédiatement un feed réel
+ * (pré-rempli par les recherches déjà faites) en attendant le 1er run complet du
+ * cron. Déduplique par ad_archive_id (meilleur score, le plus récent gagne les
+ * égalités), garde le top FEED_KEEP au-dessus de FEED_SCORE_MIN.
+ */
+export async function seedFeedFromCache(
+  admin: Admin,
+): Promise<{ found: number; stored: number; scanned: number }> {
+  // Recherches récentes d'abord → les créatives les plus fraîches gagnent.
+  const { data: searches } = await admin
+    .from("spy_searches")
+    .select("filters, results, created_at")
+    .order("created_at", { ascending: false })
+    .limit(400);
+
+  if (!searches || searches.length === 0) return { found: 0, stored: 0, scanned: 0 };
+
+  const best = new Map<string, { ad: SpyAd; niche: string }>();
+  for (const s of searches) {
+    const ads = Array.isArray(s.results) ? (s.results as unknown as SpyAd[]) : [];
+    const kw = ((s.filters as { q?: string } | null)?.q ?? "") as string;
+    const niche = nicheFromKeyword(kw);
+    for (const ad of ads) {
+      if (!ad?.ad_archive_id || (ad.score ?? 0) < FEED_SCORE_MIN) continue;
+      const prev = best.get(ad.ad_archive_id);
+      if (!prev || ad.score > prev.ad.score) best.set(ad.ad_archive_id, { ad, niche });
+    }
+  }
+
+  const ranked = [...best.values()].sort((a, b) => b.ad.score - a.ad.score).slice(0, FEED_KEEP);
+  if (ranked.length === 0) return { found: 0, stored: 0, scanned: searches.length };
+
+  const now = new Date().toISOString();
+  const rows = ranked.map(({ ad, niche }) => ({
+    ad_archive_id: ad.ad_archive_id,
+    page_name: ad.page_name,
+    page_id: ad.page_id,
+    score: ad.score,
+    score_label: ad.score_label,
+    jours_actifs: ad.jours_actifs,
+    reach: ad.reach,
+    platforms: ad.platforms,
+    country: ad.country ?? null,
+    variants_count: ad.variants_count,
+    niche,
+    media_type: ad.media_type,
+    media_cdn_url: null,
+    thumbnail_cdn_url: null,
+    ad_library_url: ad.ad_library_url,
+    landing_domain: ad.landing_domain,
+    payload: ad as unknown as Json,
+    refreshed_at: now,
+  }));
+
+  await admin.from("feed_ads").upsert(rows, { onConflict: "ad_archive_id" });
+  return { found: ranked.length, stored: rows.length, scanned: searches.length };
+}
+
 /** Lit le feed commun (pour affichage). Renvoie des SpyAd prêts pour la carte. */
 export async function getFeed(
   admin: Admin,

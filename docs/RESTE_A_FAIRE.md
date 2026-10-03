@@ -7,31 +7,28 @@
 
 ---
 
-## 🔴 NOUVEAU — Feed commun : activer le cron quotidien
+## ✅ Feed commun — cron Vercel branché (remplissage)
 
-Le **feed commun** (table `feed_ads`, page Spy) est codé et la table est en base,
-mais il reste **VIDE tant que le cron ne tourne pas**. Le cron appelle la route
-Next `/api/cron/feed-refresh` (scrape niches × marchés → archive Bunny → `feed_ads`).
+Le **feed commun** (table `feed_ads`, page Spy) est **branché sur Vercel Cron**
+(comme notifs / winner-agent) : entrée ajoutée dans `vercel.json`
+(`/api/cron/feed-refresh`, tous les jours **06:00 UTC**). La route accepte
+l'auth native Vercel (`Authorization: Bearer $CRON_SECRET`, déjà présent dans
+l'env) **et** `x-cron-secret` pour un déclenchement manuel. **Plus besoin de
+pg_cron pour le feed.**
 
-**À faire (👤) :**
-1. **Vercel** : ajouter la variable `CRON_SECRET` (même valeur que côté Supabase).
-   La route Next la lit via `process.env.CRON_SECRET`.
-2. **Supabase → SQL Editor** (pg_cron requis — cf. §3 plus bas) :
-   ```sql
-   select cron.schedule('look360-feed', '0 6 * * *', $$
-     select net.http_post(
-       url := 'https://look360.io/api/cron/feed-refresh',
-       headers := jsonb_build_object('x-cron-secret', '<CRON_SECRET>')
-     );
-   $$);
-   ```
-3. **Test immédiat** (remplir le feed tout de suite) — déclenchement manuel :
-   `GET https://look360.io/api/cron/feed-refresh` avec l'en-tête
-   `x-cron-secret: <CRON_SECRET>`.
-   (Nécessite que **Apify** et **Bunny Storage** soient configurés côté Vercel,
-   sinon le feed se remplit mais sans créatives archivées.)
+Le feed part **VIDE** tant qu'aucun run n'a eu lieu. Deux façons de le remplir :
 
-Tant que ce n'est pas fait, la page Spy affiche l'état « Lance une recherche ».
+1. **Tout de suite, depuis le cache (gratuit, sans Apify/Bunny)** — pré-remplit
+   `feed_ads` à partir des recherches déjà faites (données **réelles**) :
+   `GET /api/cron/feed-refresh?mode=seed`
+   (en-tête `x-cron-secret: <CRON_SECRET>`, ou via le bouton « Run » du cron
+   dans le dashboard Vercel en ajoutant `?mode=seed`).
+2. **Refresh complet quotidien (automatique)** — le cron Vercel lance le scrape
+   niches × marchés + archivage des créatives sur Bunny, puis upsert. Se déclenche
+   seul chaque jour ; déclenchable à la main depuis **Vercel → Settings → Cron Jobs
+   → Run** (nécessite **Apify** + **Bunny Storage** configurés — ils le sont).
+
+Tant que le feed est vide, la page Spy affiche l'état « Lance une recherche ».
 
 ---
 

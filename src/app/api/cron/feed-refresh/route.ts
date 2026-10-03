@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { refreshFeed } from "@/lib/feed";
+import { refreshFeed, seedFeedFromCache } from "@/lib/feed";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,18 +8,32 @@ export const maxDuration = 60;
 
 /**
  * Rafraîchit le FEED COMMUN (pubs gagnantes du jour), partagé par tous.
- * Protégé par CRON_SECRET (en-tête `x-cron-secret`). Appelé une fois par jour
- * par pg_cron (voir docs/RESTE_A_FAIRE.md). Tourne en service_role (admin).
+ * Déclenché par Vercel Cron (voir vercel.json) qui envoie
+ * `Authorization: Bearer $CRON_SECRET`. On accepte aussi `x-cron-secret` pour un
+ * déclenchement manuel. Tourne en service_role (admin).
+ *
+ * - par défaut            → refresh complet (scrape niches × marchés + archivage)
+ * - `?mode=seed`          → remplissage IMMÉDIAT depuis le cache de recherches
+ *   existant (aucun appel Apify/Bunny) : utile pour pré-remplir tout de suite.
  */
+function authorized(request: Request): boolean {
+  const secret = process.env.CRON_SECRET;
+  if (!secret) return false;
+  const auth = request.headers.get("authorization");
+  if (auth === `Bearer ${secret}`) return true; // Vercel Cron
+  return request.headers.get("x-cron-secret") === secret; // déclenchement manuel
+}
+
 async function run(request: Request) {
-  const secret = request.headers.get("x-cron-secret");
-  if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
+  if (!authorized(request)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
+  const mode = new URL(request.url).searchParams.get("mode");
   try {
     const admin = createAdminClient();
-    const res = await refreshFeed(admin);
-    return NextResponse.json({ ok: true, ...res });
+    const res =
+      mode === "seed" ? await seedFeedFromCache(admin) : await refreshFeed(admin);
+    return NextResponse.json({ ok: true, mode: mode ?? "refresh", ...res });
   } catch (e) {
     return NextResponse.json(
       { ok: false, error: e instanceof Error ? e.message : "feed_refresh_failed" },
