@@ -69,7 +69,7 @@ export async function createProduit(formData: FormData): Promise<void> {
   }
 
   revalidatePath("/recherche");
-  revalidatePath("/pipeline");
+  revalidatePath("/recherche");
   redirect(backTo.split("?")[0]);
 }
 
@@ -115,7 +115,7 @@ export async function updateProduit(formData: FormData): Promise<void> {
 
   revalidatePath(`/produits/${id}`);
   revalidatePath("/recherche");
-  revalidatePath("/pipeline");
+  revalidatePath("/recherche");
   revalidatePath("/testing");
   redirect(`/produits/${id}`);
 }
@@ -181,7 +181,7 @@ export async function passerEnProduction(formData: FormData): Promise<void> {
   const id = String(formData.get("id") ?? "");
   if (id) {
     await setStatut(id, "production");
-    revalidatePath("/pipeline");
+    revalidatePath("/recherche");
   }
 }
 
@@ -193,8 +193,8 @@ export async function deleteProduit(formData: FormData): Promise<void> {
   const { error } = await supabase.from("produits").delete().eq("id", id);
   if (!error) {
     revalidatePath("/recherche");
-    revalidatePath("/pipeline");
-    revalidatePath("/aujourdhui");
+    revalidatePath("/recherche");
+    revalidatePath("/recherche");
   }
 }
 
@@ -217,7 +217,7 @@ export async function updatePlanning(formData: FormData): Promise<void> {
     .eq("id", id);
   if (!error) {
     revalidatePath("/recherche");
-    revalidatePath("/aujourdhui");
+    revalidatePath("/recherche");
     revalidatePath(`/testing/${id}`);
   }
 }

@@ -34,15 +34,14 @@ export function VideoLightbox({
   const canDownload = useCanDownload();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const hlsRef = useRef<Hls | null>(null);
-  const rescuedRef = useRef(false); // une seule tentative de transcodage
+  const attemptRef = useRef(0); // 0 = URL brute · 1 = proxy · 2 = transcodage
   const blackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelledRef = useRef(false);
-  // Les callbacks d'événements du <video> pointent vers rescue/onFail définis
-  // dans l'effet (ref stable, mise à jour à chaque (re)montage de la source).
-  const handlersRef = useRef<{ rescue: () => void; onFail: (m?: string) => void }>({
-    rescue: () => {},
-    onFail: () => {},
+  // Callbacks d'événements du <video> (ref stable pointant vers l'effet courant).
+  const handlersRef = useRef<{ onError: () => void; onBlack: () => void }>({
+    onError: () => {},
+    onBlack: () => {},
   });
 
   const [phase, setPhase] = useState<Phase>("loading");
@@ -65,6 +64,7 @@ export function VideoLightbox({
 
   useEffect(() => {
     cancelledRef.current = false;
+    attemptRef.current = 0;
 
     function clearTimers() {
       if (blackTimerRef.current) clearTimeout(blackTimerRef.current);
@@ -104,18 +104,9 @@ export function VideoLightbox({
       });
     }
 
-    // 1) Lecture directe immédiate (proxy même-origine si mp4, HLS direct sinon).
-    function playDirect() {
-      setPhase("loading");
-      setStatus("Chargement de la vidéo…");
-      attach(isM3u8(url) ? url : inlineProxy(url));
-    }
-
-    // 2) Secours : transcodage web-safe (une seule fois). Déclenché si la source
-    //    directe échoue ou reste noire.
+    // Secours : transcodage web-safe. Dernière tentative (source illisible/noire).
     async function rescue() {
-      if (cancelledRef.current || rescuedRef.current) return onFail();
-      rescuedRef.current = true;
+      if (cancelledRef.current) return;
       clearTimers();
       setPhase("transcoding");
       setStatus("Optimisation de la vidéo…");
@@ -157,10 +148,39 @@ export function VideoLightbox({
       setPhase("error");
     }
 
-    // expose les handlers aux events du <video> via les refs du composant
-    handlersRef.current = { rescue, onFail };
+    // Enchaîne les sources par ordre de fiabilité :
+    //  0) URL brute → le navigateur lit directement depuis Meta (IP du client,
+    //     le plus fiable ; les liens signés ne sont pas verrouillés par IP),
+    //  1) proxy même-origine (secours réseau/CORS),
+    //  2) transcodage web-safe (codec non lisible), sinon message d'erreur.
+    function advance(toTranscode = false) {
+      if (cancelledRef.current) return;
+      clearTimers();
+      if (toTranscode) attemptRef.current = 2;
+      const n = attemptRef.current;
+      attemptRef.current = n + 1;
+      if (n === 0) {
+        setPhase("loading");
+        setStatus("Chargement de la vidéo…");
+        attach(url); // brut (HLS si .m3u8)
+      } else if (n === 1) {
+        if (isM3u8(url)) return advance(); // proxy inutile pour un flux HLS
+        setPhase("loading");
+        setStatus("Nouvelle tentative…");
+        attach(inlineProxy(url));
+      } else if (n === 2) {
+        rescue();
+      } else {
+        onFail();
+      }
+    }
 
-    playDirect();
+    handlersRef.current = {
+      onError: () => advance(false),
+      onBlack: () => advance(true),
+    };
+
+    advance();
     return () => {
       cancelledRef.current = true;
       clearTimers();
@@ -179,12 +199,12 @@ export function VideoLightbox({
       blackTimerRef.current = null;
       setPortrait(video.videoHeight > video.videoWidth);
       setPhase("ok");
-    } else if (!rescuedRef.current) {
-      // La piste joue mais aucune image (codec non décodé) → secours transcodage.
+    } else if (attemptRef.current < 3) {
+      // La piste joue mais aucune image (codec non décodé) → bascule transcodage.
       if (blackTimerRef.current) clearTimeout(blackTimerRef.current);
       blackTimerRef.current = setTimeout(() => {
         const v = videoRef.current;
-        if (v && (v.videoWidth === 0 || v.videoHeight === 0)) handlersRef.current.rescue();
+        if (v && (v.videoWidth === 0 || v.videoHeight === 0)) handlersRef.current.onBlack();
       }, 1400);
     }
   }
@@ -267,7 +287,7 @@ export function VideoLightbox({
               preload="metadata"
               onPlaying={onPlaying}
               onLoadedMetadata={onLoadedMeta}
-              onError={() => handlersRef.current.rescue()}
+              onError={() => handlersRef.current.onError()}
               className="mx-auto block max-h-[85vh] w-full object-contain"
               style={{ aspectRatio: portrait === null ? "9 / 16" : undefined }}
             />

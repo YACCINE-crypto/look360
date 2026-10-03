@@ -3,6 +3,7 @@ import { RechercheClient } from "./RechercheClient";
 import type { Stat } from "@/components/StatsStrip";
 import { margeParProduit, closingParProduit } from "@/lib/testing";
 import { scoreParProduit } from "@/lib/score";
+import { getFeed } from "@/lib/feed";
 
 export default async function RecherchePage({
   searchParams,
@@ -14,9 +15,10 @@ export default async function RecherchePage({
   const supabase = await createClient();
   // Un seul chargement : tous les produits + tests. Le filtrage/tri se fait
   // ensuite côté client (instantané), sans requête au clic.
-  const [{ data: produits }, { data: tests }] = await Promise.all([
+  const [{ data: produits }, { data: tests }, feed] = await Promise.all([
     supabase.from("produits").select("*").order("created_at", { ascending: false }),
     supabase.from("tests").select("*").order("created_at", { ascending: false }),
+    getFeed(supabase, { limit: 48 }), // feed commun (gratuit, lecture RLS authenticated)
   ]);
 
   const marges = margeParProduit(tests ?? []);
@@ -31,6 +33,7 @@ export default async function RecherchePage({
       closings={closings}
       scores={scores}
       stats={stats}
+      feed={feed}
       addError={error}
     />
   );

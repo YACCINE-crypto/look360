@@ -6,7 +6,6 @@ import { Icon } from "./Icon";
 import { planConfig } from "@/lib/billing";
 
 const ITEMS = [
-  { href: "/aujourdhui", label: "Aujourd'hui", icon: "today" as const },
   { href: "/recherche", label: "Recherche", icon: "search" as const },
   { href: "/spy", label: "Spy Facebook", icon: "eye" as const },
   { href: "/winners", label: "Winners du jour", icon: "trophy" as const, needs: "winner" as const },
@@ -14,9 +13,7 @@ const ITEMS = [
   { href: "/top-trend", label: "Top Trend", icon: "trending" as const },
   { href: "/sauvegardes", label: "Sauvegardés", icon: "bookmark" as const },
   { href: "/surveillance", label: "Surveillance", icon: "bell" as const, needs: "competitor" as const },
-  { href: "/pipeline", label: "Pipeline", icon: "pipeline" as const },
   { href: "/testing", label: "Testing", icon: "flask" as const },
-  { href: "/angles", label: "Angles", icon: "tag" as const },
   { href: "/validation", label: "Validation", icon: "inbox" as const, adminOnly: true },
   { href: "/equipe", label: "Équipe", icon: "users" as const, adminOnly: true },
 ];

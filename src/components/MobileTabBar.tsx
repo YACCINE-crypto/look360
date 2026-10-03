@@ -8,7 +8,7 @@ type IconName = Parameters<typeof Icon>[0]["name"];
 
 const TABS: { href: string; label: string; icon: IconName }[] = [
   { href: "/recherche", label: "Recherche", icon: "search" },
-  { href: "/pipeline", label: "Pipeline", icon: "pipeline" },
+  { href: "/spy", label: "Spy", icon: "eye" },
   { href: "/winners", label: "Winners", icon: "trophy" },
   { href: "/vitrine", label: "Vitrine", icon: "store" },
 ];
