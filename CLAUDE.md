@@ -2,6 +2,12 @@
 
 # Design system (OBLIGATOIRE)
 
+**Skill de design de référence = `.claude/skills/look360-design` (SKILL.md)** — à
+suivre pour toute création/refonte d'écran, composant ou page Look360 (contexte
+produit, direction visuelle nav navy + contenu clair, règles anti‑AI‑slop, états
+réels, honnêteté des données, responsive). Cette règle‑ci reste la contrainte
+technique incontournable ci‑dessous.
+
 **Source de vérité des tokens = `/design-system/tokens.css`** (design system OpenDesign
 « dashboard », Apache 2.0, + extensions Look360). Exposés en utilitaires Tailwind dans
 `src/app/globals.css` (bloc `@theme`).
