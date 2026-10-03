@@ -1,15 +1,121 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CircleUser, Bell, Gauge, ShieldCheck, ChevronRight } from "lucide-react";
+import {
+  CircleUser,
+  Mail,
+  BadgeCheck,
+  Gauge,
+  Bell,
+  Store,
+  ShieldCheck,
+  ChevronRight,
+  type LucideIcon,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getSubscription } from "@/lib/credits";
 import { formatCredits, planLabel } from "@/lib/billing";
 import { PageHeader } from "@/components/ui";
-import { Icon } from "@/components/Icon";
 import { NotifBell } from "@/components/NotifBell";
 import { ShareToggle } from "./ShareToggle";
 
 export const dynamic = "force-dynamic";
+
+/** Groupe de réglages : titre discret + carte à lignes séparées. */
+function Group({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="space-y-1.5">
+      <h2 className="text-muted-foreground px-1 text-xs font-semibold uppercase tracking-wide">
+        {title}
+      </h2>
+      <div className="border-border bg-surface shadow-card divide-border divide-y overflow-hidden rounded-2xl border">
+        {children}
+      </div>
+    </section>
+  );
+}
+
+/** Intérieur commun d'une ligne : petite icône + libellé (+ sous-titre) + contenu à droite. */
+function RowBody({
+  icon: Icon,
+  label,
+  sub,
+  children,
+}: {
+  icon: LucideIcon;
+  label: string;
+  sub?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <>
+      <span className="bg-secondary text-accent grid h-9 w-9 shrink-0 place-items-center rounded-lg">
+        <Icon size={18} strokeWidth={1.9} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-fg text-sm font-semibold">{label}</p>
+        {sub && <p className="text-muted-foreground mt-0.5 text-xs leading-snug">{sub}</p>}
+      </div>
+      {children}
+    </>
+  );
+}
+
+/** Ligne cliquable (navigue) : valeur/état à droite + chevron. */
+function LinkRow({
+  icon,
+  label,
+  sub,
+  href,
+  value,
+  badge = false,
+}: {
+  icon: LucideIcon;
+  label: string;
+  sub?: string;
+  href: string;
+  value?: string;
+  badge?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className="hover:bg-secondary/40 flex min-h-[56px] items-center gap-3 px-4 py-3 transition-colors"
+    >
+      <RowBody icon={icon} label={label} sub={sub}>
+        {value &&
+          (badge ? (
+            <span className="bg-secondary text-accent shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold capitalize">
+              {value}
+            </span>
+          ) : (
+            <span className="text-fg shrink-0 text-sm font-semibold tabular-nums">{value}</span>
+          ))}
+        <ChevronRight size={18} className="text-muted-foreground ml-1 shrink-0" />
+      </RowBody>
+    </Link>
+  );
+}
+
+/** Ligne non navigable : contrôle/valeur à droite (toggle, bouton, texte). */
+function ControlRow({
+  icon,
+  label,
+  sub,
+  children,
+}: {
+  icon: LucideIcon;
+  label: string;
+  sub?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex min-h-[56px] items-center gap-3 px-4 py-3">
+      <RowBody icon={icon} label={label} sub={sub}>
+        <div className="shrink-0">{children}</div>
+      </RowBody>
+    </div>
+  );
+}
 
 export default async function ParametresPage() {
   const supabase = await createClient();
@@ -23,110 +129,67 @@ export default async function ParametresPage() {
     getSubscription(uid),
   ]);
   const share = profile?.vitrine_share ?? true;
-  const role = profile?.role ?? "membre";
-  const isAdmin = role === "superadmin";
+  const isAdmin = (profile?.role ?? "membre") === "superadmin";
   const displayName = profile?.nom ?? email ?? "Mon compte";
   const plan = sub?.plan ?? "free";
   const credits = sub?.credits_balance ?? 0;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-5">
+    <div className="mx-auto max-w-2xl space-y-6">
       <PageHeader title="Paramètres" subtitle="Ton compte, ton offre et tes préférences." />
 
-      {/* Compte */}
-      <div className="border-border bg-surface shadow-card rounded-2xl border p-5">
-        <div className="flex items-center gap-3">
-          <span className="bg-secondary text-accent grid h-14 w-14 shrink-0 place-items-center rounded-full">
-            <CircleUser size={30} strokeWidth={1.75} />
-          </span>
-          <div className="min-w-0">
-            <p className="text-fg truncate text-lg font-bold">{displayName}</p>
-            {email && <p className="text-muted-foreground truncate text-sm">{email}</p>}
-            <span className="bg-secondary text-accent mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold capitalize">
-              Offre {planLabel(plan)}
-            </span>
-          </div>
-        </div>
-      </div>
+      <Group title="Compte">
+        <ControlRow icon={CircleUser} label="Nom">
+          <span className="text-fg max-w-[55%] truncate text-sm font-semibold">{displayName}</span>
+        </ControlRow>
+        {email && (
+          <ControlRow icon={Mail} label="Email">
+            <span className="text-muted-foreground max-w-[60%] truncate text-sm">{email}</span>
+          </ControlRow>
+        )}
+      </Group>
 
-      {/* Crédits / usage */}
-      <Link
-        href="/offres"
-        className="border-border bg-surface shadow-card card-lift flex items-center gap-3 rounded-2xl border p-5"
-      >
-        <span className="bg-secondary text-accent grid h-10 w-10 shrink-0 place-items-center rounded-xl">
-          <Gauge size={20} strokeWidth={1.75} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-fg font-semibold">Crédits & offre</p>
-          <p className="text-muted-foreground text-sm">
-            <span className="text-fg font-semibold tabular-nums">{formatCredits(credits)}</span>{" "}
-            crédits · offre {planLabel(plan)}
-          </p>
-        </div>
-        <span className="bg-accent text-accent-on inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold">
-          Gérer <ChevronRight size={14} />
-        </span>
-      </Link>
+      <Group title="Offre & crédits">
+        <LinkRow icon={BadgeCheck} label="Offre actuelle" href="/offres" value={planLabel(plan)} badge />
+        <LinkRow
+          icon={Gauge}
+          label="Crédits disponibles"
+          sub="Recherches & analyses Spy"
+          href="/offres"
+          value={formatCredits(credits)}
+        />
+      </Group>
 
-      {/* Notifications */}
-      <div className="border-border bg-surface shadow-card rounded-2xl border p-5">
-        <div className="flex items-start gap-3">
-          <span className="bg-secondary text-accent grid h-10 w-10 shrink-0 place-items-center rounded-xl">
-            <Bell size={20} strokeWidth={1.75} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-fg font-semibold">Notifications</p>
-            <p className="text-muted-foreground mt-0.5 text-sm">
-              Sois alerté dès qu&apos;un concurrent suivi lance une nouvelle pub, ou
-              quand ton offre arrive à échéance.
-            </p>
-            <div className="mt-2">
-              <NotifBell />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Panneau admin (superadmin uniquement) */}
-      {isAdmin && (
-        <Link
-          href="/admin"
-          className="border-border bg-surface shadow-card card-lift flex items-center gap-3 rounded-2xl border p-5"
+      <Group title="Notifications">
+        <ControlRow
+          icon={Bell}
+          label="Alertes push"
+          sub="Concurrents suivis · échéance d'offre"
         >
-          <span className="bg-secondary text-accent grid h-10 w-10 shrink-0 place-items-center rounded-xl">
-            <ShieldCheck size={20} strokeWidth={1.75} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-fg font-semibold">Panneau admin</p>
-            <p className="text-muted-foreground text-sm">Cockpit, clients, revenus & activité.</p>
-          </div>
-          <ChevronRight size={18} className="text-muted-foreground shrink-0" />
-        </Link>
-      )}
+          <NotifBell />
+        </ControlRow>
+      </Group>
 
-      {/* Partage vitrine */}
-      <div className="border-border bg-surface shadow-card rounded-2xl border p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="bg-secondary text-accent grid h-8 w-8 shrink-0 place-items-center rounded-lg">
-                <Icon name="store" size={16} />
-              </span>
-              <p className="text-fg font-semibold">Partager mes tests validés à la communauté</p>
-            </div>
-            <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
-              Quand tu valides un produit (≥ 10 commandes reçues), il peut apparaître
-              dans la <b className="text-fg">vitrine communautaire</b> des offres Business
-              — <b className="text-fg">100 % anonymisé</b> : seulement la catégorie, le
-              pays, le taux de closing et la marge. Jamais ton nom, jamais le nom exact
-              de ton produit, jamais un lien vers ta boutique. Tu peux désactiver ce
-              partage à tout moment.
-            </p>
-          </div>
+      <Group title="Partage">
+        <ControlRow
+          icon={Store}
+          label="Vitrine communautaire"
+          sub="Partage tes tests validés — 100 % anonymisés (catégorie, pays, closing, marge). Jamais ton nom ni ta boutique."
+        >
           <ShareToggle initial={share} />
-        </div>
-      </div>
+        </ControlRow>
+      </Group>
+
+      {isAdmin && (
+        <Group title="Administration">
+          <LinkRow
+            icon={ShieldCheck}
+            label="Panneau admin"
+            sub="Cockpit, clients, revenus & activité"
+            href="/admin"
+          />
+        </Group>
+      )}
     </div>
   );
 }
