@@ -52,7 +52,7 @@ export const PLANS: Record<Plan, PlanConfig> = {
     winnerEnabled: true,
     winnerKeywords: 2,
     winnerCountries: 1,
-    whatsapp: true,
+    whatsapp: false, // WhatsApp Winners = Business uniquement (spec v2)
     vitrineEnabled: false,
     priceNormal: 15000,
     priceFirst: 10000,
@@ -76,6 +76,34 @@ export function planConfig(plan: string | null | undefined): PlanConfig {
 }
 export function planLabel(plan: string | null | undefined): string {
   return planConfig(plan).label;
+}
+
+// ============================================================================
+// Quotas v2 — « niveau d'accès », PAS de crédits visibles. Miroir TS de la table
+// `plan_limits` (seule source d'enforcement = la base, via SECURITY DEFINER).
+// Ces constantes servent à l'AFFICHAGE (pricing, jauges d'usage) et aux
+// garde-fous côté app. Toujours garder les 2 synchronisés avec 0030.
+//   search             = 1 recherche utilisateur
+//   market_search_unit = 1 recherche exécutée sur 1 marché (coût Apify réel)
+// ============================================================================
+export type PlanLimits = {
+  monthlySearches: number;
+  monthlyUnits: number; // market_search_units/mois (plafond de sécurité coût)
+  maxMarkets: number; // marchés max par recherche
+  monthlyDownloads: number;
+  maxSavedProducts: number;
+  monthlyWinnerRuns: number;
+};
+
+export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
+  free:     { monthlySearches: 0,   monthlyUnits: 0,   maxMarkets: 0, monthlyDownloads: 0,    maxSavedProducts: 0,     monthlyWinnerRuns: 0 },
+  starter:  { monthlySearches: 250, monthlyUnits: 300, maxMarkets: 2, monthlyDownloads: 100,  maxSavedProducts: 500,   monthlyWinnerRuns: 0 },
+  pro:      { monthlySearches: 500, monthlyUnits: 600, maxMarkets: 3, monthlyDownloads: 500,  maxSavedProducts: 2500,  monthlyWinnerRuns: 30 },
+  business: { monthlySearches: 700, monthlyUnits: 800, maxMarkets: 5, monthlyDownloads: 1500, maxSavedProducts: 10000, monthlyWinnerRuns: 60 },
+};
+
+export function planLimits(plan: string | null | undefined): PlanLimits {
+  return PLAN_LIMITS[(plan as Plan) in PLAN_LIMITS ? (plan as Plan) : "free"];
 }
 
 // --- Coûts d'actions (en crédits) ---
