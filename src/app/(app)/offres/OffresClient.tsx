@@ -4,23 +4,24 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { motion, type Variants } from "motion/react";
 import NumberFlow from "@number-flow/react";
-import { Zap, Check, X, Sparkles, Crown, ArrowUpRight, Loader2 } from "lucide-react";
-import {
-  PLANS,
-  CREDIT_PACKS,
-  formatCredits,
-  planLabel,
-  type Plan,
-} from "@/lib/billing";
+import { Check, X, Sparkles, Crown, ArrowUpRight, Loader2, Gift } from "lucide-react";
+import { PLANS, PLAN_LIMITS, planLabel, type Plan } from "@/lib/billing";
 import { startPayment } from "@/lib/pay";
 
 const fcfa = (n: number) => new Intl.NumberFormat("fr-FR").format(n) + " FCFA";
+const nf = (n: number) => new Intl.NumberFormat("fr-FR").format(n);
 const discountPct = (normal: number, first: number) =>
   Math.round((1 - first / normal) * 100);
 
-/** On ne montre en grand que les offres PAYANTES. Le Gratuit = bandeau discret. */
+/** On ne montre en grand que les offres PAYANTES. Le Gratuit = bandeau d'entrée. */
 const PAID_ORDER: Plan[] = ["starter", "pro", "business"];
 const POPULAR: Plan = "pro";
+const CTA_LABEL: Record<Plan, string> = {
+  free: "Commencer gratuitement",
+  starter: "Commencer avec Starter",
+  pro: "Choisir Pro",
+  business: "Choisir Business",
+};
 
 /** Baseline « montée en gamme » affichée sous le nom de chaque offre. */
 const TAGLINE: Record<Plan, string> = {
@@ -31,49 +32,62 @@ const TAGLINE: Record<Plan, string> = {
 };
 
 const SUPPORT: Record<Plan, string> = {
-  free: "communautaire",
+  free: "—",
   starter: "standard",
   pro: "prioritaire",
-  business: "prioritaire (VIP)",
+  business: "VIP",
 };
 
 type Feat = { label: ReactNode; on: boolean };
 
-/** Liste complète des fonctionnalités, avec ✅ inclus / ❌ non inclus. */
+/** Fonctionnalités par offre = NIVEAU D'ACCÈS (jamais de crédits). ✅/❌. */
 function features(p: Plan): Feat[] {
   const c = PLANS[p];
+  const l = PLAN_LIMITS[p];
   const s = c.competitorSlots > 1 ? "s" : "";
   return [
     {
       label: (
         <>
-          <b className="text-fg font-semibold">
-            {formatCredits(c.monthlyCredits)}
-          </b>{" "}
-          crédits / mois
+          <b className="text-fg font-semibold">{nf(l.monthlySearches)}</b> recherches / mois
         </>
       ),
-      on: true,
+      on: l.monthlySearches > 0,
+    },
+    {
+      label: (
+        <>
+          Jusqu&apos;à <b className="text-fg font-semibold">{l.maxMarkets}</b> marché
+          {l.maxMarkets > 1 ? "s" : ""} par recherche
+        </>
+      ),
+      on: l.maxMarkets > 0,
     },
     { label: "Spy Facebook — recherche de pubs", on: true },
-    { label: "Top Trend — classement produits", on: true },
+    { label: "Feed des winners du jour + Top Trend", on: true },
     { label: "Analyse de concurrent", on: true },
     {
       label: (
         <>
-          <b className="text-fg font-semibold">Testing &amp; validation produit</b>{" "}
-          — taux de closing, marge nette, verdict
+          <b className="text-fg font-semibold">Testing &amp; validation produit</b> — closing,
+          marge nette, verdict
         </>
       ),
       on: true,
     },
-    { label: "Téléchargement des vidéos de pub", on: true },
     {
       label: (
         <>
-          Suivi de{" "}
-          <b className="text-fg font-semibold">{c.competitorSlots}</b>{" "}
-          concurrent{s}
+          Téléchargement des vidéos de pub{" "}
+          <span className="text-muted-foreground/70">({nf(l.monthlyDownloads)}/mois)</span>
+        </>
+      ),
+      on: l.monthlyDownloads > 0,
+    },
+    {
+      label: (
+        <>
+          Suivi de <b className="text-fg font-semibold">{c.competitorSlots}</b> concurrent{s}
         </>
       ),
       on: c.competitorSlots > 0,
@@ -81,11 +95,8 @@ function features(p: Plan): Feat[] {
     {
       label: c.winnerEnabled ? (
         <>
-          Winner Agent auto —{" "}
-          <b className="text-fg font-semibold">
-            {c.winnerKeywords} mots-clés
-          </b>{" "}
-          × {c.winnerCountries} pays
+          Winner Agent — <b className="text-fg font-semibold">{c.winnerKeywords} mots-clés</b> ×{" "}
+          {c.winnerCountries} pays
         </>
       ) : (
         "Winner Agent automatique"
@@ -121,12 +132,10 @@ const reveal: Variants = {
 
 export default function OffresClient({
   current,
-  balance,
   payReturn: payReturnFlag,
   payReturnRef,
 }: {
   current: Plan;
-  balance: number;
   payReturn?: boolean;
   payReturnRef?: string | null;
 }) {
@@ -225,16 +234,13 @@ export default function OffresClient({
       )}
       {/* En-tête */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">
-          Offres &amp; crédits
-        </h1>
+        <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">Offres</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Les crédits servent aux recherches et aux analyses. Change d&apos;offre
-          quand tu veux.
+          Choisis ton niveau d&apos;accès à Look360. Change d&apos;offre quand tu veux.
         </p>
       </div>
 
-      {/* Bandeau discret — offre actuelle (Gratuit ou autre) + solde */}
+      {/* Bandeau — offre actuelle */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -243,14 +249,40 @@ export default function OffresClient({
       >
         <span className="text-muted-foreground">Ton offre actuelle :</span>
         <span className="font-bold">{planLabel(current)}</span>
-        <span className="text-muted-foreground">
-          — {formatCredits(PLANS[current].monthlyCredits)} crédits / mois
+        {current !== "free" && (
+          <>
+            <span className="text-border mx-1">·</span>
+            <span className="text-muted-foreground">
+              Jusqu&apos;à {nf(PLAN_LIMITS[current].monthlySearches)} recherches / mois
+            </span>
+          </>
+        )}
+      </motion.div>
+
+      {/* Entrée GRATUITE — porte d'entrée (feed + Top Trend en lecture) */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.42, delay: 0.03 }}
+        className="border-border bg-surface shadow-card flex flex-wrap items-center gap-3 rounded-xl border p-4"
+      >
+        <span className="bg-secondary text-accent grid h-10 w-10 shrink-0 place-items-center rounded-xl">
+          <Gift size={20} />
         </span>
-        <span className="text-border mx-1">·</span>
-        <span className="text-accent inline-flex items-center gap-1 font-semibold">
-          <Zap size={14} className="fill-primary text-accent" /> Solde{" "}
-          {formatCredits(balance)}
-        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-fg flex items-center gap-2 font-semibold">
+            Gratuit — Découvre ce qui marche
+            {current === "free" && (
+              <span className="bg-success-bg text-success rounded-full px-2 py-0.5 text-[11px] font-semibold">
+                Actuelle
+              </span>
+            )}
+          </p>
+          <p className="text-muted-foreground text-sm">
+            Feed des winners du jour + Top Trend, en lecture. Pour lancer tes propres
+            recherches, passe en Starter.
+          </p>
+        </div>
       </motion.div>
 
       {/* Bandeau promo lancement */}
@@ -292,7 +324,7 @@ export default function OffresClient({
               {isPopular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span className="from-accent inline-flex items-center gap-1 rounded-full bg-gradient-to-r to-blue-500 px-3 py-1 text-xs font-bold text-white shadow-md">
-                    <Crown size={13} /> Populaire
+                    <Crown size={13} /> Le plus choisi
                   </span>
                 </div>
               )}
@@ -338,6 +370,7 @@ export default function OffresClient({
 
               {/* CTA */}
               <PlanButton
+                label={CTA_LABEL[p]}
                 isCurrent={isCurrent}
                 isPopular={isPopular}
                 busy={busy === p}
@@ -383,67 +416,22 @@ export default function OffresClient({
         })}
       </div>
 
-      {/* Recharger des crédits */}
-      <div>
-        <div className="mb-4">
-          <h2 className="text-lg font-bold">Recharger des crédits</h2>
-          <p className="text-muted-foreground text-sm">
-            Un coup de boost ? Ajoute des crédits à ton solde — ils n&apos;expirent
-            pas et s&apos;utilisent sur toutes les offres.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {CREDIT_PACKS.map((pack, i) => (
-            <motion.div
-              key={pack.credits}
-              custom={i}
-              variants={reveal}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, margin: "-40px" }}
-              className="border-border bg-surface shadow-card flex flex-col items-center gap-3 rounded-2xl border p-5 text-center"
-            >
-              <div>
-                <p className="flex items-center justify-center gap-1.5 text-2xl font-bold tabular-nums whitespace-nowrap">
-                  <Zap size={18} className="fill-primary text-accent" />
-                  {formatCredits(pack.credits)}
-                </p>
-                <p className="text-muted-foreground text-sm">crédits</p>
-              </div>
-              <p className="text-lg font-bold">{fcfa(pack.price)}</p>
-              <button
-                type="button"
-                onClick={() =>
-                  pay(`pack:${pack.credits}`, {
-                    purpose: "credit_pack",
-                    packCredits: pack.credits,
-                  })
-                }
-                disabled={busy === `pack:${pack.credits}`}
-                className="bg-accent text-accent-on inline-flex min-h-[40px] w-full items-center justify-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
-              >
-                {busy === `pack:${pack.credits}` ? (
-                  <>
-                    <Loader2 size={15} className="animate-spin" /> Redirection…
-                  </>
-                ) : (
-                  "Recharger"
-                )}
-              </button>
-            </motion.div>
-          ))}
-        </div>
-      </div>
+      <p className="text-muted-foreground text-center text-xs">
+        Paiement mensuel. Recherche intensive bornée par un usage équitable (fair use)
+        pour garder le service rapide pour tout le monde.
+      </p>
     </div>
   );
 }
 
 function PlanButton({
+  label,
   isCurrent,
   isPopular,
   busy,
   onClick,
 }: {
+  label: string;
   isCurrent: boolean;
   isPopular: boolean;
   busy: boolean;
@@ -477,7 +465,7 @@ function PlanButton({
         </>
       ) : (
         <>
-          Choisir cette offre <ArrowUpRight size={15} />
+          {label} <ArrowUpRight size={15} />
         </>
       )}
     </button>

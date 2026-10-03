@@ -7,18 +7,38 @@ import { SidebarNav } from "./Nav";
 import { Icon } from "./Icon";
 import { MobileTabBar } from "./MobileTabBar";
 import { logout } from "@/app/login/actions";
-import { formatCredits, planLabel } from "@/lib/billing";
+import { planLabel } from "@/lib/billing";
 
-/** Pastille solde de crédits + offre — cliquable vers la page d'offres. */
-function CreditsBadge({ credits, plan, compact = false }: { credits: number; plan: string; compact?: boolean }) {
+const nf = (n: number) => new Intl.NumberFormat("fr-FR").format(n);
+
+/** Pastille d'usage (recherches du mois) OU offre — cliquable vers les offres.
+ *  Aucun crédit affiché : on parle de recherches et de niveau d'accès. */
+function UsageBadge({
+  searchesUsed,
+  searchesLimit,
+  plan,
+}: {
+  searchesUsed: number;
+  searchesLimit: number;
+  plan: string;
+}) {
+  const hasQuota = searchesLimit > 0;
   return (
     <Link
       href="/offres"
       className="bg-secondary text-secondary-foreground inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-opacity hover:opacity-90"
-      title={`${formatCredits(credits)} crédits · offre ${planLabel(plan)}`}
+      title={hasQuota ? "Recherches utilisées ce mois" : "Passe en Starter pour lancer tes recherches"}
     >
-      <span>⚡ {formatCredits(credits)}</span>
-      {!compact && <span className="opacity-70">· {planLabel(plan)}</span>}
+      {hasQuota ? (
+        <>
+          <Icon name="search" size={12} />
+          <span className="tabular-nums">
+            {nf(searchesUsed)}/{nf(searchesLimit)}
+          </span>
+        </>
+      ) : (
+        <span>{planLabel(plan)}</span>
+      )}
     </Link>
   );
 }
@@ -53,7 +73,6 @@ function Sidebar({
   role?: string;
   isAdmin: boolean;
   pendingCount: number;
-  credits?: number;
   plan: string;
   onClose?: () => void;
 }) {
@@ -126,7 +145,8 @@ export function AppShell({
   initials,
   role,
   pendingCount = 0,
-  credits = 0,
+  searchesUsed = 0,
+  searchesLimit = 0,
   plan = "free",
 }: {
   children: React.ReactNode;
@@ -134,7 +154,8 @@ export function AppShell({
   initials: string;
   role: string;
   pendingCount?: number;
-  credits?: number;
+  searchesUsed?: number;
+  searchesLimit?: number;
   plan?: string;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -150,7 +171,6 @@ export function AppShell({
           role={role}
           isAdmin={isAdmin}
           pendingCount={pendingCount}
-          credits={credits}
           plan={plan}
         />
       </div>
@@ -170,7 +190,6 @@ export function AppShell({
               role={role}
               isAdmin={isAdmin}
               pendingCount={pendingCount}
-              credits={credits}
               plan={plan}
               onClose={() => setMobileOpen(false)}
             />
@@ -190,7 +209,7 @@ export function AppShell({
             <Icon name="menu" size={22} />
           </button>
           <Brand compact />
-          <CreditsBadge credits={credits} plan={plan} compact />
+          <UsageBadge searchesUsed={searchesUsed} searchesLimit={searchesLimit} plan={plan} />
         </header>
 
         <main className="app-canvas flex-1 overflow-y-auto p-4 pb-24 lg:p-6 lg:pb-6">

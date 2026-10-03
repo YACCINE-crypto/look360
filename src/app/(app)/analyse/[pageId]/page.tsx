@@ -11,7 +11,7 @@ import { ajouterAuxProduits } from "../../spy/actions";
 import { activityByMonth, countryLabel, formatReach, cleanField, type SpyAd } from "@/lib/spy";
 import { getSubscription } from "@/lib/credits";
 import { assertSearchAllowed, recordSearchUsage, QuotaError } from "@/lib/usage";
-import { ANALYZE_COST, formatCredits } from "@/lib/billing";
+import { planLimits } from "@/lib/billing";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -48,10 +48,11 @@ export default async function AnalysePage({
   const { data: claims } = await supabase.auth.getClaims();
   const userId = (claims?.claims?.sub as string | undefined) ?? null;
 
-  // Interstitiel de confirmation du coût (20 crédits) AVANT de payer/analyser.
-  // Débit réel uniquement sur cache-miss (rafraîchir une analyse récente = gratuit).
+  // Interstitiel de confirmation AVANT d'analyser (= 1 recherche du mois).
+  // Conso réelle seulement sur cache-miss (ré-analyse récente = gratuit).
   const sub = userId ? await getSubscription(userId) : null;
-  const balance = sub?.credits_balance ?? 0;
+  const plan = sub?.plan ?? "free";
+  const canAnalyse = planLimits(plan).monthlySearches > 0;
   if (sp.confirm !== "1") {
     return (
       <AnalyseGate
@@ -59,7 +60,7 @@ export default async function AnalysePage({
         country={country}
         name={sp.name ?? ""}
         confirmName={confirmName}
-        balance={balance}
+        canAnalyse={canAnalyse}
       />
     );
   }
@@ -69,7 +70,6 @@ export default async function AnalysePage({
   let insufficient = false;
   // Quota v2 : l'analyse = 1 recherche sur 1 marché (la source : pubs actives de
   // l'annonceur). Garde-fou avant Apify, puis conso réelle (cache = 0 unit).
-  const plan = sub?.plan ?? "free";
   try {
     if (userId) await assertSearchAllowed(userId, plan, 1);
     else insufficient = true;
@@ -97,7 +97,7 @@ export default async function AnalysePage({
         country={country}
         name={sp.name ?? ""}
         confirmName={confirmName}
-        balance={balance}
+        canAnalyse={canAnalyse}
         insufficient
       />
     );
@@ -344,24 +344,24 @@ function BreakRow({
   );
 }
 
-/** Interstitiel : confirme le coût (20 crédits) avant d'analyser un concurrent. */
+/** Interstitiel : confirme l'analyse d'un concurrent (= 1 recherche du mois). */
 function AnalyseGate({
   pageId,
   country,
   name,
   confirmName,
-  balance,
+  canAnalyse,
   insufficient = false,
 }: {
   pageId: string;
   country: string;
   name: string;
   confirmName: string;
-  balance: number;
+  canAnalyse: boolean;
   insufficient?: boolean;
 }) {
   const go = `/analyse/${encodeURIComponent(pageId)}?confirm=1&country=${encodeURIComponent(country)}&name=${encodeURIComponent(name)}`;
-  const enough = balance >= ANALYZE_COST && !insufficient;
+  const allowed = canAnalyse && !insufficient;
 
   return (
     <div className="mx-auto max-w-md space-y-4 py-8">
@@ -371,7 +371,7 @@ function AnalyseGate({
       </Link>
       <Card className="space-y-4 p-6">
         <div className="flex items-center gap-3">
-          <span className="bg-secondary text-secondary-foreground grid h-11 w-11 place-items-center rounded-full">
+          <span className="bg-secondary text-accent grid h-11 w-11 place-items-center rounded-full">
             <Icon name="search" size={20} />
           </span>
           <div>
@@ -381,30 +381,32 @@ function AnalyseGate({
         </div>
 
         <p className="text-sm">
-          Cette analyse coûtera <b>{formatCredits(ANALYZE_COST)} crédits</b> — toutes ses pubs actives,
+          Cette analyse utilise <b>1 de tes recherches du mois</b> — toutes ses pubs actives,
           son activité et son audience cumulée.
         </p>
         <p className="text-muted-foreground text-xs">
-          Solde actuel : {formatCredits(balance)} crédits. Gratuit si tu l&apos;as déjà analysé récemment.
+          Gratuit si tu l&apos;as déjà analysé récemment (cache).
         </p>
 
-        {enough ? (
+        {allowed ? (
           <Link
             href={go}
             className="bg-accent text-accent-on inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
           >
-            <Icon name="search" size={16} /> Analyser ({formatCredits(ANALYZE_COST)} crédits)
+            <Icon name="search" size={16} /> Analyser ce concurrent
           </Link>
         ) : (
           <div className="space-y-3">
             <div className="bg-danger-bg text-danger rounded-md p-3 text-sm">
-              Crédits insuffisants — recharge des crédits ou passe à une offre supérieure.
+              {!canAnalyse
+                ? "L'analyse de concurrent est réservée aux offres payantes. Passe en Starter pour l'utiliser."
+                : "Tu as atteint ta limite de recherches ce mois-ci. Passe à une offre supérieure pour continuer."}
             </div>
             <Link
               href="/offres"
               className="bg-accent text-accent-on inline-flex min-h-[44px] w-full items-center justify-center rounded-md px-4 text-sm font-semibold"
             >
-              Recharger
+              Voir les offres
             </Link>
           </div>
         )}

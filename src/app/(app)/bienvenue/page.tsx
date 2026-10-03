@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getSubscription } from "@/lib/credits";
-import { formatCredits } from "@/lib/billing";
 import { Icon } from "@/components/Icon";
 
 export const dynamic = "force-dynamic";
@@ -18,24 +16,24 @@ export default async function BienvenuePage() {
   const userId = claims?.claims?.sub as string | undefined;
   if (!userId) redirect("/login");
 
-  const [{ data: profile }, sub] = await Promise.all([
-    supabase.from("profiles").select("nom").eq("id", userId).maybeSingle(),
-    getSubscription(userId),
-  ]);
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("nom")
+    .eq("id", userId)
+    .maybeSingle();
 
   const prenom =
     (profile?.nom as string | undefined)?.split(" ")[0] ??
     (claims?.claims?.email as string | undefined)?.split("@")[0] ??
     "";
-  const credits = sub?.credits_balance ?? 0;
 
   const steps = [
     {
       icon: "search" as const,
-      title: "Lance ta première recherche",
-      body: "Trouve des produits qui cartonnent déjà (Spy Facebook, Afrique + Europe). Filtre par pays et repère les vrais winners.",
-      cta: "Ouvrir la recherche",
-      href: "/spy",
+      title: "Explore le feed des winners",
+      body: "Vois ce qui cartonne aujourd'hui (feed commun, gratuit). Pour lancer tes propres recherches Spy, passe en Starter.",
+      cta: "Ouvrir le feed",
+      href: "/recherche",
     },
     {
       icon: "flask" as const,
@@ -68,7 +66,7 @@ export default async function BienvenuePage() {
           est activé — sans carte bancaire.
         </p>
         <span className="text-accent bg-secondary mt-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold">
-          <Icon name="trending" size={14} /> {formatCredits(credits)} crédits offerts
+          <Icon name="trending" size={14} /> Feed des winners du jour offert
         </span>
       </div>
 

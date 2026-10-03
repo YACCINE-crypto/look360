@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { PLANS, formatCredits, type Plan } from "@/lib/billing";
+import { PLANS, PLAN_LIMITS, type Plan } from "@/lib/billing";
 import { Icon } from "@/components/Icon";
 import { RevealOnScroll } from "./RevealOnScroll";
 
@@ -34,18 +34,19 @@ type Feat = { label: ReactNode; on: boolean };
 /** Liste complète des fonctionnalités, avec ✅ inclus / ❌ non inclus. */
 function features(p: Plan): Feat[] {
   const c = PLANS[p];
+  const l = PLAN_LIMITS[p];
   const s = c.competitorSlots > 1 ? "s" : "";
   return [
     {
       label: (
         <>
           <b className="text-foreground font-semibold">
-            {formatCredits(c.monthlyCredits)}
+            {new Intl.NumberFormat("fr-FR").format(l.monthlySearches)}
           </b>{" "}
-          crédits / mois
+          recherches / mois · jusqu&apos;à {l.maxMarkets} marché{l.maxMarkets > 1 ? "s" : ""}
         </>
       ),
-      on: true,
+      on: l.monthlySearches > 0,
     },
     { label: "Spy Facebook — recherche de pubs", on: true },
     { label: "Top Trend — classement produits", on: true },
@@ -231,8 +232,7 @@ export function OffresSection() {
             <div className="text-center sm:text-left">
               <p className="text-foreground font-bold">Offre Gratuite</p>
               <p className="text-muted-foreground text-sm">
-                {formatCredits(PLANS.free.monthlyCredits)} crédits / mois · testing
-                inclus · sans carte bancaire
+                Feed des winners du jour + Top Trend, en lecture · sans carte bancaire
               </p>
             </div>
             <Link

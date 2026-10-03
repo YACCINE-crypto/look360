@@ -96,7 +96,7 @@ export function RechercheClient({
               </p>
             </div>
             <span className="bg-success-bg text-success inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-semibold">
-              Gratuit · 0 crédit
+              Gratuit · 0 recherche
             </span>
           </div>
           <AdGrid ads={feed} />

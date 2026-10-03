@@ -15,18 +15,12 @@ export default async function OffresPage({
   const userId = claims?.claims?.sub as string | undefined;
   const sub = userId ? await getSubscription(userId) : null;
   const current = (sub?.plan ?? "free") as Plan;
-  const balance = sub?.credits_balance ?? 0;
 
   const sp = await searchParams;
   const payReturn = sp.pay === "return";
   const payReturnRef = typeof sp.ref === "string" ? sp.ref : null;
 
   return (
-    <OffresClient
-      current={current}
-      balance={balance}
-      payReturn={payReturn}
-      payReturnRef={payReturnRef}
-    />
+    <OffresClient current={current} payReturn={payReturn} payReturnRef={payReturnRef} />
   );
 }

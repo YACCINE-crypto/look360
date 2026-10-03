@@ -13,7 +13,8 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getSubscription } from "@/lib/credits";
-import { formatCredits, planLabel } from "@/lib/billing";
+import { getUsage } from "@/lib/usage";
+import { planLabel, planLimits } from "@/lib/billing";
 import { PageHeader } from "@/components/ui";
 import { NotifBell } from "@/components/NotifBell";
 import { ShareToggle } from "./ShareToggle";
@@ -124,15 +125,17 @@ export default async function ParametresPage() {
   if (!uid) redirect("/login");
   const email = (claims?.claims?.email as string | undefined) ?? undefined;
 
-  const [{ data: profile }, sub] = await Promise.all([
+  const [{ data: profile }, sub, usage] = await Promise.all([
     supabase.from("profiles").select("nom, role, vitrine_share").eq("id", uid).maybeSingle(),
     getSubscription(uid),
+    getUsage(uid),
   ]);
   const share = profile?.vitrine_share ?? true;
   const isAdmin = (profile?.role ?? "membre") === "superadmin";
   const displayName = profile?.nom ?? email ?? "Mon compte";
   const plan = sub?.plan ?? "free";
-  const credits = sub?.credits_balance ?? 0;
+  const lim = planLimits(plan);
+  const nf = (n: number) => new Intl.NumberFormat("fr-FR").format(n);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -149,15 +152,25 @@ export default async function ParametresPage() {
         )}
       </Group>
 
-      <Group title="Offre & crédits">
+      <Group title="Offre & usage">
         <LinkRow icon={BadgeCheck} label="Offre actuelle" href="/offres" value={planLabel(plan)} badge />
-        <LinkRow
-          icon={Gauge}
-          label="Crédits disponibles"
-          sub="Recherches & analyses Spy"
-          href="/offres"
-          value={formatCredits(credits)}
-        />
+        {lim.monthlySearches > 0 ? (
+          <LinkRow
+            icon={Gauge}
+            label="Recherches ce mois"
+            sub={`Jusqu'à ${lim.maxMarkets} marché${lim.maxMarkets > 1 ? "s" : ""} par recherche`}
+            href="/offres"
+            value={`${nf(usage?.searches_used ?? 0)} / ${nf(lim.monthlySearches)}`}
+          />
+        ) : (
+          <LinkRow
+            icon={Gauge}
+            label="Lancer mes recherches"
+            sub="Les recherches perso sont réservées aux offres payantes"
+            href="/offres"
+            value="Passer en Starter"
+          />
+        )}
       </Group>
 
       <Group title="Notifications">

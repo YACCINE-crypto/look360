@@ -20,11 +20,11 @@ import {
   LANDING_LABEL,
   cleanField,
   countryLabel,
-  SPY_COUNTRIES_SOFT,
   type SpyAd,
 } from "@/lib/spy";
-import { searchCost, formatCredits, SEARCH_COST_PER_COUNTRY } from "@/lib/billing";
 import { useCanDownload } from "@/components/PlanProvider";
+
+const nf = (n: number) => new Intl.NumberFormat("fr-FR").format(n);
 
 const labelCls = "text-xs font-medium text-muted-foreground";
 
@@ -80,15 +80,19 @@ function sortAds(list: SpyAd[], t: string): SpyAd[] {
 type Status = "idle" | "loading" | "done" | "error";
 
 export function SpyClient({
-  balance,
+  searchesUsed = 0,
+  searchesLimit = 0,
+  maxMarkets = 0,
   initialFeed = [],
 }: {
-  balance: number;
+  searchesUsed?: number;
+  searchesLimit?: number;
+  maxMarkets?: number;
   plan?: string;
   initialFeed?: SpyAd[];
 }) {
   const params = useSearchParams();
-  const [bal, setBal] = useState(balance);
+  const [used, setUsed] = useState(searchesUsed);
   const [q, setQ] = useState("");
   const [countries, setCountries] = useState<string[]>(() => {
     const c = (params.get("country") || "FR").toUpperCase();
@@ -115,8 +119,8 @@ export function SpyClient({
   const jsonHeaders = { "Content-Type": "application/json" };
 
   const euDispo = countries.some(isEUCountry);
-  const nbSearches = countries.length;
-  const cost = searchCost(countries.length);
+  const markets = Math.max(1, countries.length);
+  const remaining = Math.max(0, searchesLimit - used);
 
   const triOpts: SelectOption[] = useMemo(
     () => [
@@ -152,14 +156,14 @@ export function SpyClient({
       });
       const data = await res.json();
       if (res.status === 402) {
-        setError(data?.error || "Crédits insuffisants.");
+        setError(data?.error || "Limite atteinte pour ton offre.");
         setStatus("error");
         return;
       }
       if (!res.ok) throw new Error(data?.error || "Recherche impossible.");
       setAds(sortAds(data.ads ?? [], tri));
       setCached(Boolean(data.cached));
-      if (!data.cached) setBal((b) => Math.max(0, b - searchCost(countries.length)));
+      if (data.usage?.searches_used != null) setUsed(data.usage.searches_used);
       setStatus("done");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue.");
@@ -220,7 +224,7 @@ export function SpyClient({
             setProgress(msg.found ?? map.size);
           } else if (msg.type === "done") {
             setCached(Boolean(msg.cached));
-            if (!msg.cached) setBal((b) => Math.max(0, b - SEARCH_COST_PER_COUNTRY));
+            if (!msg.cached) setUsed((u) => u + 1);
           } else if (msg.type === "error") {
             errored = true;
             // Plafond (429) ou crédits insuffisants (402) → on s'arrête, pas de repli.
@@ -345,17 +349,19 @@ export function SpyClient({
           </label>
           <span
             className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-              nbSearches > SPY_COUNTRIES_SOFT
+              maxMarkets > 0 && markets > maxMarkets
                 ? "bg-warn-bg text-warn"
                 : "bg-input text-muted-foreground"
             }`}
-            title="Coût débité uniquement si la recherche n'est pas déjà en cache"
+            title={`Ton offre permet jusqu'à ${maxMarkets} marché${maxMarkets > 1 ? "s" : ""} par recherche`}
           >
-            ≈ {formatCredits(cost)} crédits
+            {markets} marché{markets > 1 ? "s" : ""} / {maxMarkets} max
           </span>
-          <span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 text-xs font-semibold">
-            Solde : {formatCredits(bal)}
-          </span>
+          {searchesLimit > 0 && (
+            <span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums">
+              {nf(used)}/{nf(searchesLimit)} ce mois
+            </span>
+          )}
           <button
             type="submit"
             disabled={status === "loading"}
@@ -413,7 +419,7 @@ export function SpyClient({
                 </div>
               </div>
               <span className="bg-success-bg text-success inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold">
-                <Icon name="check" size={13} /> Gratuit · 0 crédit
+                <Icon name="check" size={13} /> Gratuit
               </span>
             </div>
             <div className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -486,8 +492,10 @@ export function SpyClient({
       {confirmOpen && (
         <ConfirmSearch
           countries={countries}
-          cost={cost}
-          balance={bal}
+          markets={markets}
+          maxMarkets={maxMarkets}
+          remaining={remaining}
+          searchesLimit={searchesLimit}
           onConfirm={() => runSearch()}
           onCancel={() => setConfirmOpen(false)}
         />
@@ -505,38 +513,48 @@ export function SpyClient({
 
 function ConfirmSearch({
   countries,
-  cost,
-  balance,
+  markets,
+  maxMarkets,
+  remaining,
+  searchesLimit,
   onConfirm,
   onCancel,
 }: {
   countries: string[];
-  cost: number;
-  balance: number;
+  markets: number;
+  maxMarkets: number;
+  remaining: number;
+  searchesLimit: number;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
-  const enough = balance >= cost;
+  const tooManyMarkets = maxMarkets > 0 && markets > maxMarkets;
+  const noQuota = searchesLimit === 0 || remaining < 1;
+  const blocked = tooManyMarkets || noQuota;
+  const blockMsg = tooManyMarkets
+    ? `Ton offre permet jusqu'à ${maxMarkets} marché${maxMarkets > 1 ? "s" : ""} par recherche. Retire des marchés ou passe à une offre supérieure.`
+    : searchesLimit === 0
+      ? "Les recherches personnelles sont réservées aux offres payantes. Passe en Starter pour lancer tes propres recherches."
+      : "Tu as atteint ta limite de recherches ce mois-ci. Passe à une offre supérieure pour continuer.";
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onCancel} aria-hidden="true" />
       <div className="bg-surface border-border relative z-10 w-full max-w-sm rounded-xl border p-5 shadow-xl">
         <div className="mb-3 flex items-center gap-2">
-          <span className="bg-secondary text-secondary-foreground grid h-9 w-9 place-items-center rounded-full text-sm font-bold">
-            ⚡
+          <span className="bg-secondary text-accent grid h-9 w-9 place-items-center rounded-full">
+            <Icon name="search" size={16} />
           </span>
           <h3 className="font-bold">Confirmer la recherche</h3>
         </div>
         <p className="text-muted-foreground text-sm">
-          Cette recherche coûtera <b className="text-fg">{formatCredits(cost)} crédits</b>
-          {countries.length > 1
-            ? ` (${countries.length} pays × ${formatCredits(SEARCH_COST_PER_COUNTRY)})`
-            : ""}{" "}
-          — continuer ?
+          Recherche sur <b className="text-fg">{markets} marché{markets > 1 ? "s" : ""}</b> — continuer ?
         </p>
-        <p className="text-muted-foreground mt-1 text-xs">
-          Solde actuel : {formatCredits(balance)} crédits. Gratuit si la recherche est déjà en cache.
-        </p>
+        {searchesLimit > 0 && (
+          <p className="text-muted-foreground mt-1 text-xs">
+            Il te reste <b className="text-fg">{nf(remaining)}</b> recherche{remaining > 1 ? "s" : ""} ce mois.
+            Gratuit si la recherche est déjà en cache.
+          </p>
+        )}
         <div className="mt-3 flex flex-wrap gap-1.5">
           {countries.map((c) => (
             <span key={c} className="bg-input text-muted-foreground rounded-full px-2 py-0.5 text-[11px] font-medium">
@@ -545,17 +563,15 @@ function ConfirmSearch({
           ))}
         </div>
 
-        {!enough ? (
+        {blocked ? (
           <div className="mt-4 space-y-3">
-            <div className="bg-danger-bg text-danger rounded-md p-3 text-sm">
-              Crédits insuffisants — recharge des crédits ou passe à une offre supérieure.
-            </div>
+            <div className="bg-danger-bg text-danger rounded-md p-3 text-sm">{blockMsg}</div>
             <div className="flex gap-2">
               <Link
                 href="/offres"
                 className="bg-accent text-accent-on inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-md px-4 text-sm font-semibold"
               >
-                Recharger
+                Voir les offres
               </Link>
               <button
                 onClick={onCancel}

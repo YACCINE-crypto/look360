@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSubscription } from "@/lib/credits";
+import { getUsage } from "@/lib/usage";
+import { planLimits } from "@/lib/billing";
 import { AppShell } from "@/components/AppShell";
 import { PlanProvider } from "@/components/PlanProvider";
 
@@ -36,6 +38,8 @@ export default async function AppLayout({
   const pendingCount = role === "superadmin" ? (count ?? 0) : 0;
 
   const sub = await getSubscription(userId);
+  const plan = sub?.plan ?? "free";
+  const usage = await getUsage(userId);
 
   return (
     <AppShell
@@ -43,8 +47,9 @@ export default async function AppLayout({
       initials={initials}
       role={role}
       pendingCount={pendingCount}
-      credits={sub?.credits_balance ?? 0}
-      plan={sub?.plan ?? "free"}
+      searchesUsed={usage?.searches_used ?? 0}
+      searchesLimit={planLimits(plan).monthlySearches}
+      plan={plan}
     >
       <PlanProvider plan={sub?.plan ?? "free"}>{children}</PlanProvider>
     </AppShell>
