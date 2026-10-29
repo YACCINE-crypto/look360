@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SpyCard } from "@/app/(app)/spy/SpyClient";
-import { VideoLightbox } from "@/components/VideoLightbox";
+import { VideoLightbox, type PlayRequest } from "@/components/VideoLightbox";
 import type { SpyAd } from "@/lib/spy";
 
 const MEDAL = ["🥇", "🥈", "🥉"];
@@ -20,7 +20,7 @@ function rankClass(i: number): string {
  */
 export function AdGrid({ ads, ranked = false }: { ads: SpyAd[]; ranked?: boolean }) {
   const router = useRouter();
-  const [playing, setPlaying] = useState<{ url: string; adLibraryUrl?: string } | null>(null);
+  const [playing, setPlaying] = useState<PlayRequest | null>(null);
 
   return (
     <>
@@ -51,6 +51,9 @@ export function AdGrid({ ads, ranked = false }: { ads: SpyAd[]; ranked?: boolean
         <VideoLightbox
           url={playing.url}
           adLibraryUrl={playing.adLibraryUrl}
+          adId={playing.adId}
+          hlsUrl={playing.hlsUrl}
+          sourceUrl={playing.sourceUrl}
           onClose={() => setPlaying(null)}
         />
       )}

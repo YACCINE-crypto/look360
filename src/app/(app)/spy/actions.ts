@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { MARCHES, type ProduitInsert } from "@/lib/produits";
 import { deleteKey, keyFromCdnUrl, mediaStorageConfigured, storeFromUrl } from "@/lib/mediaStorage";
 import { reserveMedia, releaseMedia } from "@/lib/usage";
+import { isStreamUrl } from "@/lib/bunnyStream";
 import { accountSuspended } from "@/lib/accountGuard";
 
 function str(formData: FormData, key: string): string | null {
@@ -89,6 +90,9 @@ export async function retirerPub(formData: FormData): Promise<void> {
     .flatMap((r) => [keyFromCdnUrl(r.media_cdn_url), keyFromCdnUrl(r.thumbnail_cdn_url)])
     .filter((k): k is string => Boolean(k));
   await Promise.all(keys.map((k) => deleteKey(k)));
-  await releaseMedia(userId, keys.length);
+  // Vidéo transcodée : partagée entre comptes (même créative) → on ne la
+  // supprime pas du service, on rend seulement le quota.
+  const streams = (removed ?? []).filter((r) => isStreamUrl(r.media_cdn_url)).length;
+  await releaseMedia(userId, keys.length + streams);
   revalidatePath("/sauvegardes");
 }

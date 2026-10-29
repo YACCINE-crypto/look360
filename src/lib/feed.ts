@@ -2,6 +2,13 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { searchSpyWithCache } from "@/lib/spyCache";
 import { storeFromUrl, mediaStorageConfigured } from "@/lib/mediaStorage";
+import {
+  ensureStream,
+  isStreamUrl,
+  streamConfigured,
+  streamStatus,
+  type StreamInfo,
+} from "@/lib/bunnyStream";
 import type { SpyAd } from "@/lib/spy";
 import type { Database, Json } from "@/lib/database.types";
 
@@ -10,8 +17,8 @@ type Admin = SupabaseClient<Database>;
 /**
  * Feed commun pré-rempli (pubs gagnantes du jour), partagé par tous et GRATUIT.
  * Le cron (service_role) le rafraîchit : scraping des niches par défaut × marchés
- * principaux, score, anti-doublon, archivage des créatives sur Bunny, puis
- * upsert dans `feed_ads`. Les utilisateurs le parcourent sans consommer de quota.
+ * principaux, score, anti-doublon, upsert dans `feed_ads`, puis transcodage des
+ * vidéos (H.264/HLS) et archivage des miniatures. Les utilisateurs le parcourent sans consommer de quota.
  */
 
 // Niches par défaut (mot-clé FR → libellé niche).
@@ -32,117 +39,224 @@ const FEED_SEARCH_CAP = 24; // nb max de scrapes Apify par run (coût maîtrisé
 const FEED_SCORE_MIN = 55; // ne garde que les signaux solides
 const FEED_KEEP = 60; // top N conservés dans le feed
 const FEED_TTL_DAYS = 4; // purge au-delà
-const RUN_BUDGET_MS = 50_000; // garde-fou temps total
-const ARCHIVE_VIDEO_TOP = 12; // nb de vidéos archivées en entier (le reste : source)
+const SEARCH_CONCURRENCY = 3; // scrapes Apify en parallèle (~40-55 s chacun)
+const COLLECT_BUDGET_MS = 150_000; // collecte : on ne lance plus de lot au-delà
+const MEDIA_BUDGET_MS = 110_000; // transcodage : budget par passage
 
-/** Rafraîchit le feed commun. À appeler via le cron (service_role). */
+type FeedRow = Database["public"]["Tables"]["feed_ads"]["Insert"];
+type Payload = SpyAd & {
+  media_stream_guid?: string | null;
+  media_stream_failed?: boolean;
+};
+
+function rowFor(ad: SpyAd, niche: string, now: string): FeedRow {
+  return {
+    ad_archive_id: ad.ad_archive_id,
+    page_name: ad.page_name,
+    page_id: ad.page_id,
+    score: ad.score,
+    score_label: ad.score_label,
+    jours_actifs: ad.jours_actifs,
+    reach: ad.reach,
+    platforms: ad.platforms,
+    country: ad.country ?? null,
+    variants_count: ad.variants_count,
+    niche,
+    media_type: ad.media_type,
+    media_cdn_url: null,
+    thumbnail_cdn_url: null,
+    ad_library_url: ad.ad_library_url,
+    landing_domain: ad.landing_domain,
+    payload: ad as unknown as Json,
+    refreshed_at: now,
+  };
+}
+
+/**
+ * Upsert en GARDANT le travail média déjà fait (flux HLS, miniature archivée) :
+ * une pub re-scrapée ne repart pas de zéro.
+ */
+async function upsertKeepingMedia(admin: Admin, rows: FeedRow[]): Promise<void> {
+  if (rows.length === 0) return;
+  const ids = rows.map((r) => r.ad_archive_id);
+  const { data: prev } = await admin
+    .from("feed_ads")
+    .select("ad_archive_id, media_cdn_url, thumbnail_cdn_url, payload")
+    .in("ad_archive_id", ids);
+  const byId = new Map((prev ?? []).map((p) => [p.ad_archive_id, p]));
+  const merged = rows.map((r) => {
+    const old = byId.get(r.ad_archive_id);
+    if (!old) return r;
+    const op = (old.payload ?? {}) as unknown as Payload;
+    const np = { ...(r.payload as unknown as Payload) };
+    // Source d'origine : la plus récente (liens signés frais), le reste conservé.
+    np.media_source_url = np.media_url && !isStreamUrl(np.media_url) ? np.media_url : op.media_source_url;
+    np.media_hls_url = op.media_hls_url ?? null;
+    np.media_stream_guid = op.media_stream_guid ?? null;
+    np.media_stream_failed = op.media_stream_failed;
+    if (old.thumbnail_cdn_url) np.thumbnail_url = old.thumbnail_cdn_url;
+    return {
+      ...r,
+      media_cdn_url: old.media_cdn_url,
+      thumbnail_cdn_url: old.thumbnail_cdn_url,
+      payload: np as unknown as Json,
+    };
+  });
+  const { error } = await admin.from("feed_ads").upsert(merged, { onConflict: "ad_archive_id" });
+  if (error) console.error("[feed] upsert KO", error.message);
+}
+
+/**
+ * Rafraîchit le feed commun (cron, service_role). Tient dans la durée max d'une
+ * fonction : scrapes en parallèle par lots, ENREGISTREMENT APRÈS CHAQUE LOT
+ * (un run coupé garde ce qu'il a trouvé), purge des pubs périmées seulement si
+ * le run a ramené du neuf, puis un passage de transcodage vidéo.
+ */
 export async function refreshFeed(
   admin: Admin,
   opts: { cap?: number } = {},
-): Promise<{ found: number; searches: number; stored: number }> {
+): Promise<{ found: number; searches: number; stored: number; purged: number; media: MediaPass }> {
   const cap = opts.cap ?? FEED_SEARCH_CAP;
   const start = Date.now();
-  let searches = 0;
+  const pairs = FEED_MARKETS.flatMap((market) => FEED_NICHES.map((n) => ({ market, n }))).slice(0, cap);
   const found = new Map<string, { ad: SpyAd; niche: string }>();
+  let searches = 0;
+  let stored = 0;
 
-  outer: for (const market of FEED_MARKETS) {
-    for (const n of FEED_NICHES) {
-      if (searches >= cap || Date.now() - start > RUN_BUDGET_MS) break outer;
-      searches++;
-      try {
-        const { ads } = await searchSpyWithCache(
+  for (let i = 0; i < pairs.length; i += SEARCH_CONCURRENCY) {
+    if (Date.now() - start > COLLECT_BUDGET_MS) break;
+    const batch = pairs.slice(i, i + SEARCH_CONCURRENCY);
+    searches += batch.length;
+    const results = await Promise.allSettled(
+      batch.map(({ market, n }) =>
+        searchSpyWithCache(
           { q: n.kw, country: market, statut: "active", ancienneteMin: 20, tri: "score", limit: 40 },
           null, // userId null → aucune facturation, aucun plafond perso
-        );
-        for (const ad of ads) {
-          if (!ad.ad_archive_id || ad.score < FEED_SCORE_MIN) continue;
-          const prev = found.get(ad.ad_archive_id);
-          if (!prev || ad.score > prev.ad.score) {
-            found.set(ad.ad_archive_id, {
-              ad: { ...ad, country: ad.country ?? market },
-              niche: n.niche,
-            });
+        ).then((r) => ({ market, niche: n.niche, ads: r.ads })),
+      ),
+    );
+    const fresh: FeedRow[] = [];
+    const now = new Date().toISOString();
+    for (const res of results) {
+      if (res.status !== "fulfilled") continue;
+      for (const ad of res.value.ads) {
+        if (!ad.ad_archive_id || ad.score < FEED_SCORE_MIN) continue;
+        const prev = found.get(ad.ad_archive_id);
+        if (!prev || ad.score > prev.ad.score) {
+          const entry = { ad: { ...ad, country: ad.country ?? res.value.market }, niche: res.value.niche };
+          found.set(ad.ad_archive_id, entry);
+          fresh.push(rowFor(entry.ad, entry.niche, now));
+        }
+      }
+    }
+    // Dédoublonne le lot (même pub trouvée sur 2 marchés) puis enregistre.
+    const uniq = [...new Map(fresh.map((r) => [r.ad_archive_id, r])).values()];
+    await upsertKeepingMedia(admin, uniq);
+    stored += uniq.length;
+  }
+
+  // Purge : pubs non revues depuis FEED_TTL_DAYS, puis on garde le top FEED_KEEP.
+  // Seulement si ce run a ramené du neuf (jamais de feed vidé par un run raté).
+  let purged = 0;
+  if (stored >= 10) {
+    const cutoff = new Date(Date.now() - FEED_TTL_DAYS * 86_400_000).toISOString();
+    const { count } = await admin.from("feed_ads").delete({ count: "exact" }).lt("refreshed_at", cutoff);
+    purged += count ?? 0;
+    const { data: keep } = await admin
+      .from("feed_ads")
+      .select("id")
+      .order("score", { ascending: false })
+      .order("refreshed_at", { ascending: false })
+      .range(FEED_KEEP, FEED_KEEP + 500);
+    if (keep && keep.length > 0) {
+      const { count: c2 } = await admin
+        .from("feed_ads")
+        .delete({ count: "exact" })
+        .in("id", keep.map((k) => k.id));
+      purged += c2 ?? 0;
+    }
+  }
+
+  const media = await processFeedMedia(admin, { budgetMs: Math.max(20_000, 270_000 - (Date.now() - start)) });
+  return { found: found.size, searches, stored, purged, media };
+}
+
+export type MediaPass = { uploaded: number; ready: number; thumbs: number; failed: number; pending: number };
+
+/**
+ * Passage média du feed (cron) :
+ *  1. vidéos déjà envoyées au transcodage → statut ; prêtes → media_cdn_url = HLS ;
+ *  2. vidéos pas encore envoyées → upload vers le service de streaming
+ *     (idempotent : une créative déjà transcodée n'est jamais renvoyée) ;
+ *  3. miniatures → archivées sur le CDN (affichage persistant).
+ * Les meilleurs scores d'abord ; s'arrête au budget, reprend au passage suivant.
+ */
+export async function processFeedMedia(
+  admin: Admin,
+  opts: { budgetMs?: number } = {},
+): Promise<MediaPass> {
+  const start = Date.now();
+  const budget = opts.budgetMs ?? MEDIA_BUDGET_MS;
+  const out: MediaPass = { uploaded: 0, ready: 0, thumbs: 0, failed: 0, pending: 0 };
+
+  const { data: rows } = await admin
+    .from("feed_ads")
+    .select("id, media_type, media_cdn_url, thumbnail_cdn_url, payload")
+    .order("score", { ascending: false })
+    .limit(FEED_KEEP + 20);
+
+  for (const row of rows ?? []) {
+    if (Date.now() - start > budget) break;
+    const p = { ...((row.payload ?? {}) as unknown as Payload) };
+    const patch: Partial<FeedRow> = {};
+
+    // Miniature persistante (image légère, sur le CDN d'archive).
+    if (!row.thumbnail_cdn_url && p.thumbnail_url && mediaStorageConfigured() && !p.thumbnail_url.includes("/feed/thumb/")) {
+      try {
+        const t = await storeFromUrl(p.thumbnail_url, "feed/thumb");
+        patch.thumbnail_cdn_url = t.cdnUrl;
+        p.thumbnail_url = t.cdnUrl;
+        out.thumbs++;
+      } catch {
+        /* lien source conservé */
+      }
+    }
+
+    if (row.media_type === "video" && !row.media_cdn_url && !p.media_stream_failed && streamConfigured()) {
+      const source = p.media_source_url ?? (p.media_url && !isStreamUrl(p.media_url) ? p.media_url : null);
+      if (source) {
+        p.media_source_url = source;
+        let info: StreamInfo | null = null;
+        if (p.media_stream_guid) {
+          info = await streamStatus(p.media_stream_guid);
+        } else {
+          info = await ensureStream(source); // retrouve ou crée + upload
+          if (info) out.uploaded++;
+        }
+        if (info) {
+          p.media_stream_guid = info.guid;
+          if (info.ready && info.hls) {
+            patch.media_cdn_url = info.hls;
+            p.media_hls_url = info.hls;
+            out.ready++;
+          } else if (info.failed) {
+            p.media_stream_failed = true;
+            out.failed++;
+          } else {
+            out.pending++;
           }
         }
-      } catch {
-        /* skip ce couple niche×marché */
-      }
-    }
-  }
-
-  const ranked = [...found.values()]
-    .sort((a, b) => b.ad.score - a.ad.score)
-    .slice(0, FEED_KEEP);
-  if (ranked.length === 0) return { found: 0, searches, stored: 0 };
-
-  const now = new Date().toISOString();
-  const canArchive = mediaStorageConfigured();
-  let videosArchived = 0;
-
-  const rows = [];
-  for (const { ad, niche } of ranked) {
-    const payload = { ...ad } as SpyAd;
-    let thumbnailCdn: string | null = null;
-    let mediaCdn: string | null = null;
-
-    if (canArchive) {
-      // Miniature (image) → archivage systématique (léger, affichage persistant).
-      if (ad.thumbnail_url) {
-        try {
-          const s = await storeFromUrl(ad.thumbnail_url, "feed/thumb");
-          thumbnailCdn = s.cdnUrl;
-          payload.thumbnail_url = s.cdnUrl;
-        } catch {
-          /* garde la source */
-        }
-      }
-      // Vidéo → archivage complet pour le top (budget temps), source sinon.
-      if (
-        ad.media_type === "video" &&
-        ad.media_url &&
-        videosArchived < ARCHIVE_VIDEO_TOP &&
-        Date.now() - start < RUN_BUDGET_MS
-      ) {
-        try {
-          const s = await storeFromUrl(ad.media_url, "feed/media");
-          mediaCdn = s.cdnUrl;
-          payload.media_url = s.cdnUrl;
-          videosArchived++;
-        } catch {
-          /* garde la source (le lecteur transcode à la volée) */
-        }
       }
     }
 
-    rows.push({
-      ad_archive_id: ad.ad_archive_id,
-      page_name: ad.page_name,
-      page_id: ad.page_id,
-      score: ad.score,
-      score_label: ad.score_label,
-      jours_actifs: ad.jours_actifs,
-      reach: ad.reach,
-      platforms: ad.platforms,
-      country: ad.country ?? null,
-      variants_count: ad.variants_count,
-      niche,
-      media_type: ad.media_type,
-      media_cdn_url: mediaCdn,
-      thumbnail_cdn_url: thumbnailCdn,
-      ad_library_url: ad.ad_library_url,
-      landing_domain: ad.landing_domain,
-      payload: payload as unknown as Json,
-      refreshed_at: now,
-    });
+    if (Object.keys(patch).length > 0 || JSON.stringify(p) !== JSON.stringify(row.payload)) {
+      await admin
+        .from("feed_ads")
+        .update({ ...patch, payload: p as unknown as Json })
+        .eq("id", row.id);
+    }
   }
-
-  await admin.from("feed_ads").upsert(rows, { onConflict: "ad_archive_id" });
-
-  // Purge des entrées trop anciennes (feed = le plus frais).
-  const cutoff = new Date(Date.now() - FEED_TTL_DAYS * 86_400_000).toISOString();
-  await admin.from("feed_ads").delete().lt("refreshed_at", cutoff);
-
-  return { found: ranked.length, searches, stored: rows.length };
+  return out;
 }
 
 // Associe un mot-clé de recherche à un libellé de niche (best-effort, pour le

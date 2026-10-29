@@ -6,6 +6,7 @@ import { Icon } from "@/components/Icon";
 import { CreativeMedia } from "@/components/CreativeMedia";
 import { ajouterAuxProduits, retirerPub } from "../spy/actions";
 import { landingKind, LANDING_LABEL, formatReach, countryLabel, cleanField } from "@/lib/spy";
+import { WatchVideoButton } from "@/components/WatchVideoButton";
 
 export const dynamic = "force-dynamic";
 
@@ -108,14 +109,13 @@ export default async function SauvegardesPage() {
                         </a>
                       )}
                       {ad.media_type === "video" && watchUrl && (
-                        <a
-                          href={watchUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <WatchVideoButton
+                          url={watchUrl}
+                          sourceUrl={ad.media_source_url}
+                          adId={ad.ad_archive_id}
+                          adLibraryUrl={ad.ad_library_url}
                           className="border-border hover:bg-input flex flex-1 items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors"
-                        >
-                          <Icon name="play" size={12} /> Regarder
-                        </a>
+                        />
                       )}
                       {ad.media_type !== "video" && ad.landing_url && kind === "shop" && (
                         <a

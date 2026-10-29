@@ -1,13 +1,15 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mediaStorageConfigured, storeFromUrl } from "@/lib/mediaStorage";
+import { getOrCreateStream, hlsUrlFor, uploadStream } from "@/lib/bunnyStream";
 import { reserveMedia, releaseMedia, QuotaError } from "@/lib/usage";
 import { accountSuspended } from "@/lib/accountGuard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+// Inclut l'envoi de la vidéo au transcodage, après la réponse (after()).
+export const maxDuration = 120;
 
 /**
  * Sauvegarde une pub espionnée (Spy v2 §5). Insère la ligne, puis archive
@@ -104,10 +106,30 @@ export async function POST(request: Request) {
   }
   if (reserved > 0) {
     if (mediaSource) {
-      try {
-        mediaCdn = (await storeFromUrl(mediaSource, `spy/${userId}/media`)).cdnUrl;
-      } catch {
-        /* fallback: lien source */
+      if (str("media_type") === "video") {
+        // Vidéo : transcodage H.264/HLS (les pistes Meta DASH restent noires en
+        // lecture directe). L'URL HLS est stable ; le fichier part après la
+        // réponse (after) et le lecteur attend la fin de l'encodage si besoin.
+        try {
+          const s = await getOrCreateStream(mediaSource);
+          if (s) {
+            mediaCdn = hlsUrlFor(s.info.guid);
+            if (s.needsUpload) {
+              const { guid } = s.info;
+              after(async () => {
+                await uploadStream(guid, mediaSource);
+              });
+            }
+          }
+        } catch {
+          /* fallback: lien source */
+        }
+      } else {
+        try {
+          mediaCdn = (await storeFromUrl(mediaSource, `spy/${userId}/media`)).cdnUrl;
+        } catch {
+          /* fallback: lien source */
+        }
       }
     }
     if (thumbSource) {

@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { refreshFeed, seedFeedFromCache } from "@/lib/feed";
+import { processFeedMedia, refreshFeed, seedFeedFromCache } from "@/lib/feed";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+// Collecte (scrapes Apify en parallèle) + transcodage : jusqu'à 5 min (Fluid compute).
+export const maxDuration = 300;
 
 /**
  * Rafraîchit le FEED COMMUN (pubs gagnantes du jour), partagé par tous.
@@ -12,7 +13,11 @@ export const maxDuration = 60;
  * `Authorization: Bearer $CRON_SECRET`. On accepte aussi `x-cron-secret` pour un
  * déclenchement manuel. Tourne en service_role (admin).
  *
- * - par défaut            → refresh complet (scrape niches × marchés + archivage)
+ * - par défaut            → refresh complet (scrape niches × marchés, puis un
+ *                            passage de transcodage vidéo + miniatures)
+ * - `?mode=media`         → passage média seul : termine les transcodages en
+ *                            cours et envoie les vidéos restantes (relancé par
+ *                            un 2e cron, l'encodage prenant quelques minutes)
  * - `?mode=seed`          → remplissage IMMÉDIAT depuis le cache de recherches
  *   existant (aucun appel Apify/Bunny) : utile pour pré-remplir tout de suite.
  */
@@ -32,7 +37,11 @@ async function run(request: Request) {
   try {
     const admin = createAdminClient();
     const res =
-      mode === "seed" ? await seedFeedFromCache(admin) : await refreshFeed(admin);
+      mode === "seed"
+        ? await seedFeedFromCache(admin)
+        : mode === "media"
+          ? await processFeedMedia(admin, { budgetMs: 270_000 })
+          : await refreshFeed(admin);
     return NextResponse.json({ ok: true, mode: mode ?? "refresh", ...res });
   } catch (e) {
     return NextResponse.json(

@@ -197,6 +197,10 @@ export type SpyAd = {
   media_type: "video" | "image" | "none";
   media_url: string | null;
   thumbnail_url: string | null;
+  /** Flux HLS transcodé (service de streaming), quand il est prêt. */
+  media_hls_url?: string | null;
+  /** URL vidéo Meta d'origine, conservée quand media_url pointe ailleurs. */
+  media_source_url?: string | null;
   landing_url: string | null;
   landing_kind: LandingKind;
   landing_domain: string | null;
