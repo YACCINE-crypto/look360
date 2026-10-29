@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { accountSuspended } from "@/lib/accountGuard";
 import { consumeDownload, QuotaError } from "@/lib/usage";
-import { isAllowedMediaUrl } from "@/lib/mediaHosts";
+import { fetchAllowedMedia, isAllowedMediaUrl } from "@/lib/mediaHosts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,8 +42,8 @@ export async function GET(request: Request) {
   const range = request.headers.get("range");
   let upstream: Response;
   try {
-    // Pas de redirection suivie : elle pourrait sortir de la liste d'hôtes.
-    upstream = await fetch(u, { redirect: "error", ...(range ? { headers: { Range: range } } : {}) });
+    // Redirections suivies seulement vers des hôtes autorisés (revérifiés).
+    upstream = await fetchAllowedMedia(u, range ? { headers: { Range: range } } : {}, { archive: true });
   } catch {
     return NextResponse.json({ error: "téléchargement impossible" }, { status: 502 });
   }
