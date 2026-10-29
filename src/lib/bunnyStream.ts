@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash } from "crypto";
-import { isAllowedMediaUrl } from "@/lib/mediaHosts";
+import { fetchAllowedMedia, isAllowedMediaUrl } from "@/lib/mediaHosts";
 
 // ============================================================================
 // Transcodage vidéo via le service de streaming (Bunny Stream). Les créatives
@@ -163,10 +163,10 @@ async function findByTitle(
   }
 }
 
-/** Télécharge la source (hôte autorisé, sans redirection, taille bornée). */
+/** Télécharge la source (hôtes autorisés à chaque redirection, taille bornée). */
 async function downloadSource(sourceUrl: string): Promise<Buffer | null> {
   try {
-    const r = await fetch(sourceUrl, { redirect: "error", headers: { "User-Agent": UA } });
+    const r = await fetchAllowedMedia(sourceUrl, { headers: { "User-Agent": UA } }, { archive: true });
     if (!r.ok || !r.body) return null;
     if (Number(r.headers.get("content-length") || 0) > MAX_UPLOAD_BYTES) return null;
     const chunks: Uint8Array[] = [];

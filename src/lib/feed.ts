@@ -7,6 +7,7 @@ import {
   isStreamUrl,
   streamConfigured,
   streamStatus,
+  thumbUrlFor,
   type StreamInfo,
 } from "@/lib/bunnyStream";
 import type { SpyAd } from "@/lib/spy";
@@ -222,6 +223,13 @@ export async function processFeedMedia(
       }
     }
 
+    // Vidéo déjà prête mais sans miniature : celle du service de streaming.
+    if (row.media_type === "video" && row.media_cdn_url && !row.thumbnail_cdn_url && !patch.thumbnail_cdn_url && p.media_stream_guid) {
+      patch.thumbnail_cdn_url = thumbUrlFor(p.media_stream_guid);
+      p.thumbnail_url = patch.thumbnail_cdn_url;
+      out.thumbs++;
+    }
+
     if (row.media_type === "video" && !row.media_cdn_url && !p.media_stream_failed && streamConfigured()) {
       const source = p.media_source_url ?? (p.media_url && !isStreamUrl(p.media_url) ? p.media_url : null);
       if (source) {
@@ -238,6 +246,12 @@ export async function processFeedMedia(
           if (info.ready && info.hls) {
             patch.media_cdn_url = info.hls;
             p.media_hls_url = info.hls;
+            // Miniature : celle générée par le service si l'archivage a échoué.
+            if (!row.thumbnail_cdn_url && !patch.thumbnail_cdn_url && info.thumb) {
+              patch.thumbnail_cdn_url = info.thumb;
+              p.thumbnail_url = info.thumb;
+              out.thumbs++;
+            }
             out.ready++;
           } else if (info.failed) {
             p.media_stream_failed = true;

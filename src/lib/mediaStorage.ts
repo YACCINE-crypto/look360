@@ -1,5 +1,5 @@
 import "server-only";
-import { isAllowedMediaUrl } from "@/lib/mediaHosts";
+import { fetchAllowedMedia, isAllowedMediaUrl } from "@/lib/mediaHosts";
 
 // ============================================================================
 // Couche de stockage média abstraite (Spy v2 §2). Implémentation active :
@@ -61,8 +61,8 @@ export async function storeFromUrl(sourceUrl: string, keyPrefix: string): Promis
   if (!mediaStorageConfigured()) throw new Error("media_storage_not_configured");
   if (!allowedSource(sourceUrl)) throw new Error("source_not_allowed");
 
-  // Pas de redirection suivie (sortirait de la liste d'hôtes) + taille bornée.
-  const r = await fetch(sourceUrl, { redirect: "error" });
+  // Redirections suivies seulement vers des hôtes autorisés + taille bornée.
+  const r = await fetchAllowedMedia(sourceUrl, {}, { archive: false });
   if (!r.ok || !r.body) throw new Error(`source_fetch_${r.status}`);
   if (Number(r.headers.get("content-length") || 0) > MAX_SOURCE_BYTES) throw new Error("source_too_large");
   const chunks: Uint8Array[] = [];

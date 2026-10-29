@@ -36,3 +36,24 @@ export function isAllowedMediaUrl(url: string, opts: { archive: boolean }): bool
   const archive = archiveCdnHost();
   return opts.archive && archive !== "" && parsed.hostname.toLowerCase() === archive;
 }
+
+/**
+ * fetch() qui suit les redirections (les CDN Meta redirigent souvent vers un
+ * autre edge) en revérifiant CHAQUE étape contre la liste d'hôtes : une
+ * redirection vers un hôte non autorisé est refusée (anti-SSRF). Max 4 sauts.
+ */
+export async function fetchAllowedMedia(
+  url: string,
+  init: RequestInit,
+  opts: { archive: boolean },
+): Promise<Response> {
+  let current = url;
+  for (let hop = 0; hop <= 4; hop++) {
+    if (!isAllowedMediaUrl(current, opts)) throw new Error("redirect_not_allowed");
+    const r = await fetch(current, { ...init, redirect: "manual" });
+    const loc = r.status >= 300 && r.status < 400 ? r.headers.get("location") : null;
+    if (!loc) return r;
+    current = new URL(loc, current).toString();
+  }
+  throw new Error("too_many_redirects");
+}
