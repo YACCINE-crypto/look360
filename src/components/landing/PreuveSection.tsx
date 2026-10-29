@@ -18,19 +18,20 @@ type Stats = {
   produitsTestes: number;
   closingMoyen: number | null;
   margeMoyenne: number | null;
-  teaser: Teaser[];
 };
 
 /**
  * Stats 100 % réelles et anonymisées (agrégats). On ne lit JAMAIS d'identité
  * (pas de user_id, pas de nom de produit) — uniquement des compteurs et des
- * moyennes. Via service_role (page publique, sans session).
+ * moyennes. Via service_role (page publique, sans session). Les comptes qui
+ * ont refusé le partage (vitrine_share = false) sont exclus des agrégats, et
+ * aucune ligne produit n'est jamais envoyée au visiteur anonyme.
  */
 async function getStats(): Promise<Stats | null> {
   try {
     const admin = createAdminClient();
-    const [{ data: prod }, { data: tests }] = await Promise.all([
-      admin.from("produits").select("id, statut, marche, categorie").limit(3000),
+    const [{ data: prodAll }, { data: testsAll }, { data: optOut }] = await Promise.all([
+      admin.from("produits").select("id, statut, soumis_par").limit(3000),
       admin
         .from("tests")
         .select(
@@ -38,10 +39,13 @@ async function getStats(): Promise<Stats | null> {
         )
         .order("created_at", { ascending: false })
         .limit(5000),
+      admin.from("profiles").select("id").eq("vitrine_share", false),
     ]);
 
-    const produits = prod ?? [];
-    const T = (tests ?? []) as Test[];
+    const excluded = new Set((optOut ?? []).map((p) => p.id as string));
+    const produits = (prodAll ?? []).filter((p) => !excluded.has(p.soumis_par as string));
+    const shared = new Set(produits.map((p) => p.id as string));
+    const T = ((testsAll ?? []) as Test[]).filter((t) => shared.has(t.produit_id));
 
     // Marge % et closing % du test le plus récent, par produit.
     const closingByProd: Record<string, number> = {};
@@ -63,20 +67,15 @@ async function getStats(): Promise<Stats | null> {
       produitsTestes: new Set(T.map((t) => t.produit_id)).size,
       closingMoyen: avg(Object.values(closingByProd)),
       margeMoyenne: avg(Object.values(margeByProd)),
-      teaser: winners.slice(0, 8).map((w) => ({
-        categorie: w.categorie,
-        marche: w.marche,
-        marge: margeByProd[w.id] ?? null,
-        closing: closingByProd[w.id] ?? null,
-      })),
     };
   } catch {
     return null;
   }
 }
 
-// Cartes génériques si la base n'a pas encore de winners validés (le teaser
-// reste flouté → aucune donnée réelle exposée de toute façon).
+// Cartes génériques du teaser flouté. Toujours utilisées : on n'envoie jamais
+// de lignes produit réelles (marge, closing) à un visiteur anonyme, même floutées
+// (le flou est visuel, les valeurs restaient dans le HTML).
 const GENERIC_TEASER: Teaser[] = [
   { categorie: "Santé & Bien-être", marche: "CI", marge: 44, closing: 62 },
   { categorie: "Beauté & Cheveux", marche: "SN", marge: 38, closing: 55 },
@@ -106,8 +105,7 @@ export async function PreuveSection() {
     { label: "Marge moyenne", value: floor(stats?.margeMoyenne, SEED.marge), suffix: " %" },
   ];
 
-  const teaser =
-    stats && stats.teaser.length >= 3 ? stats.teaser : GENERIC_TEASER;
+  const teaser = GENERIC_TEASER;
 
   return (
     <section id="preuve" className="bg-surface scroll-mt-20 px-4 py-12 sm:px-6 sm:py-20">
