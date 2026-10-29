@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { mediaStorageConfigured, storeFromUrl } from "@/lib/mediaStorage";
+import { reserveMedia, releaseMedia, QuotaError } from "@/lib/usage";
+import { accountSuspended } from "@/lib/accountGuard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,12 +13,17 @@ export const maxDuration = 60;
  * Sauvegarde une pub espionnée (Spy v2 §5). Insère la ligne, puis archive
  * best-effort la créative + la miniature sur le CDN (Bunny) si configuré.
  * En cas d'échec d'archivage → on garde les liens source (media_stored=false).
+ * Chaque objet archivé consomme le quota de stockage média de l'offre
+ * (reserve_media, atomique) ; quota atteint → pas d'archivage, liens source.
+ * Écritures via service_role : le client n'a plus de droit d'écriture direct
+ * sur spy_saved_ads (0032), donc ni sur media_stored ni sur les URLs CDN.
  */
 export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
   const userId = claims?.claims?.sub as string | undefined;
   if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (await accountSuspended(userId)) return NextResponse.json({ error: "compte suspendu" }, { status: 403 });
 
   let ad: Record<string, unknown>;
   try {
@@ -33,15 +41,23 @@ export async function POST(request: Request) {
     return typeof v === "number" ? v : null;
   };
 
+  // Une pub = un ad_archive_id (clé d'unicité) : sans lui, chaque appel créerait
+  // une nouvelle ligne et un nouvel archivage.
+  const adArchiveId = str("ad_archive_id");
+  if (!adArchiveId || !/^\d{1,32}$/.test(adArchiveId)) {
+    return NextResponse.json({ error: "bad_request" }, { status: 400 });
+  }
+
   const mediaSource = str("media_url");
   const thumbSource = str("thumbnail_url");
 
-  const { data: row, error } = await supabase
+  const admin = createAdminClient();
+  const { data: row, error } = await admin
     .from("spy_saved_ads")
     .upsert(
       {
         user_id: userId,
-        ad_archive_id: str("ad_archive_id"),
+        ad_archive_id: adArchiveId,
         page_id: str("page_id"),
         page_name: str("page_name"),
         ad_text: str("ad_text"),
@@ -74,7 +90,19 @@ export async function POST(request: Request) {
 
   let mediaCdn: string | null = null;
   let thumbCdn: string | null = null;
-  if (mediaStorageConfigured()) {
+  let quotaReached = false;
+  const wanted = (mediaSource ? 1 : 0) + (thumbSource ? 1 : 0);
+  let reserved = 0;
+  if (mediaStorageConfigured() && wanted > 0) {
+    try {
+      await reserveMedia(userId, wanted);
+      reserved = wanted;
+    } catch (e) {
+      if (!(e instanceof QuotaError)) throw e;
+      quotaReached = true;
+    }
+  }
+  if (reserved > 0) {
     if (mediaSource) {
       try {
         mediaCdn = (await storeFromUrl(mediaSource, `spy/${userId}/media`)).cdnUrl;
@@ -89,8 +117,10 @@ export async function POST(request: Request) {
         /* fallback: lien source */
       }
     }
+    // Rend le quota des objets qui n'ont pas pu être archivés.
+    await releaseMedia(userId, reserved - (mediaCdn ? 1 : 0) - (thumbCdn ? 1 : 0));
     if (mediaCdn || thumbCdn) {
-      await supabase
+      await admin
         .from("spy_saved_ads")
         .update({
           media_cdn_url: mediaCdn,
@@ -106,5 +136,6 @@ export async function POST(request: Request) {
     id: row.id,
     media_stored: Boolean(mediaCdn),
     archived_thumb: Boolean(thumbCdn),
+    ...(quotaReached ? { quota: "media" } : {}),
   });
 }

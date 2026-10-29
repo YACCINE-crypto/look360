@@ -2,6 +2,45 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getWebPush, type PushPayload, type StoredSubscription } from "@/lib/webpush";
 import { runSpySearch } from "@/lib/apify";
+import { planConfig } from "@/lib/billing";
+
+type WatchRow = { id: string; user_id: string; created_at: string } & Record<string, unknown>;
+
+/**
+ * Ne garde que les lignes couvertes par l'offre EFFECTIVE de leur propriétaire
+ * (les N plus anciennes, N = slots ; offre expirée = Gratuit = 0) et jamais
+ * celles d'un compte suspendu. Puis les 50 moins récemment vérifiées.
+ */
+async function entitledRows<T extends WatchRow>(
+  supabase: ReturnType<typeof createAdminClient>,
+  rows: T[],
+): Promise<T[]> {
+  const users = Array.from(new Set(rows.map((r) => r.user_id)));
+  if (users.length === 0) return [];
+  const [{ data: subs }, { data: profs }] = await Promise.all([
+    supabase.from("subscriptions").select("user_id, plan, current_period_end").in("user_id", users),
+    supabase.from("profiles").select("id, suspended").in("id", users),
+  ]);
+  const now = Date.now();
+  const slots = new Map<string, number>();
+  for (const s of (subs ?? []) as { user_id: string; plan: string; current_period_end: string | null }[]) {
+    const expired = s.plan !== "free" && s.current_period_end !== null && Date.parse(s.current_period_end) <= now;
+    slots.set(s.user_id, planConfig(expired ? "free" : s.plan).competitorSlots);
+  }
+  for (const p of (profs ?? []) as { id: string; suspended: boolean }[]) {
+    if (p.suspended) slots.set(p.id, 0);
+  }
+  const allowed = new Set<string>();
+  const byUser = new Map<string, T[]>();
+  for (const r of rows) byUser.set(r.user_id, [...(byUser.get(r.user_id) ?? []), r]);
+  for (const [uid, list] of byUser) {
+    list
+      .sort((x, y) => Date.parse(x.created_at) - Date.parse(y.created_at))
+      .slice(0, slots.get(uid) ?? 0)
+      .forEach((r) => allowed.add(r.id));
+  }
+  return rows.filter((r) => allowed.has(r.id)).slice(0, 50);
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,14 +63,15 @@ export async function GET(request: Request) {
   }
 
   const supabase = createAdminClient();
-  const { data: comps, error } = await supabase
+  const { data: rows, error } = await supabase
     .from("competitors_watch")
     .select("*")
     .order("last_checked_at", { ascending: true, nullsFirst: true })
-    .limit(50);
+    .limit(2000);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  if (!comps || comps.length === 0) {
+  const comps = await entitledRows(supabase, rows ?? []);
+  if (comps.length === 0) {
     return NextResponse.json({ ok: true, checked: 0, notified: 0 });
   }
 

@@ -10,7 +10,7 @@ import { SuivreButton } from "./SuivreButton";
 import { ajouterAuxProduits } from "../../spy/actions";
 import { activityByMonth, countryLabel, formatReach, cleanField, type SpyAd } from "@/lib/spy";
 import { getSubscription } from "@/lib/credits";
-import { assertSearchAllowed, recordSearchUsage, QuotaError } from "@/lib/usage";
+import { reserveSearch, releaseUsage, QuotaError } from "@/lib/usage";
 import { planLimits } from "@/lib/billing";
 
 export const dynamic = "force-dynamic";
@@ -69,9 +69,10 @@ export default async function AnalysePage({
   let failed = false;
   let insufficient = false;
   // Quota v2 : l'analyse = 1 recherche sur 1 marché (la source : pubs actives de
-  // l'annonceur). Garde-fou avant Apify, puis conso réelle (cache = 0 unit).
+  // l'annonceur). Réservation atomique avant Apify, puis on rend l'unit si le
+  // résultat venait du cache.
   try {
-    if (userId) await assertSearchAllowed(userId, plan, 1);
+    if (userId) await reserveSearch(userId, plan, 1);
     else insufficient = true;
   } catch (e) {
     if (e instanceof QuotaError) insufficient = true;
@@ -84,9 +85,10 @@ export default async function AnalysePage({
         userId,
       );
       ads = res.ads;
-      if (userId) await recordSearchUsage(userId, res.units);
+      if (userId) await releaseUsage(userId, 0, 1 - Math.min(1, res.units));
     } catch {
       failed = true;
+      if (userId) await releaseUsage(userId, 1, 1);
     }
   }
 

@@ -1,4 +1,5 @@
 import "server-only";
+import { isAllowedMediaUrl } from "@/lib/mediaHosts";
 
 // ============================================================================
 // Couche de stockage média abstraite (Spy v2 §2). Implémentation active :
@@ -11,6 +12,9 @@ const ZONE = process.env.BUNNY_STORAGE_ZONE;
 const API_KEY = process.env.BUNNY_STORAGE_API_KEY;
 const REGION = process.env.BUNNY_STORAGE_REGION; // "" (Falkenstein) | "ny" | "la" | "sg" | "syd" | "uk" | "se" | "br" | "jh"
 const CDN_HOST = process.env.BUNNY_CDN_HOST; // ex. look360.b-cdn.net
+
+// Plafond d'un média archivé depuis une URL source (les créas Meta font < 50 Mo).
+const MAX_SOURCE_BYTES = 100 * 1024 * 1024;
 
 export type StoredMedia = { cdnUrl: string; key: string };
 
@@ -34,14 +38,9 @@ function storageHost(): string {
   return `${r}.storage.bunnycdn.com`;
 }
 
-// Anti-SSRF : on n'archive que les CDN Meta.
+// Anti-SSRF : on n'archive que les CDN Meta (https, frontière de sous-domaine).
 function allowedSource(url: string): boolean {
-  try {
-    const h = new URL(url).hostname;
-    return h.endsWith("fbcdn.net") || h.endsWith("facebook.com");
-  } catch {
-    return false;
-  }
+  return isAllowedMediaUrl(url, { archive: false });
 }
 
 function extFromContentType(ct: string | null): string {
@@ -62,9 +61,24 @@ export async function storeFromUrl(sourceUrl: string, keyPrefix: string): Promis
   if (!mediaStorageConfigured()) throw new Error("media_storage_not_configured");
   if (!allowedSource(sourceUrl)) throw new Error("source_not_allowed");
 
-  const r = await fetch(sourceUrl);
-  if (!r.ok) throw new Error(`source_fetch_${r.status}`);
-  const buf = Buffer.from(await r.arrayBuffer());
+  // Pas de redirection suivie (sortirait de la liste d'hôtes) + taille bornée.
+  const r = await fetch(sourceUrl, { redirect: "error" });
+  if (!r.ok || !r.body) throw new Error(`source_fetch_${r.status}`);
+  if (Number(r.headers.get("content-length") || 0) > MAX_SOURCE_BYTES) throw new Error("source_too_large");
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  const reader = r.body.getReader();
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > MAX_SOURCE_BYTES) {
+      await reader.cancel();
+      throw new Error("source_too_large");
+    }
+    chunks.push(value);
+  }
+  const buf = Buffer.concat(chunks);
   const ext = extFromContentType(r.headers.get("content-type"));
   const key = `${keyPrefix}/${crypto.randomUUID()}.${ext}`;
 
@@ -105,6 +119,14 @@ export async function storeBuffer(
 /** URL CDN à partir d'une clé stockée. */
 export function getUrl(key: string): string {
   return `${cdnBase()}/${key}`;
+}
+
+/** Clé de stockage d'une URL de NOTRE CDN (null si l'URL n'en vient pas). */
+export function keyFromCdnUrl(url: string | null | undefined): string | null {
+  const base = `${cdnBase()}/`;
+  if (!CDN_HOST || !url || !url.startsWith(base)) return null;
+  const key = url.slice(base.length);
+  return key && !key.includes("..") ? key : null;
 }
 
 /** Supprime un objet du stockage (best-effort). */

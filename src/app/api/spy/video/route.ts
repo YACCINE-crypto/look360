@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { accountSuspended } from "@/lib/accountGuard";
 import { consumeDownload, QuotaError } from "@/lib/usage";
+import { isAllowedMediaUrl } from "@/lib/mediaHosts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,6 +20,9 @@ export async function GET(request: Request) {
   if (!userId) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
+  if (await accountSuspended(userId)) {
+    return NextResponse.json({ error: "compte suspendu" }, { status: 403 });
+  }
 
   const params = new URL(request.url).searchParams;
   const u = params.get("url");
@@ -27,20 +32,9 @@ export async function GET(request: Request) {
 
   if (!u) return NextResponse.json({ error: "url requise" }, { status: 400 });
 
-  let host = "";
-  try {
-    host = new URL(u).hostname;
-  } catch {
-    return NextResponse.json({ error: "url invalide" }, { status: 400 });
-  }
-  // Anti-SSRF : CDN Meta + CDN média configuré (archives).
-  const cdnHost = process.env.BUNNY_CDN_HOST || "";
-  const okHost =
-    host.endsWith("fbcdn.net") ||
-    host.endsWith("facebook.com") ||
-    (cdnHost && host === cdnHost) ||
-    host.endsWith("b-cdn.net");
-  if (!okHost) {
+  // Anti-SSRF / anti-XSS : https uniquement, CDN Meta (frontière de
+  // sous-domaine) ou EXACTEMENT notre CDN d'archive configuré.
+  if (!isAllowedMediaUrl(u, { archive: true })) {
     return NextResponse.json({ error: "hôte non autorisé" }, { status: 400 });
   }
 
@@ -48,7 +42,8 @@ export async function GET(request: Request) {
   const range = request.headers.get("range");
   let upstream: Response;
   try {
-    upstream = await fetch(u, range ? { headers: { Range: range } } : undefined);
+    // Pas de redirection suivie : elle pourrait sortir de la liste d'hôtes.
+    upstream = await fetch(u, { redirect: "error", ...(range ? { headers: { Range: range } } : {}) });
   } catch {
     return NextResponse.json({ error: "téléchargement impossible" }, { status: 502 });
   }
@@ -56,10 +51,16 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: `amont ${upstream.status}` }, { status: 502 });
   }
 
-  const ct = upstream.headers.get("content-type") || "video/mp4";
+  // Ne JAMAIS refléter un Content-Type amont arbitraire (text/html, image/svg+xml…
+  // exécuteraient du script sur notre origine) : seul video/* passe, sinon
+  // video/mp4. nosniff + CSP sandbox en défense en profondeur.
+  const upCt = (upstream.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
+  const ct = /^video\/[a-z0-9.+-]+$/.test(upCt) ? upCt : "video/mp4";
   const headers: Record<string, string> = {
     "Content-Type": ct,
     "Cache-Control": "no-store",
+    "X-Content-Type-Options": "nosniff",
+    "Content-Security-Policy": "sandbox; default-src 'none'",
   };
   // Recopie les en-têtes utiles à la lecture progressive.
   for (const h of ["content-length", "content-range", "accept-ranges"]) {

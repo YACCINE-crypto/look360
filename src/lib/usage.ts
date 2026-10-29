@@ -6,13 +6,13 @@ import { planLimits } from "@/lib/billing";
 // Quotas v2 — comptage SERVEUR des searches + market_search_units (table
 // `subscription_usage`, fonctions SECURITY DEFINER de 0030). Le client ne peut
 // jamais modifier ses compteurs. Aucun crédit visible ici.
-//   - assertSearchAllowed : garde-fou AVANT l'appel Apify (pire cas).
-//   - recordSearchUsage   : +1 search, +N units (N = marchés réellement scrappés,
-//                           un hit de cache = 0 unit).
+//   - reserveSearch : réservation ATOMIQUE (pire cas) AVANT l'appel Apify,
+//                     puis releaseUsage rend ce qui n'a pas été scrappé (un hit
+//                     de cache = 0 unit) ou tout en cas d'échec.
 //   - consumeDownload / consumeWinnerRun : vérif + incrément atomiques.
 // ============================================================================
 
-export type QuotaKind = "searches" | "units" | "markets" | "downloads" | "winner_runs";
+export type QuotaKind = "searches" | "units" | "markets" | "downloads" | "winner_runs" | "media";
 
 export class QuotaError extends Error {
   kind: QuotaKind;
@@ -51,37 +51,61 @@ export async function getUsage(userId: string): Promise<Usage | null> {
   return (data as Usage) ?? null;
 }
 
-/**
- * Garde-fou AVANT un appel Apify : la recherche sur `markets` marchés est-elle
- * permise pour ce plan ? Lève QuotaError (markets | searches | units) sinon.
- * Contrôle le PIRE cas (tous les marchés en cache-miss).
- */
-export async function assertSearchAllowed(
-  userId: string,
-  plan: string,
-  markets: number,
-): Promise<void> {
-  const lim = planLimits(plan);
-  const m = Math.max(1, markets);
-  if (m > lim.maxMarkets) throw new QuotaError("markets");
-  const u = await getUsage(userId);
-  const searchesUsed = u?.searches_used ?? 0;
-  const unitsUsed = u?.market_search_units_used ?? 0;
-  if (searchesUsed + 1 > lim.monthlySearches) throw new QuotaError("searches");
-  if (unitsUsed + m > lim.monthlyUnits) throw new QuotaError("units");
+function quotaFrom(message: string): QuotaError | null {
+  for (const k of ["searches", "units", "downloads", "winner_runs", "media"] as const) {
+    if (message.includes(`quota_${k}`)) return new QuotaError(k);
+  }
+  return null;
 }
 
-/** Enregistre la conso d'une recherche : +1 search, +units (marchés scrappés). */
-export async function recordSearchUsage(userId: string, units: number): Promise<Usage | null> {
-  const { data, error } = await rpc("record_search_usage", {
+/**
+ * Réserve, AVANT un appel Apify, 1 search + `markets` units (pire cas : tous
+ * les marchés en cache-miss). Vérif + incrément dans la même transaction SQL,
+ * donc des requêtes parallèles ne peuvent pas dépasser le quota. Lève
+ * QuotaError (markets | searches | units).
+ */
+export async function reserveSearch(userId: string, plan: string, markets: number): Promise<void> {
+  const m = Math.max(1, markets);
+  if (m > planLimits(plan).maxMarkets) throw new QuotaError("markets");
+  await reserveUsage(userId, 1, m);
+}
+
+/** Réserve `searches` + `units` (atomique). Lève QuotaError si plafond. */
+export async function reserveUsage(userId: string, searches: number, units: number): Promise<void> {
+  const { error } = await rpc("reserve_usage", {
     p_user: userId,
+    p_searches: Math.max(0, Math.round(searches)),
+    p_units: Math.max(0, Math.round(units)),
+  });
+  if (error) throw quotaFrom(error.message) ?? new Error(error.message);
+}
+
+/** Rend une partie d'une réservation (units non scrappés, ou tout si échec). */
+export async function releaseUsage(userId: string, searches: number, units: number): Promise<Usage | null> {
+  const { data, error } = await rpc("release_usage", {
+    p_user: userId,
+    p_searches: Math.max(0, Math.round(searches)),
     p_units: Math.max(0, Math.round(units)),
   });
   if (error) {
-    console.error("record_search_usage failed:", error.message, "user:", userId);
+    console.error("release_usage failed:", error.message, "user:", userId);
     return null;
   }
   return (data as Usage) ?? null;
+}
+
+/** Réserve `n` objets de stockage média (atomique). Lève QuotaError("media") si plafond. */
+export async function reserveMedia(userId: string, n: number): Promise<void> {
+  if (n <= 0) return;
+  const { error } = await rpc("reserve_media", { p_user: userId, p_n: n });
+  if (error) throw quotaFrom(error.message) ?? new Error(error.message);
+}
+
+/** Rend `n` objets de stockage (archivage échoué ou objet supprimé). */
+export async function releaseMedia(userId: string, n: number): Promise<void> {
+  if (n <= 0) return;
+  const { error } = await rpc("release_media", { p_user: userId, p_n: n });
+  if (error) console.error("release_media failed:", error.message, "user:", userId);
 }
 
 /** Consomme 1 téléchargement vidéo (atomique). Lève QuotaError("downloads") si plafond. */

@@ -21,11 +21,13 @@ export default async function AdminLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("nom, role")
+    .select("nom, role, suspended")
     .eq("id", uid)
     .maybeSingle();
 
-  if (profile?.role !== "superadmin") redirect("/");
+  // Un superadmin suspendu n'a plus accès au panneau (is_superadmin le refuse
+  // aussi côté SQL depuis 0031).
+  if (profile?.role !== "superadmin" || profile.suspended) redirect("/");
 
   const displayName =
     (profile?.nom as string | undefined) ??

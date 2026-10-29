@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { MARCHES, type ProduitInsert } from "@/lib/produits";
-import { mediaStorageConfigured, storeFromUrl } from "@/lib/mediaStorage";
+import { deleteKey, keyFromCdnUrl, mediaStorageConfigured, storeFromUrl } from "@/lib/mediaStorage";
+import { reserveMedia, releaseMedia } from "@/lib/usage";
+import { accountSuspended } from "@/lib/accountGuard";
 
 function str(formData: FormData, key: string): string | null {
   const raw = String(formData.get(key) ?? "").trim();
@@ -21,6 +23,7 @@ export async function ajouterAuxProduits(formData: FormData): Promise<void> {
   const { data: claimsData } = await supabase.auth.getClaims();
   const userId = claimsData?.claims?.sub as string | undefined;
   if (!userId) redirect("/login");
+  if (await accountSuspended(userId)) redirect("/suspendu");
 
   const pays = (str(formData, "marche") ?? "").toUpperCase();
   const marche = MARCHES.some((m) => m.code === pays) ? pays : null;
@@ -29,10 +32,15 @@ export async function ajouterAuxProduits(formData: FormData): Promise<void> {
   const imageSource = str(formData, "image_url");
   let mediaCdn: string | null = null;
   if (imageSource && mediaStorageConfigured()) {
-    try {
-      mediaCdn = (await storeFromUrl(imageSource, `produits/${userId}`)).cdnUrl;
-    } catch {
-      /* fallback : on garde le lien source */
+    // 1 objet du quota de stockage ; quota atteint → on garde le lien source.
+    const reserved = await reserveMedia(userId, 1).then(() => true, () => false);
+    if (reserved) {
+      try {
+        mediaCdn = (await storeFromUrl(imageSource, `produits/${userId}`)).cdnUrl;
+      } catch {
+        /* fallback : on garde le lien source */
+        await releaseMedia(userId, 1);
+      }
     }
   }
 
@@ -67,6 +75,20 @@ export async function retirerPub(formData: FormData): Promise<void> {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
   const supabase = await createClient();
-  await supabase.from("spy_saved_ads").delete().eq("id", id);
+  const { data: claims } = await supabase.auth.getClaims();
+  const userId = claims?.claims?.sub as string | undefined;
+  if (!userId) return;
+  // RLS : ne supprime (et ne renvoie) que la ligne du compte courant.
+  const { data: removed } = await supabase
+    .from("spy_saved_ads")
+    .delete()
+    .eq("id", id)
+    .select("media_cdn_url, thumbnail_cdn_url");
+  // Libère les objets archivés sur le CDN et le quota de stockage associé.
+  const keys = (removed ?? [])
+    .flatMap((r) => [keyFromCdnUrl(r.media_cdn_url), keyFromCdnUrl(r.thumbnail_cdn_url)])
+    .filter((k): k is string => Boolean(k));
+  await Promise.all(keys.map((k) => deleteKey(k)));
+  await releaseMedia(userId, keys.length);
   revalidatePath("/sauvegardes");
 }

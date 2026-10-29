@@ -28,6 +28,9 @@ export async function suivreConcurrent(input: {
     .eq("user_id", userId);
   if ((count ?? 0) >= slots) return { ok: false, reason: "limit", slots };
 
+  // ignoreDuplicates : re-suivre une page déjà suivie ne fait rien (le client
+  // n'a plus de droit UPDATE sur ces colonnes, cf. 0032). Le nombre de slots
+  // est aussi appliqué en base (trigger) : erreur quota_competitors → "limit".
   const { error } = await supabase.from("competitors_watch").upsert(
     {
       user_id: userId,
@@ -36,9 +39,12 @@ export async function suivreConcurrent(input: {
       domaine: input.domaine ?? null,
       country: input.country ?? null,
     },
-    { onConflict: "user_id,page_id" },
+    { onConflict: "user_id,page_id", ignoreDuplicates: true },
   );
-  if (error) return { ok: false, reason: "db" };
+  if (error) {
+    if (error.message.includes("quota_competitors")) return { ok: false, reason: "limit", slots };
+    return { ok: false, reason: "db" };
+  }
 
   revalidatePath("/surveillance");
   return { ok: true };

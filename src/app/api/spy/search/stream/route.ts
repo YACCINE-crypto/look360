@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { accountSuspended } from "@/lib/accountGuard";
 import { getCachedSearch, dailyCapReached, persistSearch } from "@/lib/spyCache";
 import {
   startSpyRun,
@@ -8,7 +9,7 @@ import {
 } from "@/lib/apify";
 import { normalizeApifyItem, applySpyFilters } from "@/lib/spy";
 import { getSubscription } from "@/lib/credits";
-import { assertSearchAllowed, recordSearchUsage, QuotaError } from "@/lib/usage";
+import { reserveSearch, releaseUsage, QuotaError } from "@/lib/usage";
 import { planLimits } from "@/lib/billing";
 import type { SpyFilters, SpyMediaType, SpyPlatform, SpyStatut } from "@/lib/spy";
 
@@ -79,6 +80,12 @@ export async function POST(request: Request) {
       headers: { "Content-Type": "application/json" },
     });
   }
+  if (await accountSuspended(userId)) {
+    return new Response(JSON.stringify({ error: "compte suspendu" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
   if (!filters.q && !filters.country && !filters.pageId) {
     return new Response(JSON.stringify({ error: "mot-clé ou pays requis" }), {
       status: 400,
@@ -89,6 +96,7 @@ export async function POST(request: Request) {
   const stream = new ReadableStream({
     async start(controller) {
       const t0 = Date.now();
+      let reserved = false;
       const send = (o: unknown) => controller.enqueue(line(o));
       try {
         // 1) Cache → réponse instantanée.
@@ -111,7 +119,8 @@ export async function POST(request: Request) {
         const sub = await getSubscription(userId);
         const plan = sub?.plan ?? "free";
         try {
-          await assertSearchAllowed(userId, plan, 1);
+          await reserveSearch(userId, plan, 1);
+          reserved = true;
         } catch (e) {
           if (e instanceof QuotaError) {
             send({ type: "error", status: 402, message: quotaMessage(e.kind, plan) });
@@ -157,15 +166,17 @@ export async function POST(request: Request) {
         //    mais la recherche reste comptée (anti-abus, borné par le cap/jour).
         if (accumulator.length > 0) {
           await persistSearch(filters, userId, url, accumulator, accumulator.length);
-          await recordSearchUsage(userId, 1);
         } else {
-          await recordSearchUsage(userId, 0);
+          await releaseUsage(userId, 0, 1);
         }
+        reserved = false;
 
         const total = applySpyFilters(accumulator, filters).length;
         send({ type: "done", cached: false, total, took_ms: Date.now() - t0 });
         controller.close();
       } catch (e) {
+        // Échec après réservation : on rend la recherche et l'unit.
+        if (reserved) await releaseUsage(userId, 1, 1);
         const message = e instanceof Error ? e.message : "Erreur inconnue";
         send({ type: "error", status: 502, message });
         controller.close();

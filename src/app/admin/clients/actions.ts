@@ -15,10 +15,10 @@ async function guard(): Promise<SupabaseClient> {
   if (!uid) throw new Error("unauthenticated");
   const { data: p } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, suspended")
     .eq("id", uid)
     .maybeSingle();
-  if (p?.role !== "superadmin") throw new Error("forbidden");
+  if (p?.role !== "superadmin" || p.suspended) throw new Error("forbidden");
   return supabase;
 }
 

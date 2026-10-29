@@ -7,6 +7,7 @@ import { runWinnerForConfig } from "@/lib/winnerAgent";
 import { WINNER_DEFAULTS } from "@/lib/spy";
 import { getSubscription } from "@/lib/credits";
 import { planConfig } from "@/lib/billing";
+import { consumeWinnerRun, QuotaError } from "@/lib/usage";
 
 function list(formData: FormData, key: string, upper = false): string[] {
   return String(formData.get(key) ?? "")
@@ -73,6 +74,13 @@ export async function lancerWinnerMaintenant(): Promise<void> {
     cfg = created;
   }
   if (cfg) {
+    // Même quota mensuel que le cron : 1 exécution consommée avant l'appel Apify.
+    try {
+      await consumeWinnerRun(userId);
+    } catch (e) {
+      if (e instanceof QuotaError) return;
+      throw e;
+    }
     const admin = createAdminClient();
     await runWinnerForConfig(admin, cfg, { sendPush: false });
   }

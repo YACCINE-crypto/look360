@@ -95,8 +95,14 @@ Deno.serve(async (req) => {
 
     // Échéance dépassée → expiration (une seule fois par période).
     if (msLeft <= 0) {
+      // Expirer D'ABORD : si la RPC échoue, on ne pose pas la marque "expired"
+      // (sinon l'expiration ne serait jamais retentée). L'e-mail reste unique.
+      const { error: expErr } = await admin.rpc("expire_subscription", { p_user: s.user_id });
+      if (expErr) {
+        console.error("expire_subscription failed", s.user_id, expErr.message);
+        continue;
+      }
       if (await claim(admin, s.user_id, endStr, "expired")) {
-        await admin.rpc("expire_subscription", { p_user: s.user_id });
         const email = await emailOf(admin, s.user_id);
         if (email) await sendEmail({ to: email, subject: "Ton abonnement Look360 a expiré", html: expiredHtml() });
         summary.expired++;

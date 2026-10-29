@@ -1,6 +1,8 @@
 import { createHash } from "crypto";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { accountSuspended } from "@/lib/accountGuard";
+import { isAllowedMediaUrl } from "@/lib/mediaHosts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,22 +40,11 @@ function configured(): boolean {
 function hlsUrl(guid: string): string {
   return `https://${CDN}/${guid}/playlist.m3u8`;
 }
+// Sources Meta + nos archives média (CDN de stockage, hôte exact). Les
+// créatives du feed commun ont leur URL réécrite vers le CDN d'archive : elles
+// doivent aussi pouvoir être transcodées pour une lecture fiable.
 function allowedSource(u: string): boolean {
-  try {
-    const h = new URL(u).hostname;
-    // Sources Meta + nos archives média (CDN de stockage). Les créatives du feed
-    // commun ont leur URL réécrite vers le CDN d'archive : elles doivent aussi
-    // pouvoir être transcodées pour une lecture fiable.
-    const archiveHost = (process.env.BUNNY_CDN_HOST || "").replace(/^https?:\/\//i, "").replace(/\/+$/, "");
-    return (
-      h.endsWith("fbcdn.net") ||
-      h.endsWith("facebook.com") ||
-      h.endsWith("b-cdn.net") ||
-      (archiveHost !== "" && h === archiveHost)
-    );
-  } catch {
-    return false;
-  }
+  return isAllowedMediaUrl(u, { archive: true });
 }
 
 // Titre déterministe par source → permet de RETROUVER une vidéo déjà transcodée
@@ -99,6 +90,9 @@ export async function GET(request: Request) {
   if (!data?.claims?.sub) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
+  if (await accountSuspended(data.claims.sub as string)) {
+    return NextResponse.json({ error: "compte suspendu" }, { status: 403 });
+  }
   if (!configured()) {
     return NextResponse.json({ configured: false });
   }
@@ -136,6 +130,10 @@ export async function GET(request: Request) {
   try {
     // Polling d'un transcodage en cours.
     if (guidParam) {
+      // GUID Bunny = UUID : rien d'autre n'est interpolé dans l'URL de l'API.
+      if (!/^[0-9a-f-]{36}$/i.test(guidParam)) {
+        return NextResponse.json({ error: "guid invalide" }, { status: 400 });
+      }
       const status = await statusOf(guidParam);
       const ready = readyFrom(status);
       return NextResponse.json({
