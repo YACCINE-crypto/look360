@@ -266,7 +266,7 @@ export function VideoLightbox({
               if (blacks.every(Boolean)) {
                 // Piste sans image : HLS → transcodage/secours ; brut → échec.
                 if (stage === "hls") return playRaw();
-                return fail("La vidéo source n'a pas d'image lisible (format Meta).");
+                return fail("Meta ne fournit plus que le son de cette vidéo (lien expiré). Ouvre-la dans Ad Library.");
               }
               setPhase("ok");
             }

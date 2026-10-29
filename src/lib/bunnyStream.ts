@@ -85,14 +85,16 @@ function headers(json = true): Record<string, string> {
 }
 
 // Statuts du service : 0 créée · 1 uploadée · 2 traitement · 3 transcodage ·
-// 4 terminée · 5 erreur · 6 échec d'upload.
-function infoFrom(guid: string, status: number | null): StreamInfo {
-  const ready = status === 4;
+// 4 terminée · 5 erreur · 6 échec d'upload. Une vidéo « terminée » de largeur 0
+// n'a pas de piste image (source Meta expirée, son seul) → échec, jamais lue.
+function infoFrom(guid: string, status: number | null, width?: number | null): StreamInfo {
+  const noImage = status === 4 && typeof width === "number" && width <= 0;
+  const ready = status === 4 && !noImage;
   return {
     guid,
     status,
     ready,
-    failed: status === 5 || status === 6,
+    failed: status === 5 || status === 6 || noImage,
     hls: ready ? hlsUrlFor(guid) : null,
     thumb: ready ? thumbUrlFor(guid) : null,
   };
@@ -106,20 +108,56 @@ export async function streamStatus(guid: string): Promise<StreamInfo | null> {
     cache: "no-store",
   });
   if (!r.ok) return null;
-  const j = (await r.json()) as { status?: number };
-  return infoFrom(guid, typeof j.status === "number" ? j.status : null);
+  const j = (await r.json()) as { status?: number; width?: number };
+  return infoFrom(guid, typeof j.status === "number" ? j.status : null, j.width);
 }
 
-async function findByTitle(title: string): Promise<{ guid: string; status: number | null } | null> {
+/** Supprime une vidéo du service (upload inutilisable). Best-effort. */
+async function deleteStream(guid: string): Promise<void> {
+  try {
+    await fetch(`${API}/library/${LIBRARY}/videos/${guid}`, { method: "DELETE", headers: headers(false) });
+  } catch {
+    /* best-effort */
+  }
+}
+
+/**
+ * Le fichier MP4 contient-il une piste IMAGE ? (boîte `hdlr` de type `vide`).
+ * Les liens Meta assemblent à la volée une piste vidéo ÉPHÉMÈRE et une piste
+ * audio permanente : une fois la vidéo expirée, Meta ne sert plus que le son
+ * (écran noir). Inconnu (pas de `hdlr` lisible) → on laisse passer.
+ */
+export function mp4HasVideoTrack(buf: Buffer): boolean {
+  let seen = false;
+  let i = buf.indexOf("hdlr");
+  while (i !== -1) {
+    seen = true;
+    if (buf.toString("latin1", i + 12, i + 16) === "vide") return true;
+    i = buf.indexOf("hdlr", i + 4);
+  }
+  return !seen;
+}
+
+async function findByTitle(
+  title: string,
+): Promise<{ guid: string; status: number | null; width: number | null } | null> {
   try {
     const r = await fetch(
       `${API}/library/${LIBRARY}/videos?search=${encodeURIComponent(title)}&itemsPerPage=20&page=1`,
       { headers: headers(false), cache: "no-store" },
     );
     if (!r.ok) return null;
-    const j = (await r.json()) as { items?: { guid?: string; title?: string; status?: number }[] };
+    const j = (await r.json()) as {
+      items?: { guid?: string; title?: string; status?: number; width?: number }[];
+    };
     const hit = (j.items || []).find((v) => v.title === title && v.guid);
-    return hit?.guid ? { guid: hit.guid, status: typeof hit.status === "number" ? hit.status : null } : null;
+    return hit?.guid
+      ? {
+          guid: hit.guid,
+          status: typeof hit.status === "number" ? hit.status : null,
+          width: typeof hit.width === "number" ? hit.width : null,
+        }
+      : null;
   } catch {
     return null;
   }
@@ -153,9 +191,16 @@ async function downloadSource(sourceUrl: string): Promise<Buffer | null> {
 /**
  * Envoie la vidéo au service : upload direct des octets (notre serveur sait
  * lire fbcdn), sinon récupération par le service lui-même depuis l'URL.
+ * Source sans piste image (lien Meta expiré) → la vidéo Stream est supprimée
+ * et l'envoi échoue : on ne transcode jamais un écran noir.
  */
 async function uploadTo(guid: string, sourceUrl: string): Promise<boolean> {
   const buf = await downloadSource(sourceUrl);
+  if (buf && !mp4HasVideoTrack(buf)) {
+    console.error("[stream] source sans image (son seul)", guid);
+    await deleteStream(guid);
+    return false;
+  }
   if (buf) {
     const put = await fetch(`${API}/library/${LIBRARY}/videos/${guid}`, {
       method: "PUT",
@@ -190,7 +235,12 @@ export async function getOrCreateStream(
 
   const known = await findByTitle(title);
   if (known) {
-    return { info: infoFrom(known.guid, known.status), needsUpload: known.status === 0 || known.status === 6 };
+    const info = infoFrom(known.guid, known.status, known.width);
+    // Ancienne vidéo sans image (son seul) : on la jette et on recommence.
+    if (!(info.failed && known.status === 4)) {
+      return { info, needsUpload: known.status === 0 || known.status === 6 };
+    }
+    await deleteStream(known.guid);
   }
   const create = await fetch(`${API}/library/${LIBRARY}/videos`, {
     method: "POST",
@@ -230,5 +280,5 @@ export async function findStream(sourceUrl: string): Promise<StreamInfo | null> 
   const key = streamKey(sourceUrl);
   if (!key) return null;
   const known = await findByTitle(titleFor(key));
-  return known ? infoFrom(known.guid, known.status) : null;
+  return known ? infoFrom(known.guid, known.status, known.width) : null;
 }
