@@ -86,8 +86,12 @@ export async function GET(request: Request) {
 
   try {
     if (guidParam) {
+      if (!/^[0-9a-f-]{36}$/i.test(guidParam)) {
+        return NextResponse.json({ error: "guid invalide" }, { status: 400 });
+      }
+      // Vidéo introuvable = upload refusé (source sans image) → échec immédiat.
       const info = await streamStatus(guidParam);
-      if (!info) return NextResponse.json({ error: "guid invalide" }, { status: 400 });
+      if (!info) return NextResponse.json({ configured: true, guid: guidParam, failed: true });
       return NextResponse.json({ configured: true, ...info });
     }
 
