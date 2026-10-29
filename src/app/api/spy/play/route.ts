@@ -1,6 +1,7 @@
 import { createHash } from "crypto";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { accountSuspended } from "@/lib/accountGuard";
 import { isAllowedMediaUrl } from "@/lib/mediaHosts";
 
 export const runtime = "nodejs";
@@ -88,6 +89,9 @@ export async function GET(request: Request) {
   const { data } = await supabase.auth.getClaims();
   if (!data?.claims?.sub) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+  if (await accountSuspended(data.claims.sub as string)) {
+    return NextResponse.json({ error: "compte suspendu" }, { status: 403 });
   }
   if (!configured()) {
     return NextResponse.json({ configured: false });

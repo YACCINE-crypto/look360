@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { accountSuspended } from "@/lib/accountGuard";
 import { consumeDownload, QuotaError } from "@/lib/usage";
 import { isAllowedMediaUrl } from "@/lib/mediaHosts";
 
@@ -18,6 +19,9 @@ export async function GET(request: Request) {
   const userId = data?.claims?.sub as string | undefined;
   if (!userId) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+  if (await accountSuspended(userId)) {
+    return NextResponse.json({ error: "compte suspendu" }, { status: 403 });
   }
 
   const params = new URL(request.url).searchParams;

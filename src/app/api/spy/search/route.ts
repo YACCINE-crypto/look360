@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { accountSuspended } from "@/lib/accountGuard";
 import { searchSpyWithCache, searchSpyManyCountries } from "@/lib/spyCache";
 import { getSubscription } from "@/lib/credits";
-import { assertSearchAllowed, recordSearchUsage, QuotaError } from "@/lib/usage";
+import { reserveSearch, releaseUsage, QuotaError } from "@/lib/usage";
 import { planLimits } from "@/lib/billing";
 import type { SpyFilters, SpyMediaType, SpyPlatform, SpyStatut } from "@/lib/spy";
 
@@ -74,18 +75,21 @@ async function handle(filters: SpyFilters, countries: string[]) {
   if (!userId) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
+  if (await accountSuspended(userId)) {
+    return NextResponse.json({ error: "compte suspendu" }, { status: 403 });
+  }
   if (!filters.q && countries.length === 0 && !filters.pageId) {
     return NextResponse.json({ error: "mot-clé ou pays requis" }, { status: 400 });
   }
 
-  // Quotas v2 : on compte des market_search_units, pas des crédits. Garde-fou
-  // AVANT Apify (pire cas = tous les marchés en cache-miss) ; on enregistre
-  // ensuite la conso réelle (un hit de cache = 0 unit).
+  // Quotas v2 : on compte des market_search_units, pas des crédits. Réservation
+  // atomique AVANT Apify (pire cas = tous les marchés en cache-miss) ; on rend
+  // ensuite ce qui n'a pas été scrappé (un hit de cache = 0 unit).
   const sub = await getSubscription(userId);
   const plan = sub?.plan ?? "free";
   const markets = Math.max(1, countries.length);
   try {
-    await assertSearchAllowed(userId, plan, markets);
+    await reserveSearch(userId, plan, markets);
   } catch (e) {
     if (e instanceof QuotaError) {
       return NextResponse.json(
@@ -104,15 +108,17 @@ async function handle(filters: SpyFilters, countries: string[]) {
         ? await searchSpyWithCache({ ...filters, country: countries[0] ?? filters.country }, userId)
         : await searchSpyManyCountries(filters, countries, userId);
     if (result.capped) {
+      await releaseUsage(userId, 1, markets);
       return NextResponse.json(
         { error: "Plafond de recherches Spy atteint pour aujourd'hui. Réessaie demain." },
         { status: 429 },
       );
     }
-    // Enregistre la conso réelle (units = marchés réellement scrappés).
-    const usage = await recordSearchUsage(userId, result.units);
+    // Conso réelle (units = marchés réellement scrappés) : on rend le reste.
+    const usage = await releaseUsage(userId, 0, markets - Math.min(markets, result.units));
     return NextResponse.json({ ...result, usage });
   } catch (e) {
+    await releaseUsage(userId, 1, markets);
     const msg = e instanceof Error ? e.message : "Erreur inconnue";
     return NextResponse.json({ error: msg }, { status: 502 });
   }

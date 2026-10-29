@@ -121,6 +121,14 @@ export function getUrl(key: string): string {
   return `${cdnBase()}/${key}`;
 }
 
+/** Clé de stockage d'une URL de NOTRE CDN (null si l'URL n'en vient pas). */
+export function keyFromCdnUrl(url: string | null | undefined): string | null {
+  const base = `${cdnBase()}/`;
+  if (!CDN_HOST || !url || !url.startsWith(base)) return null;
+  const key = url.slice(base.length);
+  return key && !key.includes("..") ? key : null;
+}
+
 /** Supprime un objet du stockage (best-effort). */
 export async function deleteKey(key: string): Promise<void> {
   if (!mediaStorageConfigured()) return;

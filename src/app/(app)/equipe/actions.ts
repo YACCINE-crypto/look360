@@ -21,10 +21,10 @@ export async function creerAgent(
 
   const { data: prof } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, suspended")
     .eq("id", userId)
     .maybeSingle();
-  if (prof?.role !== "superadmin") return "Réservé à l'administrateur.";
+  if (prof?.role !== "superadmin" || prof.suspended) return "Réservé à l'administrateur.";
 
   const nom = String(formData.get("nom") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();

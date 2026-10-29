@@ -38,7 +38,14 @@ export async function getSubscription(userId: string): Promise<Subscription | nu
   if (error) {
     console.error("getSubscription admin read failed:", error.message, "user:", userId);
   }
-  return (data as Subscription | null) ?? null;
+  const row = (data as Subscription | null) ?? null;
+  // Plan EFFECTIF : une offre payante dont la période est terminée vaut
+  // Gratuit, même si le job d'expiration n'est pas encore passé (même règle
+  // que public.effective_plan en base).
+  if (row && row.plan !== "free" && row.current_period_end && Date.parse(row.current_period_end) <= Date.now()) {
+    return { ...row, plan: "free", status: "expired" };
+  }
+  return row;
 }
 
 /**
