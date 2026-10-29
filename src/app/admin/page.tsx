@@ -3,6 +3,8 @@ import { PLANS } from "@/lib/billing";
 import { COST_PER_CREDIT_FCFA } from "@/lib/adminCost";
 import { Cockpit, type CockpitData } from "@/components/admin/Cockpit";
 import { Charts, type MonthPoint } from "@/components/admin/Charts";
+import { FeedRefreshPanel, type FeedStats } from "@/components/admin/FeedRefreshPanel";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +33,20 @@ export default async function AdminCockpitPage() {
     supabase.rpc("admin_charts"),
   ]);
   const r = (data ?? {}) as Partial<Raw>;
+
+  // État réel du feed commun (page déjà gardée superadmin par le layout).
+  const admin = createAdminClient();
+  const { data: feedRows } = await admin
+    .from("feed_ads")
+    .select("media_type, media_cdn_url, thumbnail_cdn_url, refreshed_at");
+  const fr = feedRows ?? [];
+  const feed: FeedStats = {
+    total: fr.length,
+    videos: fr.filter((x) => x.media_type === "video").length,
+    videosReady: fr.filter((x) => x.media_type === "video" && x.media_cdn_url).length,
+    thumbs: fr.filter((x) => x.thumbnail_cdn_url).length,
+    lastRefresh: fr.reduce<string | null>((m, x) => (!m || x.refreshed_at > m ? x.refreshed_at : m), null),
+  };
 
   const c = (charts ?? {}) as {
     revenue_by_month?: { month: string; total: number }[];
@@ -86,6 +102,7 @@ export default async function AdminCockpitPage() {
       </div>
 
       <Cockpit k={k} />
+      <FeedRefreshPanel stats={feed} />
       <Charts revenue={revenue} signups={signups} plans={k.plans} />
     </div>
   );
