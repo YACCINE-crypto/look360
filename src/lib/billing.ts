@@ -78,6 +78,27 @@ export function planLabel(plan: string | null | undefined): string {
   return planConfig(plan).label;
 }
 
+/**
+ * Statut RÉEL d'un abonnement : une offre payante dont la période est finie est
+ * « expired », même si le job d'expiration n'est pas encore passé (même règle
+ * que public.effective_plan en base). Sert à l'affichage (admin, compte).
+ */
+export function effectiveStatus(s: {
+  plan: string | null | undefined;
+  status: string | null | undefined;
+  current_period_end: string | null | undefined;
+}): string {
+  if (
+    s.plan &&
+    s.plan !== "free" &&
+    s.current_period_end &&
+    Date.parse(s.current_period_end) <= Date.now()
+  ) {
+    return "expired";
+  }
+  return s.status ?? "active";
+}
+
 // ============================================================================
 // Quotas v2 — « niveau d'accès », PAS de crédits visibles. Miroir TS de la table
 // `plan_limits` (seule source d'enforcement = la base, via SECURITY DEFINER).

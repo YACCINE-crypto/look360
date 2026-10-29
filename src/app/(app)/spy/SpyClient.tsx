@@ -8,7 +8,7 @@ import { Icon } from "@/components/Icon";
 import { Select, type SelectOption } from "@/components/Select";
 import { CountryMultiSelect } from "@/components/CountryMultiSelect";
 import { CreativeMedia } from "@/components/CreativeMedia";
-import { VideoLightbox } from "@/components/VideoLightbox";
+import { VideoLightbox, type PlayRequest } from "@/components/VideoLightbox";
 import { EmptyState } from "@/components/EmptyState";
 import { Search } from "lucide-react";
 import { ajouterAuxProduits } from "./actions";
@@ -110,7 +110,7 @@ export function SpyClient({
   const [ads, setAds] = useState<SpyAd[]>([]);
   const [cached, setCached] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [playing, setPlaying] = useState<{ url: string; adLibraryUrl?: string } | null>(null);
+  const [playing, setPlaying] = useState<PlayRequest | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [limit, setLimit] = useState(DEFAULT_LIMIT);
   const [progress, setProgress] = useState(0);
@@ -504,11 +504,25 @@ export function SpyClient({
         <VideoLightbox
           url={playing.url}
           adLibraryUrl={playing.adLibraryUrl}
+          adId={playing.adId}
+          hlsUrl={playing.hlsUrl}
+          sourceUrl={playing.sourceUrl}
           onClose={() => setPlaying(null)}
         />
       )}
     </div>
   );
+}
+
+/** Demande de lecture d'une pub : HLS transcodé si connu, source Meta sinon. */
+function playRequest(ad: SpyAd, url: string): PlayRequest {
+  return {
+    url,
+    adId: ad.ad_archive_id,
+    hlsUrl: ad.media_hls_url ?? null,
+    sourceUrl: ad.media_source_url ?? ad.media_url ?? url,
+    adLibraryUrl: ad.ad_library_url,
+  };
 }
 
 function ConfirmSearch({
@@ -621,7 +635,7 @@ export function SpyCard({
 }: {
   ad: SpyAd;
   onAnalyze?: (ad: SpyAd) => void;
-  onPlay?: (v: { url: string; adLibraryUrl?: string }) => void;
+  onPlay?: (v: PlayRequest) => void;
 }) {
   const [pending, startTransition] = useTransition();
   const [followed, setFollowed] = useState(false);
@@ -676,7 +690,7 @@ export function SpyCard({
         alt={pageName ?? ""}
         isVideo={ad.media_type === "video"}
         playUrl={ad.media_url}
-        onPlay={(u) => onPlay?.({ url: u, adLibraryUrl: ad.ad_library_url })}
+        onPlay={(u) => onPlay?.(playRequest(ad, u))}
       >
         <span
           className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-semibold ${scoreBadge(ad.score_label)}`}
@@ -791,7 +805,7 @@ export function SpyCard({
           {ad.media_type === "video" && ad.media_url && (
             <div className="flex gap-2">
               <button
-                onClick={() => onPlay?.({ url: ad.media_url!, adLibraryUrl: ad.ad_library_url })}
+                onClick={() => onPlay?.(playRequest(ad, ad.media_url!))}
                 className="border-border hover:bg-input flex flex-1 items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors"
               >
                 <Icon name="play" size={12} /> Regarder

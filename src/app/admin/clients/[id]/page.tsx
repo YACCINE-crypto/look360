@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { planLabel, formatCredits } from "@/lib/billing";
+import { effectiveStatus, planLabel, formatCredits } from "@/lib/billing";
 import { Icon } from "@/components/Icon";
 import { grantCredits, setPlan, setSuspended } from "../actions";
 
@@ -51,6 +51,7 @@ export default async function AdminClientDetailPage({
   const d = (data ?? {}) as Detail;
   const c = d.client;
   if (!c) notFound();
+  const st = effectiveStatus(c);
 
   return (
     <div className="space-y-5">
@@ -74,14 +75,14 @@ export default async function AdminClientDetailPage({
             <span className="bg-secondary text-accent rounded-full px-2.5 py-1 text-xs font-semibold">
               {planLabel(c.plan)}
             </span>
-            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${c.suspended ? "bg-danger-bg text-danger" : c.status === "active" ? "bg-success-bg text-success" : "bg-input text-muted-foreground"}`}>
-              {c.suspended ? "Suspendu" : c.status === "active" ? "Abonnement actif" : c.status === "expired" ? "Abonnement expiré" : c.status}
+            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${c.suspended ? "bg-danger-bg text-danger" : st === "active" ? "bg-success-bg text-success" : "bg-input text-muted-foreground"}`}>
+              {c.suspended ? "Suspendu" : st === "active" ? "Abonnement actif" : st === "expired" ? "Abonnement expiré" : st}
             </span>
           </div>
         </div>
         {c.current_period_end && (
           <p className="text-muted-foreground mt-2 text-xs">
-            {c.status === "active" ? "Prochaine échéance : " : "Abonnement terminé le "}
+            {st === "active" ? "Prochaine échéance : " : "Abonnement terminé le "}
             <span className="text-fg font-medium">
               {new Date(c.current_period_end).toLocaleDateString("fr-FR")}
             </span>

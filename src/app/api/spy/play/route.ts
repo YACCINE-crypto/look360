@@ -1,224 +1,116 @@
-import { createHash } from "crypto";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { accountSuspended } from "@/lib/accountGuard";
 import { isAllowedMediaUrl } from "@/lib/mediaHosts";
+import { getSubscription } from "@/lib/credits";
+import { planLimits } from "@/lib/billing";
+import {
+  getOrCreateStream,
+  streamConfigured,
+  streamKey,
+  streamStatus,
+  uploadStream,
+} from "@/lib/bunnyStream";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+// L'upload vers le service de streaming tourne APRÈS la réponse (after()) et
+// dispose de cette durée : téléchargement de la créative + envoi.
+export const maxDuration = 120;
 
 /**
- * Résolveur de flux vidéo optimisé (transcodage H.264 web-safe côté serveur).
- * But : certaines vidéos sources (CDN Meta) ont un codec que le navigateur ne
- * sait pas afficher (image noire, son seul). On les fait retranscoder par le
- * service de streaming (config via variables d'environnement) puis on renvoie
- * une URL HLS qui joue partout.
+ * Résolveur de lecture vidéo (transcodage H.264/HLS côté service de streaming).
+ * Les créatives Meta (fbcdn) sont souvent des pistes DASH illisibles en direct
+ * (écran noir) : on les transcode une fois, puis tout le monde lit le flux HLS.
  *
- * - GET ?url=<source>  → crée/retrouve la vidéo transcodée, renvoie {hls,status}
- * - GET ?guid=<id>     → statut de transcodage (polling client)
+ * - GET ?url=<source>[&ad=<ad_archive_id>] → retrouve ou lance le transcodage,
+ *   renvoie { configured, guid, ready, hls, failed }. Idempotent (même vidéo
+ *   source = même transcodage, voir lib/bunnyStream).
+ * - GET ?guid=<id>  → statut d'un transcodage en cours (polling client).
+ * - GET ?diag=1     → diagnostic sans aucune valeur secrète.
  *
- * Si le service n'est pas configuré → { configured:false } et le client
- * retombe sur la lecture directe / hls.js. Aucun nom de prestataire n'est
- * exposé côté client (clés + hôtes en variables d'env uniquement).
+ * Créer un transcodage coûte : réservé aux offres payantes, ou aux vidéos du
+ * feed commun (déjà transcodées par le cron, sinon complétées ici).
  */
 
 const API = "https://video.bunnycdn.com";
-const LIBRARY = process.env.BUNNY_STREAM_LIBRARY_ID;
-const KEY = process.env.BUNNY_STREAM_API_KEY;
-const CDN_RAW = process.env.BUNNY_STREAM_CDN_HOST; // ex. vz-xxxx.b-cdn.net
-// Nettoyage : tolère "https://…" et les "/" en trop → hôte nu.
-const CDN = (CDN_RAW || "").replace(/^https?:\/\//i, "").replace(/\/+$/, "");
 
-// Dédoublonnage best-effort par instance : source → guid (évite de recréer
-// une vidéo à chaque lecture).
-const cache = new Map<string, string>();
-
-function configured(): boolean {
-  return Boolean(LIBRARY && KEY && CDN);
-}
-function hlsUrl(guid: string): string {
-  return `https://${CDN}/${guid}/playlist.m3u8`;
-}
-// Sources Meta + nos archives média (CDN de stockage, hôte exact). Les
-// créatives du feed commun ont leur URL réécrite vers le CDN d'archive : elles
-// doivent aussi pouvoir être transcodées pour une lecture fiable.
-function allowedSource(u: string): boolean {
-  return isAllowedMediaUrl(u, { archive: true });
-}
-
-// Titre déterministe par source → permet de RETROUVER une vidéo déjà transcodée
-// (même sur une autre instance serverless / après un cold start) au lieu d'en
-// recréer une à chaque lecture (évite les transcodages/coûts en double).
-function titleFor(source: string): string {
-  return `look360:${createHash("sha1").update(source).digest("hex")}`;
-}
-
-// Recherche une vidéo déjà créée pour cette source (par son titre déterministe).
-async function findExistingGuid(source: string): Promise<string | null> {
-  const title = titleFor(source);
-  try {
-    const r = await fetch(
-      `${API}/library/${LIBRARY}/videos?search=${encodeURIComponent(title)}&itemsPerPage=20&page=1`,
-      { headers: { AccessKey: KEY as string, accept: "application/json" }, cache: "no-store" },
-    );
-    if (!r.ok) return null;
-    const j = (await r.json()) as { items?: { guid?: string; title?: string }[] };
-    const hit = (j.items || []).find((v) => v.title === title && v.guid);
-    return hit?.guid ?? null;
-  } catch {
-    return null;
-  }
-}
-async function statusOf(guid: string): Promise<number | null> {
-  const r = await fetch(`${API}/library/${LIBRARY}/videos/${guid}`, {
-    headers: { AccessKey: KEY as string, accept: "application/json" },
-    cache: "no-store",
-  });
-  if (!r.ok) return null;
-  const j = (await r.json()) as { status?: number };
-  return typeof j.status === "number" ? j.status : null;
-}
-// Bunny status: 4 = Finished (encodé, prêt). >=3 = premières renditions dispo.
-function readyFrom(status: number | null): boolean {
-  return status !== null && status >= 4;
+async function allowedToTranscode(userId: string, source: string, adId: string | null): Promise<boolean> {
+  const sub = await getSubscription(userId);
+  if (planLimits(sub?.plan).monthlySearches > 0) return true;
+  // Offre gratuite : seulement une créative du feed commun, et la bonne vidéo.
+  if (!adId || !/^\d{1,32}$/.test(adId)) return false;
+  const admin = createAdminClient();
+  const { data } = await admin.from("feed_ads").select("payload").eq("ad_archive_id", adId).maybeSingle();
+  const p = (data?.payload ?? null) as { media_url?: string | null; media_source_url?: string | null } | null;
+  const key = streamKey(source);
+  return Boolean(
+    key && p && [p.media_source_url, p.media_url].some((u) => u && streamKey(u) === key),
+  );
 }
 
 export async function GET(request: Request) {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
-  if (!data?.claims?.sub) {
+  const userId = data?.claims?.sub as string | undefined;
+  if (!userId) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-  if (await accountSuspended(data.claims.sub as string)) {
+  if (await accountSuspended(userId)) {
     return NextResponse.json({ error: "compte suspendu" }, { status: 403 });
   }
-  if (!configured()) {
+  if (!streamConfigured()) {
     return NextResponse.json({ configured: false });
   }
 
   const sp = new URL(request.url).searchParams;
   const guidParam = sp.get("guid");
   const source = sp.get("url");
+  const adId = sp.get("ad");
 
-  // Diagnostic sécurisé (aucune valeur secrète renvoyée) : vérifie que la clé +
-  // la librairie Stream répondent, et la forme de l'hôte CDN.
   if (sp.get("diag") === "1") {
     let bunnyListStatus = 0;
     try {
-      const r = await fetch(`${API}/library/${LIBRARY}/videos?itemsPerPage=1&page=1`, {
-        headers: { AccessKey: KEY as string, accept: "application/json" },
+      const lib = process.env.BUNNY_STREAM_LIBRARY_ID;
+      const r = await fetch(`${API}/library/${lib}/videos?itemsPerPage=1&page=1`, {
+        headers: { AccessKey: process.env.BUNNY_STREAM_API_KEY as string, accept: "application/json" },
         cache: "no-store",
       });
       bunnyListStatus = r.status; // 200 = clé+librairie OK · 401 = clé · 404 = librairie
     } catch {
       bunnyListStatus = -1;
     }
-    return NextResponse.json({
-      configured: configured(),
-      libraryIdLen: (LIBRARY || "").length,
-      keyLen: (KEY || "").length,
-      cdn: {
-        endsWithBCdn: CDN.endsWith(".b-cdn.net"),
-        startsWithVz: CDN.startsWith("vz-"),
-        hadProtocolOrSlash: /^https?:\/\//i.test(CDN_RAW || "") || /\/$/.test(CDN_RAW || ""),
-      },
-      bunnyListStatus,
-    });
+    return NextResponse.json({ configured: true, bunnyListStatus });
   }
 
   try {
-    // Polling d'un transcodage en cours.
     if (guidParam) {
-      // GUID Bunny = UUID : rien d'autre n'est interpolé dans l'URL de l'API.
-      if (!/^[0-9a-f-]{36}$/i.test(guidParam)) {
-        return NextResponse.json({ error: "guid invalide" }, { status: 400 });
-      }
-      const status = await statusOf(guidParam);
-      const ready = readyFrom(status);
-      return NextResponse.json({
-        configured: true,
-        guid: guidParam,
-        status,
-        ready,
-        error: status === 5 || status === 6,
-        hls: ready ? hlsUrl(guidParam) : null,
-      });
+      const info = await streamStatus(guidParam);
+      if (!info) return NextResponse.json({ error: "guid invalide" }, { status: 400 });
+      return NextResponse.json({ configured: true, ...info });
     }
 
-    if (!source) {
-      return NextResponse.json({ error: "url requise" }, { status: 400 });
-    }
-    if (!allowedSource(source)) {
+    if (!source) return NextResponse.json({ error: "url requise" }, { status: 400 });
+    if (!isAllowedMediaUrl(source, { archive: true })) {
       return NextResponse.json({ error: "source non autorisée" }, { status: 400 });
     }
+    if (!(await allowedToTranscode(userId, source, adId))) {
+      // Pas de transcodage pour ce compte : le lecteur tente la lecture directe.
+      return NextResponse.json({ configured: true, allowed: false });
+    }
 
-    // Déjà connu (cache instance) ou déjà transcodé (recherche par titre) →
-    // renvoyer son statut sans recréer de vidéo.
-    const known = cache.get(source) ?? (await findExistingGuid(source));
-    if (known) {
-      cache.set(source, known);
-      const status = await statusOf(known);
-      const ready = readyFrom(status);
-      return NextResponse.json({
-        configured: true,
-        guid: known,
-        status,
-        ready,
-        error: status === 5 || status === 6,
-        hls: ready ? hlsUrl(known) : null,
+    const r = await getOrCreateStream(source);
+    if (!r) return NextResponse.json({ configured: true, failed: true }, { status: 502 });
+    if (r.needsUpload) {
+      const { guid } = r.info;
+      after(async () => {
+        const ok = await uploadStream(guid, source);
+        if (!ok) console.error("[spy/play] upload KO", guid);
       });
     }
-
-    // Créer la vidéo (titre déterministe) puis lancer la récupération depuis la
-    // source (transcodage).
-    const create = await fetch(`${API}/library/${LIBRARY}/videos`, {
-      method: "POST",
-      headers: {
-        AccessKey: KEY as string,
-        "Content-Type": "application/json",
-        accept: "application/json",
-      },
-      body: JSON.stringify({ title: titleFor(source) }),
-    });
-    if (!create.ok) {
-      console.error("[spy/play] create KO", create.status, (await create.text().catch(() => "")).slice(0, 300));
-      return NextResponse.json({ configured: true, error: true }, { status: 502 });
-    }
-    const { guid } = (await create.json()) as { guid: string };
-    cache.set(source, guid);
-
-    // Lance la récupération depuis la source (Bunny télécharge + transcode).
-    // On passe un User-Agent de navigateur : certaines origines (Meta) refusent
-    // les fetch sans UA.
-    const fetchRes = await fetch(`${API}/library/${LIBRARY}/videos/${guid}/fetch`, {
-      method: "POST",
-      headers: {
-        AccessKey: KEY as string,
-        "Content-Type": "application/json",
-        accept: "application/json",
-      },
-      body: JSON.stringify({
-        url: source,
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36",
-        },
-      }),
-    });
-    if (!fetchRes.ok) {
-      console.error("[spy/play] fetch KO", fetchRes.status, (await fetchRes.text().catch(() => "")).slice(0, 300));
-    }
-
-    return NextResponse.json({
-      configured: true,
-      guid,
-      status: 0,
-      ready: false,
-      error: false,
-      hls: null,
-    });
+    return NextResponse.json({ configured: true, allowed: true, ...r.info });
   } catch {
-    return NextResponse.json({ configured: true, error: true }, { status: 502 });
+    return NextResponse.json({ configured: true, failed: true }, { status: 502 });
   }
 }

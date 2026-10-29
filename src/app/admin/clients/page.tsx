@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { planLabel } from "@/lib/billing";
+import { effectiveStatus, planLabel } from "@/lib/billing";
 import { Icon } from "@/components/Icon";
 
 export const dynamic = "force-dynamic";
@@ -171,21 +171,28 @@ export default async function AdminClientsPage({
                     </span>
                   </td>
                   <td className="px-4 py-3">
+                    {(() => {
+                      const st = effectiveStatus(r);
+                      return (
+                        <>
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                        r.status === "active"
+                        st === "active"
                           ? "bg-success-bg text-success"
                           : "bg-input text-muted-foreground"
                       }`}
                     >
-                      {r.status === "active" ? "Actif" : r.status === "expired" ? "Expiré" : r.status}
+                      {st === "active" ? "Actif" : st === "expired" ? "Expiré" : st}
                     </span>
                     {r.current_period_end && (
                       <span className="text-muted-foreground/70 mt-0.5 block text-[11px]">
-                        {r.status === "active" ? "Échéance " : "Fin "}
+                        {st === "active" ? "Échéance " : "Fin "}
                         {new Date(r.current_period_end).toLocaleDateString("fr-FR")}
                       </span>
                     )}
+                        </>
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-3">
                     {(() => {
