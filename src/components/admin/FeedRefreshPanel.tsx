@@ -21,6 +21,23 @@ export function FeedRefreshPanel({ stats }: { stats: FeedStats }) {
   const router = useRouter();
   const [busy, setBusy] = useState<null | "refresh" | "media">(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [diag, setDiag] = useState<string | null>(null);
+
+  async function testStorage() {
+    setDiag("Test du stockage…");
+    try {
+      const r = await fetch("/api/admin/storage-diag", { method: "POST" });
+      const j = await r.json();
+      if (!j.configured) return setDiag("Stockage non configuré (variables BUNNY_STORAGE_* manquantes).");
+      if (j.putStatus >= 200 && j.putStatus < 300) return setDiag(`Stockage OK (écriture ${j.putStatus}, suppression ${j.deleteStatus}).`);
+      if (j.putStatus === 401 || j.putStatus === 403)
+        return setDiag(`Refusé (${j.putStatus}) : mot de passe de la zone ou nom de zone incorrect. Hôte : ${j.host}.`);
+      if (j.putStatus === -1) return setDiag(`Hôte injoignable (${j.host}) : vérifie BUNNY_STORAGE_REGION.`);
+      setDiag(`Réponse inattendue du stockage : ${j.putStatus} (hôte ${j.host}).`);
+    } catch {
+      setDiag("Test impossible.");
+    }
+  }
 
   async function run(mode: "refresh" | "media") {
     setBusy(mode);
@@ -79,6 +96,16 @@ export function FeedRefreshPanel({ stats }: { stats: FeedStats }) {
         </div>
       </div>
       {msg && <p className="text-fg-2 mt-3 text-sm">{msg}</p>}
+      <div className="border-border mt-4 flex flex-wrap items-center gap-3 border-t pt-4">
+        <button
+          type="button"
+          onClick={testStorage}
+          className="border-border text-fg hover:bg-input inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border px-4 text-sm font-semibold"
+        >
+          <Icon name="image" size={15} /> Tester le stockage des images
+        </button>
+        {diag && <p className="text-fg-2 text-sm">{diag}</p>}
+      </div>
     </section>
   );
 }
