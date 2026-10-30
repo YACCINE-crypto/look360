@@ -114,6 +114,8 @@ export default async function SauvegardesPage() {
                           sourceUrl={ad.media_source_url}
                           adId={ad.ad_archive_id}
                           adLibraryUrl={ad.ad_library_url}
+                          pageName={pageName}
+                          adText={adText}
                           className="border-border hover:bg-input flex flex-1 items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors"
                         />
                       )}

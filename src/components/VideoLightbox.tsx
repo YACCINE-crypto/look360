@@ -49,7 +49,7 @@ function frameIsBlack(v: HTMLVideoElement, canvas: HTMLCanvasElement): boolean |
 }
 
 /**
- * Lecteur vidéo des pubs — grande modale centrée (mobile + desktop).
+ * Lecteur vidéo des pubs — fiche compacte façon Ad Library, centrée (mobile + desktop).
  *
  * Ordre de lecture (jamais d'écran noir) :
  *  1. Flux HLS transcodé déjà connu (`hlsUrl`) → lecture immédiate (hls.js).
@@ -65,6 +65,10 @@ function frameIsBlack(v: HTMLVideoElement, canvas: HTMLCanvasElement): boolean |
 /** Ce qu'une carte transmet au lecteur. */
 export type PlayRequest = {
   url: string;
+  pageName?: string | null;
+  adText?: string | null;
+  ctaText?: string | null;
+  landingDomain?: string | null;
   adId?: string | null;
   hlsUrl?: string | null;
   sourceUrl?: string | null;
@@ -77,9 +81,17 @@ export function VideoLightbox({
   hlsUrl,
   sourceUrl,
   adLibraryUrl,
+  pageName,
+  adText,
+  ctaText,
+  landingDomain,
   onClose,
 }: {
   url: string;
+  pageName?: string | null;
+  adText?: string | null;
+  ctaText?: string | null;
+  landingDomain?: string | null;
   adId?: string | null;
   hlsUrl?: string | null;
   sourceUrl?: string | null;
@@ -286,13 +298,44 @@ export function VideoLightbox({
   }, [url, hlsUrl, raw, adId]);
 
   const showVeil = phase !== "ok";
-  // Grand lecteur : portrait borné par la hauteur, paysage large.
-  const maxWidth =
-    portrait === false ? "min(94vw, 1100px)" : "min(92vw, calc(88vh * 9 / 16))";
+  const name = pageName?.trim() || "Publicité";
+
+  const actions = (
+    <div className="border-border flex flex-wrap gap-2 border-t p-3">
+      {adLibraryUrl && (
+        <a
+          href={adLibraryUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="border-border text-fg hover:bg-input inline-flex min-h-[38px] flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 text-sm font-semibold transition-colors"
+        >
+          <Icon name="external" size={15} /> Ad Library
+        </a>
+      )}
+      {raw &&
+        (canDownload ? (
+          <a
+            href={downloadHref(raw)}
+            className="bg-accent text-accent-on inline-flex min-h-[38px] flex-1 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-semibold"
+          >
+            <Icon name="download" size={15} /> Télécharger
+          </a>
+        ) : (
+          <Link
+            href="/offres"
+            className="bg-input text-muted-foreground inline-flex min-h-[38px] flex-1 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-semibold"
+          >
+            <Icon name="lock" size={15} /> Télécharger (Starter)
+          </Link>
+        ))}
+    </div>
+  );
 
   // Rendu dans <body> (portail) : un parent animé (transform/filter) ferait de
   // « fixed » une position relative à lui → lecteur décalé hors de l'écran,
   // seul le son restait. Ici, toujours centré sur toute la fenêtre.
+  // Présentation façon fiche Ad Library : carte compacte (en-tête page,
+  // texte, média borné en hauteur, actions), pas de plein écran.
   return createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6"
@@ -300,59 +343,50 @@ export function VideoLightbox({
       aria-modal="true"
       aria-label="Lecture de la vidéo"
     >
-      <div className="absolute inset-0 bg-black/85 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      <div className="absolute inset-0 bg-black/70" onClick={onClose} aria-hidden="true" />
 
-      <div className="relative z-10 w-full" style={{ maxWidth: phase === "error" ? "min(92vw, 28rem)" : maxWidth }}>
-        <button
-          onClick={onClose}
-          className="bg-surface text-fg shadow-raised absolute -right-2 -top-2 z-20 grid h-10 w-10 place-items-center rounded-full sm:-right-4 sm:-top-4"
-          aria-label="Fermer"
-        >
-          <Icon name="x" size={18} />
-        </button>
+      <div
+        className="bg-surface shadow-raised relative z-10 flex max-h-[94vh] w-full flex-col overflow-hidden rounded-xl"
+        style={{ maxWidth: portrait === false ? "min(94vw, 34rem)" : "min(92vw, 26rem)" }}
+      >
+        {/* En-tête : page + « Sponsorisé » + fermer */}
+        <div className="flex items-center gap-2.5 px-3 pb-2 pt-3">
+          <span className="bg-accent text-accent-on grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold">
+            {name.charAt(0).toUpperCase()}
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-fg truncate text-sm font-semibold" title={name}>
+              {name}
+            </p>
+            <p className="text-muted-foreground text-xs">Sponsorisé</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-fg-2 hover:bg-input grid h-9 w-9 shrink-0 place-items-center rounded-full transition-colors"
+            aria-label="Fermer"
+          >
+            <Icon name="x" size={18} />
+          </button>
+        </div>
+
+        {adText && (
+          <p className="text-fg line-clamp-3 whitespace-pre-line px-3 pb-2 text-sm">{adText}</p>
+        )}
 
         {phase === "error" ? (
-          <div className="bg-surface rounded-xl p-6 text-center">
+          <div className="bg-input px-6 py-8 text-center">
             <span className="bg-danger-bg text-danger mx-auto mb-3 grid h-12 w-12 place-items-center rounded-xl">
               <Icon name="eyeOff" size={24} />
             </span>
             <p className="text-fg font-semibold">Lecture impossible</p>
             <p className="text-muted-foreground mx-auto mt-1 max-w-xs text-sm">{status}</p>
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
-              {adLibraryUrl && (
-                <a
-                  href={adLibraryUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-accent text-accent-on inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-lg px-4 text-sm font-semibold"
-                >
-                  <Icon name="external" size={16} /> Ouvrir dans Ad Library
-                </a>
-              )}
-              {raw &&
-                (canDownload ? (
-                  <a
-                    href={downloadHref(raw)}
-                    className="border-border text-fg inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-lg border px-4 text-sm font-semibold"
-                  >
-                    <Icon name="download" size={16} /> Télécharger
-                  </a>
-                ) : (
-                  <Link
-                    href="/offres"
-                    className="bg-input text-muted-foreground inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-lg px-4 text-sm font-semibold"
-                  >
-                    <Icon name="lock" size={16} /> Télécharger (offre Starter)
-                  </Link>
-                ))}
-            </div>
           </div>
         ) : (
-          <div className="shadow-raised relative overflow-hidden rounded-xl bg-black">
+          <div className="relative bg-black">
             {showVeil && (
               <div className="absolute inset-0 z-10 grid place-items-center bg-black">
                 <div className="flex flex-col items-center gap-3 px-6 text-center text-white/90">
-                  <span className="h-9 w-9 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  <span className="h-8 w-8 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                   <span className="text-sm">{status}</span>
                 </div>
               </div>
@@ -369,35 +403,27 @@ export function VideoLightbox({
                 if (v && v.videoWidth > 0) setPortrait(v.videoHeight > v.videoWidth);
               }}
               onError={() => handlersRef.current.onError()}
-              className="mx-auto block max-h-[88vh] w-full object-contain"
-              style={{ aspectRatio: portrait === null ? "9 / 16" : undefined }}
+              className="mx-auto block w-full object-contain"
+              style={{ height: portrait === false ? "auto" : "min(56vh, 32rem)" }}
             />
             <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
           </div>
         )}
 
-        {phase === "ok" && (
-          <div className="mt-3 flex flex-wrap justify-center gap-2">
-            {canDownload && raw && (
-              <a
-                href={downloadHref(raw)}
-                className="bg-surface/90 text-fg inline-flex min-h-[38px] items-center gap-1.5 rounded-lg px-4 text-sm font-semibold backdrop-blur"
-              >
-                <Icon name="download" size={15} /> Télécharger
-              </a>
-            )}
-            {adLibraryUrl && (
-              <a
-                href={adLibraryUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-surface/90 text-fg inline-flex min-h-[38px] items-center gap-1.5 rounded-lg px-4 text-sm font-semibold backdrop-blur"
-              >
-                <Icon name="external" size={15} /> Ad Library
-              </a>
+        {(landingDomain || ctaText) && (
+          <div className="bg-input flex items-center gap-3 px-3 py-2.5">
+            <p className="text-muted-foreground min-w-0 flex-1 truncate text-xs uppercase">
+              {landingDomain ?? ""}
+            </p>
+            {ctaText && (
+              <span className="bg-surface border-border text-fg shrink-0 rounded-md border px-3 py-1.5 text-xs font-semibold">
+                {ctaText}
+              </span>
             )}
           </div>
         )}
+
+        {actions}
       </div>
     </div>,
     document.body,

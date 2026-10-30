@@ -13,8 +13,12 @@ export function WatchVideoButton({
   sourceUrl,
   adId,
   adLibraryUrl,
+  pageName,
+  adText,
   className,
 }: {
+  pageName?: string | null;
+  adText?: string | null;
   url: string;
   sourceUrl?: string | null;
   adId?: string | null;
@@ -35,6 +39,8 @@ export function WatchVideoButton({
           sourceUrl={sourceUrl ?? (isHls ? null : url)}
           adId={adId}
           adLibraryUrl={adLibraryUrl ?? undefined}
+          pageName={pageName}
+          adText={adText}
           onClose={() => setOpen(false)}
         />
       )}
