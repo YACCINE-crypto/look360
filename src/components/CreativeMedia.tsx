@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Icon } from "./Icon";
 
 /* eslint-disable @next/next/no-img-element */
@@ -29,19 +30,26 @@ export function CreativeMedia({
   children?: React.ReactNode;
 }) {
   const aspect = ratio === "portrait" ? "aspect-[4/5]" : "aspect-square";
+  // Lien d'image expiré (CDN Meta) ou introuvable → aperçu propre, jamais de
+  // cadre blanc vide.
+  const [broken, setBroken] = useState<string | null>(null);
+  const showImage = Boolean(image) && broken !== image;
   const canPlay = isVideo && !!playUrl && !!onPlay;
 
   return (
     <div className={`bg-input relative w-full overflow-hidden ${aspect}`}>
-      {image ? (
+      {showImage ? (
         <img
-          src={image}
+          src={image!}
           alt={alt}
+          loading="lazy"
+          onError={() => setBroken(image)}
           className="h-full w-full object-cover object-center transition-transform duration-500 ease-out group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
         />
       ) : (
-        <div className="text-muted-foreground grid h-full w-full place-items-center">
-          <Icon name="image" size={26} />
+        <div className="text-muted-foreground flex h-full w-full flex-col items-center justify-center gap-1.5 px-4 text-center">
+          <Icon name={isVideo ? "play" : "image"} size={26} />
+          {image && <span className="text-xs">Aperçu indisponible</span>}
         </div>
       )}
 

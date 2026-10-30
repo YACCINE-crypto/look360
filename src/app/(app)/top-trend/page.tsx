@@ -45,7 +45,26 @@ export default async function TopTrendPage({
       if (!prev || ad.score > prev.score) map.set(ad.ad_archive_id, ad);
     }
   }
-  const ads = [...map.values()].sort((a, b) => b.score - a.score).slice(0, 50);
+  const top = [...map.values()].sort((a, b) => b.score - a.score).slice(0, 50);
+
+  // Les liens Meta (miniatures, vidéos) expirent en quelques jours : pour les
+  // pubs déjà archivées par le feed, on prend la miniature archivée et le flux
+  // vidéo transcodé.
+  const { data: archived } = await admin
+    .from("feed_ads")
+    .select("ad_archive_id, thumbnail_cdn_url, media_cdn_url")
+    .in("ad_archive_id", top.map((a) => a.ad_archive_id));
+  const arch = new Map((archived ?? []).map((r) => [r.ad_archive_id, r]));
+  const ads = top.map((ad) => {
+    const a = arch.get(ad.ad_archive_id);
+    if (!a) return ad;
+    return {
+      ...ad,
+      thumbnail_url: a.thumbnail_cdn_url ?? ad.thumbnail_url,
+      media_hls_url: a.media_cdn_url ?? ad.media_hls_url ?? null,
+      media_source_url: ad.media_source_url ?? ad.media_url,
+    };
+  });
 
   return (
     <div className="space-y-4">

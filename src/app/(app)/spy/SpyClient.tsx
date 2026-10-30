@@ -19,7 +19,6 @@ import {
   landingKind,
   LANDING_LABEL,
   cleanField,
-  countryLabel,
   type SpyAd,
 } from "@/lib/spy";
 import { useCanDownload } from "@/components/PlanProvider";
@@ -111,7 +110,6 @@ export function SpyClient({
   const [cached, setCached] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [playing, setPlaying] = useState<PlayRequest | null>(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
   const [limit, setLimit] = useState(DEFAULT_LIMIT);
   const [progress, setProgress] = useState(0);
   const router = useRouter();
@@ -120,7 +118,6 @@ export function SpyClient({
 
   const euDispo = countries.some(isEUCountry);
   const markets = Math.max(1, countries.length);
-  const remaining = Math.max(0, searchesLimit - used);
 
   const triOpts: SelectOption[] = useMemo(
     () => [
@@ -172,7 +169,6 @@ export function SpyClient({
   }
 
   async function runSearch(searchLimit = limit) {
-    setConfirmOpen(false);
     setStatus("loading");
     setError(null);
     setProgress(0);
@@ -261,8 +257,8 @@ export function SpyClient({
       setStatus("error");
       return;
     }
-    // Confirmation du coût AVANT toute recherche payante.
-    setConfirmOpen(true);
+    // Recherche lancée immédiatement (le quota restant reste visible en haut).
+    runSearch();
   }
 
   function analyze(ad: SpyAd) {
@@ -489,17 +485,6 @@ export function SpyClient({
         </>
       )}
 
-      {confirmOpen && (
-        <ConfirmSearch
-          countries={countries}
-          markets={markets}
-          maxMarkets={maxMarkets}
-          remaining={remaining}
-          searchesLimit={searchesLimit}
-          onConfirm={() => runSearch()}
-          onCancel={() => setConfirmOpen(false)}
-        />
-      )}
       {playing && (
         <VideoLightbox
           url={playing.url}
@@ -533,96 +518,6 @@ function playRequest(ad: SpyAd, url: string): PlayRequest {
   };
 }
 
-function ConfirmSearch({
-  countries,
-  markets,
-  maxMarkets,
-  remaining,
-  searchesLimit,
-  onConfirm,
-  onCancel,
-}: {
-  countries: string[];
-  markets: number;
-  maxMarkets: number;
-  remaining: number;
-  searchesLimit: number;
-  onConfirm: () => void;
-  onCancel: () => void;
-}) {
-  const tooManyMarkets = maxMarkets > 0 && markets > maxMarkets;
-  const noQuota = searchesLimit === 0 || remaining < 1;
-  const blocked = tooManyMarkets || noQuota;
-  const blockMsg = tooManyMarkets
-    ? `Ton offre permet jusqu'à ${maxMarkets} marché${maxMarkets > 1 ? "s" : ""} par recherche. Retire des marchés ou passe à une offre supérieure.`
-    : searchesLimit === 0
-      ? "Les recherches personnelles sont réservées aux offres payantes. Passe en Starter pour lancer tes propres recherches."
-      : "Tu as atteint ta limite de recherches ce mois-ci. Passe à une offre supérieure pour continuer.";
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onCancel} aria-hidden="true" />
-      <div className="bg-surface border-border relative z-10 w-full max-w-sm rounded-xl border p-5 shadow-xl">
-        <div className="mb-3 flex items-center gap-2">
-          <span className="bg-secondary text-accent grid h-9 w-9 place-items-center rounded-full">
-            <Icon name="search" size={16} />
-          </span>
-          <h3 className="font-bold">Confirmer la recherche</h3>
-        </div>
-        <p className="text-muted-foreground text-sm">
-          Recherche sur <b className="text-fg">{markets} marché{markets > 1 ? "s" : ""}</b> — continuer ?
-        </p>
-        {searchesLimit > 0 && (
-          <p className="text-muted-foreground mt-1 text-xs">
-            Il te reste <b className="text-fg">{nf(remaining)}</b> recherche{remaining > 1 ? "s" : ""} ce mois.
-            Gratuit si la recherche est déjà en cache.
-          </p>
-        )}
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {countries.map((c) => (
-            <span key={c} className="bg-input text-muted-foreground rounded-full px-2 py-0.5 text-[11px] font-medium">
-              {countryLabel(c)}
-            </span>
-          ))}
-        </div>
-
-        {blocked ? (
-          <div className="mt-4 space-y-3">
-            <div className="bg-danger-bg text-danger rounded-md p-3 text-sm">{blockMsg}</div>
-            <div className="flex gap-2">
-              <Link
-                href="/offres"
-                className="bg-accent text-accent-on inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-md px-4 text-sm font-semibold"
-              >
-                Voir les offres
-              </Link>
-              <button
-                onClick={onCancel}
-                className="bg-input text-fg inline-flex min-h-[44px] items-center justify-center rounded-md px-4 text-sm font-semibold"
-              >
-                Annuler
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="mt-5 flex gap-2">
-            <button
-              onClick={onConfirm}
-              className="bg-accent text-accent-on inline-flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
-            >
-              <Icon name="search" size={16} /> Continuer
-            </button>
-            <button
-              onClick={onCancel}
-              className="bg-input text-fg inline-flex min-h-[44px] items-center justify-center rounded-md px-4 text-sm font-semibold"
-            >
-              Annuler
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 function scoreBadge(label: SpyAd["score_label"]): string {
   if (label === "Fort potentiel") return "bg-success-bg text-success";
@@ -839,7 +734,7 @@ export function SpyCard({
 
           <form action={ajouterAuxProduits}>
             <input type="hidden" name="nom" value={pageName ?? ad.title ?? ""} />
-            <input type="hidden" name="image_url" value={ad.thumbnail_url ?? ad.media_url ?? ""} />
+            <input type="hidden" name="image_url" value={ad.thumbnail_url ?? (ad.media_type !== "video" ? ad.media_url : null) ?? ""} />
             <input type="hidden" name="landing_url" value={ad.landing_url ?? ""} />
             <input type="hidden" name="ad_library_url" value={ad.ad_library_url} />
             <input type="hidden" name="ad_text" value={adText ?? ""} />

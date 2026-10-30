@@ -282,3 +282,9 @@ export async function findStream(sourceUrl: string): Promise<StreamInfo | null> 
   const known = await findByTitle(titleFor(key));
   return known ? infoFrom(known.guid, known.status, known.width) : null;
 }
+
+/** Miniature d'une vidéo transcodée à partir de son URL HLS (null sinon). */
+export function streamThumbFromHls(url: string | null | undefined): string | null {
+  if (!url || !isStreamUrl(url) || !/\/playlist\.m3u8(\?|$)/.test(url)) return null;
+  return url.replace(/\/playlist\.m3u8(\?.*)?$/, "/thumbnail.jpg");
+}

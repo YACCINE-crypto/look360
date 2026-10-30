@@ -1,5 +1,6 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import { useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { Select } from "@/components/Select";
@@ -17,6 +18,7 @@ import {
   type TypeAppro,
 } from "@/lib/produits";
 import { margeColorClass } from "@/lib/testing";
+import { uploadMedia } from "@/lib/uploadMedia";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -79,14 +81,11 @@ export function EditProductForm({ produit }: { produit: Produit }) {
     setUploadError(null);
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const r = await fetch("/api/upload", { method: "POST", body: fd });
-      const data = await r.json();
-      if (!r.ok) throw new Error(data?.error || "upload");
-      setImageUrl(data.url);
-    } catch {
-      setUploadError("Échec de l'upload. Réessaie.");
+      // Photo convertie en JPEG (téléphone : HEIC/lourd) puis envoyée au CDN ;
+      // la base ne garde que l'URL renvoyée.
+      setImageUrl(await uploadMedia(file));
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Échec de l'envoi. Réessaie.");
     } finally {
       setUploading(false);
     }
@@ -102,7 +101,8 @@ export function EditProductForm({ produit }: { produit: Produit }) {
         <Icon name="tag" size={15} /> Modifier
       </button>
 
-      {open && (
+      {open &&
+        createPortal(
         <div className="fixed inset-0 z-40 flex justify-end">
           <div className="absolute inset-0 bg-black/30" onClick={() => setOpen(false)} aria-hidden="true" />
           <div className="bg-surface relative z-10 flex h-full w-full max-w-md flex-col overflow-y-auto p-6 shadow-xl">
@@ -313,8 +313,10 @@ export function EditProductForm({ produit }: { produit: Produit }) {
               </div>
             </form>
           </div>
-        </div>
-      )}
+        </div>,
+          document.body,
+        )
+      }
     </>
   );
 }
