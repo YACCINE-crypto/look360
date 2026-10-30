@@ -74,7 +74,7 @@ export async function validerProduit(formData: FormData): Promise<void> {
   const supabase = await createClient();
   await supabase.from("produits").update({ statut: "valide" }).eq("id", id);
   revalidatePath("/testing");
-  revalidatePath("/recherche");
+  revalidatePath("/produits");
   redirect("/testing");
 }
 
@@ -85,6 +85,6 @@ export async function abandonnerProduit(formData: FormData): Promise<void> {
   const supabase = await createClient();
   await supabase.from("produits").update({ statut: "abandonne" }).eq("id", id);
   revalidatePath("/testing");
-  revalidatePath("/recherche");
+  revalidatePath("/produits");
   redirect("/testing");
 }

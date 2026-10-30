@@ -87,7 +87,7 @@ export function AddProductPanel() {
             </p>
 
             <form action={createProduit} className="space-y-4">
-              <input type="hidden" name="redirect_to" value="/recherche" />
+              <input type="hidden" name="redirect_to" value="/produits" />
               <input type="hidden" name="image_url" value={imageUrl} />
 
               {/* Image */}

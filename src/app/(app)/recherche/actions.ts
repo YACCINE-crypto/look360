@@ -27,7 +27,7 @@ export async function createProduit(formData: FormData): Promise<void> {
   const userId = claimsData?.claims?.sub as string | undefined;
   if (!userId) redirect("/login");
 
-  const backTo = String(formData.get("redirect_to") ?? "/recherche");
+  const backTo = String(formData.get("redirect_to") ?? "/produits");
   const nom = str(formData, "nom");
   if (!nom) {
     redirect(`${backTo}?error=nom`);
@@ -68,8 +68,8 @@ export async function createProduit(formData: FormData): Promise<void> {
     redirect(`${backTo}?error=save`);
   }
 
-  revalidatePath("/recherche");
-  revalidatePath("/recherche");
+  revalidatePath("/produits");
+  revalidatePath("/produits");
   redirect(backTo.split("?")[0]);
 }
 
@@ -114,8 +114,8 @@ export async function updateProduit(formData: FormData): Promise<void> {
   if (error) redirect(`/produits/${id}?error=save`);
 
   revalidatePath(`/produits/${id}`);
-  revalidatePath("/recherche");
-  revalidatePath("/recherche");
+  revalidatePath("/produits");
+  revalidatePath("/produits");
   revalidatePath("/testing");
   redirect(`/produits/${id}`);
 }
@@ -129,7 +129,7 @@ export async function setStatut(id: string, statut: Statut): Promise<void> {
     .update({ statut })
     .eq("id", id);
   if (!error) {
-    revalidatePath("/recherche");
+    revalidatePath("/produits");
     revalidatePath("/testing");
   }
 }
@@ -171,7 +171,7 @@ export async function envoyerEnTestAvecSourcing(formData: FormData): Promise<voi
   if (error) {
     redirect(`/produits/${id}/envoyer-test?error=save`);
   }
-  revalidatePath("/recherche");
+  revalidatePath("/produits");
   revalidatePath("/testing");
   redirect(`/testing/${id}`);
 }
@@ -181,7 +181,7 @@ export async function passerEnProduction(formData: FormData): Promise<void> {
   const id = String(formData.get("id") ?? "");
   if (id) {
     await setStatut(id, "production");
-    revalidatePath("/recherche");
+    revalidatePath("/produits");
   }
 }
 
@@ -192,9 +192,9 @@ export async function deleteProduit(formData: FormData): Promise<void> {
   const supabase = await createClient();
   const { error } = await supabase.from("produits").delete().eq("id", id);
   if (!error) {
-    revalidatePath("/recherche");
-    revalidatePath("/recherche");
-    revalidatePath("/recherche");
+    revalidatePath("/produits");
+    revalidatePath("/produits");
+    revalidatePath("/produits");
   }
 }
 
@@ -216,8 +216,8 @@ export async function updatePlanning(formData: FormData): Promise<void> {
     })
     .eq("id", id);
   if (!error) {
-    revalidatePath("/recherche");
-    revalidatePath("/recherche");
+    revalidatePath("/produits");
+    revalidatePath("/produits");
     revalidatePath(`/testing/${id}`);
   }
 }

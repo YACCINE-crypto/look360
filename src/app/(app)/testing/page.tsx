@@ -51,9 +51,9 @@ export default async function TestingPage() {
         <EmptyState
           icon={FlaskConical}
           title="Aucun produit en test"
-          description="Envoie un produit en test depuis la Recherche : closing, marge et verdict s'afficheront ici en direct."
-          ctaHref="/recherche"
-          ctaLabel="Aller à la Recherche"
+          description="Envoie un produit en test depuis Mes produits : closing, marge et verdict s'afficheront ici en direct."
+          ctaHref="/produits"
+          ctaLabel="Aller à Mes produits"
         />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

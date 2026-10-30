@@ -83,11 +83,11 @@ export function ProduitDetailView({ p, tests }: { p: Produit; tests: Test[] }) {
       {/* Fil d'Ariane */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
-          href="/recherche"
+          href="/produits"
           className="text-muted-foreground hover:text-fg flex items-center gap-1 text-sm"
         >
           <Icon name="chevronRight" size={14} className="rotate-180" />
-          Recherche produit
+          Mes produits
         </Link>
         <div className="flex flex-wrap items-center gap-2">
           <EditProductForm produit={p} />
