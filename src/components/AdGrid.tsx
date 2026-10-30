@@ -54,6 +54,10 @@ export function AdGrid({ ads, ranked = false }: { ads: SpyAd[]; ranked?: boolean
           adId={playing.adId}
           hlsUrl={playing.hlsUrl}
           sourceUrl={playing.sourceUrl}
+          pageName={playing.pageName}
+          adText={playing.adText}
+          ctaText={playing.ctaText}
+          landingDomain={playing.landingDomain}
           onClose={() => setPlaying(null)}
         />
       )}

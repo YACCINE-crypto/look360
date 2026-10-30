@@ -507,6 +507,10 @@ export function SpyClient({
           adId={playing.adId}
           hlsUrl={playing.hlsUrl}
           sourceUrl={playing.sourceUrl}
+          pageName={playing.pageName}
+          adText={playing.adText}
+          ctaText={playing.ctaText}
+          landingDomain={playing.landingDomain}
           onClose={() => setPlaying(null)}
         />
       )}
@@ -522,6 +526,10 @@ function playRequest(ad: SpyAd, url: string): PlayRequest {
     hlsUrl: ad.media_hls_url ?? null,
     sourceUrl: ad.media_source_url ?? ad.media_url ?? url,
     adLibraryUrl: ad.ad_library_url,
+    pageName: ad.page_name,
+    adText: ad.ad_text,
+    ctaText: ad.cta_text,
+    landingDomain: ad.landing_domain,
   };
 }
 
