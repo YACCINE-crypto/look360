@@ -6,7 +6,7 @@ import { motion, type Variants } from "motion/react";
 import NumberFlow from "@number-flow/react";
 import { Check, X, Sparkles, Crown, ArrowUpRight, Loader2, Gift } from "lucide-react";
 import { PLANS, PLAN_LIMITS, planLabel, type Plan } from "@/lib/billing";
-import { startPayment } from "@/lib/pay";
+import { startPayment, verifyPendingPayments } from "@/lib/pay";
 
 const fcfa = (n: number) => new Intl.NumberFormat("fr-FR").format(n) + " FCFA";
 const nf = (n: number) => new Intl.NumberFormat("fr-FR").format(n);
@@ -177,6 +177,8 @@ export default function OffresClient({
     let stop = false;
     const tick = async () => {
       tries++;
+      // Vérification active côté prestataire (1er passage puis toutes les 3).
+      if (tries % 3 === 1) await verifyPendingPayments();
       try {
         const r = await fetch(
           payReturnRef
