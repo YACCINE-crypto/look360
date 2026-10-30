@@ -141,3 +141,41 @@ export async function deleteKey(key: string): Promise<void> {
     /* best-effort */
   }
 }
+
+/**
+ * Diagnostic du stockage (admin) : écrit puis supprime un petit fichier test.
+ * Ne renvoie AUCUNE valeur secrète : seulement les statuts HTTP et l'hôte.
+ */
+export async function storageDiag(): Promise<{
+  configured: boolean;
+  host: string;
+  zoneLen: number;
+  keyLen: number;
+  putStatus: number;
+  deleteStatus: number;
+}> {
+  const host = storageHost();
+  const base = { configured: mediaStorageConfigured(), host, zoneLen: (ZONE || "").length, keyLen: (API_KEY || "").length };
+  if (!base.configured) return { ...base, putStatus: 0, deleteStatus: 0 };
+  const key = `diag/${crypto.randomUUID()}.txt`;
+  let putStatus = -1;
+  let deleteStatus = -1;
+  try {
+    const put = await fetch(`https://${host}/${ZONE}/${key}`, {
+      method: "PUT",
+      headers: { AccessKey: API_KEY as string, "Content-Type": "application/octet-stream" },
+      body: new TextEncoder().encode("look360"),
+    });
+    putStatus = put.status;
+    if (put.ok) {
+      const del = await fetch(`https://${host}/${ZONE}/${key}`, {
+        method: "DELETE",
+        headers: { AccessKey: API_KEY as string },
+      });
+      deleteStatus = del.status;
+    }
+  } catch {
+    /* statut -1 = hôte injoignable (région ?) */
+  }
+  return { ...base, putStatus, deleteStatus };
+}

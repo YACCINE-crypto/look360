@@ -57,6 +57,11 @@ export async function POST(request: Request) {
   } catch (e) {
     await releaseMedia(userId, 1);
     const msg = e instanceof Error ? e.message : "échec upload";
-    return NextResponse.json({ error: msg }, { status: 502 });
+    // 401/403 du stockage = clé ou zone refusée (configuration, pas la photo).
+    const denied = /bunny_put_40[13]/.test(msg);
+    return NextResponse.json(
+      { error: denied ? "stockage refusé (clé du stockage à mettre à jour — voir Admin › Cockpit)" : msg },
+      { status: 502 },
+    );
   }
 }
