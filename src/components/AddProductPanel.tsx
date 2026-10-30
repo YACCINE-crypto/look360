@@ -1,5 +1,6 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import { useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createProduit } from "@/app/(app)/recherche/actions";
@@ -7,6 +8,7 @@ import { MARCHES, CATEGORIES } from "@/lib/produits";
 import { Icon } from "./Icon";
 import { Select } from "./Select";
 import { DatePicker } from "./DatePicker";
+import { uploadMedia } from "@/lib/uploadMedia";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -36,16 +38,11 @@ export function AddProductPanel() {
     setUploadError(null);
     setUploading(true);
     try {
-      // Le fichier part vers le CDN (b-cdn.net) via /api/upload ; la base ne
-      // garde que l'URL renvoyée.
-      const fd = new FormData();
-      fd.append("file", file);
-      const r = await fetch("/api/upload", { method: "POST", body: fd });
-      const data = await r.json();
-      if (!r.ok) throw new Error(data?.error || "upload");
-      setImageUrl(data.url);
-    } catch {
-      setUploadError("Échec de l'upload. Réessaie.");
+      // Photo convertie en JPEG (téléphone : HEIC/lourd) puis envoyée au CDN ;
+      // la base ne garde que l'URL renvoyée.
+      setImageUrl(await uploadMedia(file));
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Échec de l'envoi. Réessaie.");
     } finally {
       setUploading(false);
     }
@@ -62,7 +59,8 @@ export function AddProductPanel() {
         Ajouter
       </button>
 
-      {open && (
+      {open &&
+        createPortal(
         <div className="fixed inset-0 z-40 flex justify-end">
           <div
             className="absolute inset-0 bg-black/30"
@@ -213,8 +211,10 @@ export function AddProductPanel() {
               </div>
             </form>
           </div>
-        </div>
-      )}
+        </div>,
+          document.body,
+        )
+      }
     </>
   );
 }

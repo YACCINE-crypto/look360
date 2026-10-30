@@ -8,7 +8,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const MAX_BYTES = 25 * 1024 * 1024; // 25 Mo
+// Vercel limite le corps d'une requête à 4,5 Mo : les photos sont réduites
+// côté navigateur (lib/uploadMedia) avant l'envoi.
+const MAX_BYTES = 4.5 * 1024 * 1024;
 const ALLOWED = /^(image\/|video\/)/;
 
 /**
@@ -36,7 +38,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "type non supporté" }, { status: 415 });
   }
   if (file.size > MAX_BYTES) {
-    return NextResponse.json({ error: "fichier trop volumineux (max 25 Mo)" }, { status: 413 });
+    return NextResponse.json({ error: "fichier trop volumineux (max 4 Mo)" }, { status: 413 });
   }
 
   try {

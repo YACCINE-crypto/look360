@@ -6,7 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { MARCHES, type ProduitInsert } from "@/lib/produits";
 import { deleteKey, keyFromCdnUrl, mediaStorageConfigured, storeFromUrl } from "@/lib/mediaStorage";
 import { reserveMedia, releaseMedia } from "@/lib/usage";
-import { isStreamUrl } from "@/lib/bunnyStream";
+import { isAllowedMediaUrl, isMetaMediaHost } from "@/lib/mediaHosts";
+import { isStreamUrl, streamThumbFromHls } from "@/lib/bunnyStream";
 import { accountSuspended } from "@/lib/accountGuard";
 
 function str(formData: FormData, key: string): string | null {
@@ -30,9 +31,17 @@ export async function ajouterAuxProduits(formData: FormData): Promise<void> {
   const marche = MARCHES.some((m) => m.code === pays) ? pays : null;
 
   // Archivage image sur CDN au moment où la pub devient produit (§3/§5).
-  const imageSource = str(formData, "image_url");
-  let mediaCdn: string | null = null;
-  if (imageSource && mediaStorageConfigured()) {
+  // Jamais une vidéo comme image : un flux HLS devient sa miniature générée.
+  const rawImage = str(formData, "image_url");
+  const imageSource = streamThumbFromHls(rawImage) ?? (rawImage && /\.(m3u8|mp4)(\?|$)/i.test(rawImage) ? null : rawImage);
+  // Déjà sur NOS CDN (archive ou streaming) : rien à recopier.
+  const alreadyOurs = Boolean(
+    imageSource &&
+      (isStreamUrl(imageSource) ||
+        (isAllowedMediaUrl(imageSource, { archive: true }) && !isMetaMediaHost(new URL(imageSource).hostname))),
+  );
+  let mediaCdn: string | null = alreadyOurs ? imageSource : null;
+  if (imageSource && !alreadyOurs && mediaStorageConfigured()) {
     // 1 objet du quota de stockage ; quota atteint → on garde le lien source.
     const reserved = await reserveMedia(userId, 1).then(() => true, () => false);
     if (reserved) {

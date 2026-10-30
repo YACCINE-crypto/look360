@@ -6,6 +6,7 @@ import { CreativeMedia } from "@/components/CreativeMedia";
 import { ajouterAuxProduits, retirerPub } from "../spy/actions";
 import { landingKind, LANDING_LABEL, formatReach, countryLabel, cleanField } from "@/lib/spy";
 import { WatchVideoButton } from "@/components/WatchVideoButton";
+import { isStreamUrl, streamThumbFromHls } from "@/lib/bunnyStream";
 
 /** Onglet « Pubs sauvegardées » de Mes produits (ex-page Sauvegardés). */
 export async function SavedAds() {
@@ -30,11 +31,25 @@ export async function SavedAds() {
         <div className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {rows.map((ad) => {
             // Ne jamais afficher une vidéo (.mp4) comme <img> : miniature d'abord.
+            // Vidéo transcodée : sa miniature générée sert de repli. Jamais de
+            // vidéo (.mp4 / .m3u8) affichée comme <img>.
+            const streamThumb = streamThumbFromHls(ad.media_cdn_url);
             const img =
               ad.thumbnail_cdn_url ||
+              streamThumb ||
               ad.thumbnail_source_url ||
               (ad.media_type !== "video" ? ad.media_cdn_url || ad.media_source_url : null);
+            // Lecture : flux HLS si transcodé ; sinon la COPIE ARCHIVÉE (permanente)
+            // sert de source, le lien Meta d'origine expirant en quelques jours.
+            const archived = ad.media_cdn_url && !isStreamUrl(ad.media_cdn_url) ? ad.media_cdn_url : null;
             const watchUrl = ad.media_cdn_url || ad.media_source_url;
+            const watchSource = archived ?? ad.media_source_url;
+            const productImage =
+              ad.thumbnail_cdn_url ||
+              (ad.media_type !== "video" ? ad.media_cdn_url : null) ||
+              streamThumb ||
+              ad.thumbnail_source_url ||
+              "";
             const kind = landingKind(ad.landing_url);
             const pageName = cleanField(ad.page_name);
             const adText = cleanField(ad.ad_text);
@@ -104,7 +119,7 @@ export async function SavedAds() {
                       {ad.media_type === "video" && watchUrl && (
                         <WatchVideoButton
                           url={watchUrl}
-                          sourceUrl={ad.media_source_url}
+                          sourceUrl={watchSource}
                           adId={ad.ad_archive_id}
                           adLibraryUrl={ad.ad_library_url}
                           pageName={pageName}
@@ -131,7 +146,7 @@ export async function SavedAds() {
 
                     <form action={ajouterAuxProduits}>
                       <input type="hidden" name="nom" value={pageName ?? ""} />
-                      <input type="hidden" name="image_url" value={ad.media_cdn_url ?? ad.thumbnail_cdn_url ?? ad.thumbnail_source_url ?? ""} />
+                      <input type="hidden" name="image_url" value={productImage} />
                       <input type="hidden" name="landing_url" value={ad.landing_url ?? ""} />
                       <input type="hidden" name="ad_library_url" value={ad.ad_library_url ?? ""} />
                       <input type="hidden" name="ad_text" value={adText ?? ""} />

@@ -1,5 +1,6 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import { useState } from "react";
 import { Icon } from "./Icon";
 import { DatePicker } from "./DatePicker";
@@ -62,7 +63,8 @@ export function ProductActions({
         </form>
       </div>
 
-      {planOpen && (
+      {planOpen &&
+        createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/40"
@@ -116,8 +118,10 @@ export function ProductActions({
               </div>
             </form>
           </div>
-        </div>
-      )}
+        </div>,
+          document.body,
+        )
+      }
     </>
   );
 }
