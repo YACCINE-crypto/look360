@@ -67,7 +67,7 @@ export async function ajouterAuxProduits(formData: FormData): Promise<void> {
     redirect("/spy?error=add");
   }
 
-  revalidatePath("/recherche");
+  revalidatePath("/produits");
   redirect(`/produits/${data.id}`);
 }
 
@@ -94,5 +94,5 @@ export async function retirerPub(formData: FormData): Promise<void> {
   // supprime pas du service, on rend seulement le quota.
   const streams = (removed ?? []).filter((r) => isStreamUrl(r.media_cdn_url)).length;
   await releaseMedia(userId, keys.length + streams);
-  revalidatePath("/sauvegardes");
+  revalidatePath("/produits");
 }

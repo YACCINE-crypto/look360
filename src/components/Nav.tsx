@@ -7,11 +7,11 @@ import { planConfig } from "@/lib/billing";
 
 const ITEMS = [
   { href: "/recherche", label: "Recherche", icon: "search" as const },
+  { href: "/produits", label: "Mes produits", icon: "pipeline" as const },
   { href: "/spy", label: "Spy Facebook", icon: "eye" as const },
   { href: "/winners", label: "Winners du jour", icon: "trophy" as const, needs: "winner" as const },
   { href: "/vitrine", label: "Vitrine winners", icon: "store" as const, needs: "vitrine" as const },
   { href: "/top-trend", label: "Top Trend", icon: "trending" as const },
-  { href: "/sauvegardes", label: "Sauvegardés", icon: "bookmark" as const },
   { href: "/surveillance", label: "Surveillance", icon: "bell" as const, needs: "competitor" as const },
   { href: "/testing", label: "Testing", icon: "flask" as const },
   { href: "/validation", label: "Validation", icon: "inbox" as const, adminOnly: true },

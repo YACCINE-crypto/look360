@@ -10,17 +10,15 @@ import { PageHeader } from "@/components/ui";
 import { EmptyState } from "@/components/EmptyState";
 import { PackageSearch } from "lucide-react";
 import { Icon } from "@/components/Icon";
-import { AdGrid } from "@/components/AdGrid";
 import { type Produit, type Tri } from "@/lib/produits";
-import { type SpyAd } from "@/lib/spy";
 
-export function RechercheClient({
+export function ProduitsClient({
   produits,
   marges,
   closings,
   scores,
   stats,
-  feed = [],
+  tabs,
   addError,
 }: {
   produits: Produit[];
@@ -28,7 +26,7 @@ export function RechercheClient({
   closings: Record<string, number>;
   scores: Record<string, number>;
   stats: Stat[];
-  feed?: SpyAd[];
+  tabs?: React.ReactNode;
   addError?: string;
 }) {
   const [statut, setStatut] = useState("");
@@ -71,8 +69,8 @@ export function RechercheClient({
   return (
     <div className="space-y-4">
       <PageHeader
-        title="Recherche produit"
-        subtitle="Trouvez, évaluez et envoyez les produits prometteurs en test."
+        title="Mes produits"
+        subtitle="Tes produits enregistrés, leurs chiffres et tes pubs sauvegardées."
       >
         <div className="border-border bg-input hidden min-h-[44px] items-center gap-2 rounded-md border px-3 sm:flex">
           <Icon name="search" size={16} className="text-muted-foreground" />
@@ -86,22 +84,7 @@ export function RechercheClient({
         <AddProductPanel />
       </PageHeader>
 
-      {feed.length > 0 && (
-        <section className="space-y-2.5">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-fg text-base font-bold">Feed du jour</h2>
-              <p className="text-muted-foreground text-xs">
-                Pubs gagnantes repérées pour toi — à parcourir librement.
-              </p>
-            </div>
-            <span className="bg-success-bg text-success inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-semibold">
-              Gratuit · 0 recherche
-            </span>
-          </div>
-          <AdGrid ads={feed} />
-        </section>
-      )}
+      {tabs}
 
       <StatsStrip stats={stats} />
 
@@ -139,7 +122,7 @@ export function RechercheClient({
             icon={PackageSearch}
             title="Ta bibliothèque de produits est vide"
             description="Ajoute un produit ou importe-en un depuis le Spy — score, closing et marge s'afficheront ici."
-            ctaHref="/recherche?add=1"
+            ctaHref="/produits?add=1"
             ctaLabel="Ajouter un produit"
           />
         ) : (
@@ -148,7 +131,7 @@ export function RechercheClient({
               Aucun produit pour ces filtres.
             </p>
             <Link
-              href="/recherche?add=1"
+              href="/produits?add=1"
               className="text-accent mt-3 inline-block text-sm font-medium hover:underline"
             >
               Ajouter ton premier produit

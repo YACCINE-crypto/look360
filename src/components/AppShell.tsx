@@ -5,7 +5,6 @@ import { useState } from "react";
 import { CircleUser, LogOut } from "lucide-react";
 import { SidebarNav } from "./Nav";
 import { Icon } from "./Icon";
-import { MobileTabBar } from "./MobileTabBar";
 import { logout } from "@/app/login/actions";
 import { planLabel } from "@/lib/billing";
 
@@ -212,12 +211,9 @@ export function AppShell({
           <UsageBadge searchesUsed={searchesUsed} searchesLimit={searchesLimit} plan={plan} />
         </header>
 
-        <main className="app-canvas flex-1 overflow-y-auto p-4 pb-24 lg:p-6 lg:pb-6">
+        <main className="app-canvas flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="rise-in mx-auto max-w-[1400px]">{children}</div>
         </main>
-
-        {/* Barre d'onglets basse (mobile) — feel appli native */}
-        <MobileTabBar onMenu={() => setMobileOpen(true)} />
       </div>
     </div>
   );

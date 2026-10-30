@@ -13,7 +13,7 @@ async function setRevue(id: string, statut_revue: StatutRevue): Promise<void> {
     .eq("id", id);
   if (!error) {
     revalidatePath("/validation");
-    revalidatePath("/recherche");
+    revalidatePath("/produits");
   }
 }
 

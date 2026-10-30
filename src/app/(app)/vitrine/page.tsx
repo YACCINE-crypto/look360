@@ -68,8 +68,8 @@ export default async function VitrinePage() {
           icon={Store}
           title="Aucun winner validé pour l'instant"
           description="Dès que des commerçants valident des produits (≥ 10 commandes reçues), ils apparaissent ici — sans jamais révéler leur identité."
-          ctaHref="/recherche"
-          ctaLabel="Explorer les produits"
+          ctaHref="/produits"
+          ctaLabel="Voir mes produits"
         />
       ) : (
         <>
