@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import Hls from "hls.js";
 import { Icon } from "./Icon";
@@ -289,9 +290,12 @@ export function VideoLightbox({
   const maxWidth =
     portrait === false ? "min(94vw, 1100px)" : "min(92vw, calc(88vh * 9 / 16))";
 
-  return (
+  // Rendu dans <body> (portail) : un parent animé (transform/filter) ferait de
+  // « fixed » une position relative à lui → lecteur décalé hors de l'écran,
+  // seul le son restait. Ici, toujours centré sur toute la fenêtre.
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6"
       role="dialog"
       aria-modal="true"
       aria-label="Lecture de la vidéo"
@@ -395,6 +399,7 @@ export function VideoLightbox({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
