@@ -7,6 +7,7 @@ import NumberFlow from "@number-flow/react";
 import { Check, X, Sparkles, Crown, ArrowUpRight, Loader2, Gift } from "lucide-react";
 import { PLANS, PLAN_LIMITS, planLabel, type Plan } from "@/lib/billing";
 import { startPayment, verifyPendingPayments } from "@/lib/pay";
+import { PageHeader } from "@/components/ui";
 
 const fcfa = (n: number) => new Intl.NumberFormat("fr-FR").format(n) + " FCFA";
 const nf = (n: number) => new Intl.NumberFormat("fr-FR").format(n);
@@ -235,12 +236,10 @@ export default function OffresClient({
         </div>
       )}
       {/* En-tête */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">Offres</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Choisis ton niveau d&apos;accès à Look360. Change d&apos;offre quand tu veux.
-        </p>
-      </div>
+      <PageHeader
+        title="Offres"
+        subtitle="Choisis ton niveau d'accès à Look360. Change d'offre quand tu veux."
+      />
 
       {/* Bandeau — offre actuelle */}
       <motion.div
@@ -292,10 +291,14 @@ export default function OffresClient({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, delay: 0.05 }}
-        className="flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-amber-500/15 px-4 py-2 text-center text-sm font-semibold text-orange-700"
+        className="bg-warn-bg text-warn-fg flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-center text-sm font-semibold"
       >
-        <Sparkles size={16} className="text-orange-500" />
-        Offre de lancement — jusqu&apos;à −33&nbsp;% sur le 1<sup>er</sup> mois
+        <Sparkles size={16} className="shrink-0" />
+        {/* Un seul nœud texte : sinon le <sup> devient un item flex isolé et
+            « 1 » / « er » se séparent sur mobile. */}
+        <span>
+          Offre de lancement — jusqu&apos;à −33&nbsp;% sur le 1<sup>er</sup>&nbsp;mois
+        </span>
       </motion.div>
 
       {/* Grille des 3 offres payantes */}
@@ -318,14 +321,14 @@ export default function OffresClient({
               animate="show"
               className={`relative flex flex-col rounded-3xl border p-6 ${
                 isPopular
-                  ? "border-accent/40 bg-gradient-to-b from-secondary/60 to-surface ring-accent shadow-xl shadow-accent/10 ring-2 md:-my-2 md:py-8"
+                  ? "border-accent bg-surface ring-accent shadow-lift ring-1 md:-my-2 md:py-8"
                   : "border-border bg-surface shadow-card"
               }`}
             >
               {/* Badge populaire */}
               {isPopular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="from-accent inline-flex items-center gap-1 rounded-full bg-gradient-to-r to-blue-500 px-3 py-1 text-xs font-bold text-white shadow-md">
+                  <span className="bg-accent text-accent-on inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold">
                     <Crown size={13} /> Le plus choisi
                   </span>
                 </div>
@@ -352,8 +355,8 @@ export default function OffresClient({
                   <span className="text-muted-foreground text-base font-medium line-through">
                     {fcfa(cfg.priceNormal)}
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-2 py-0.5 text-xs font-extrabold text-white shadow-sm">
-                    <Sparkles size={11} />−{pct}%
+                  <span className="bg-warn-bg text-warn-fg inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold tabular-nums">
+                    −{pct}&nbsp;%
                   </span>
                 </div>
                 <div className="flex items-baseline gap-1.5">
@@ -455,10 +458,10 @@ function PlanButton({
       type="button"
       onClick={onClick}
       disabled={busy}
-      className={`mt-5 inline-flex min-h-[46px] w-full items-center justify-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-70 ${
+      className={`focus-visible:ring-accent/40 mt-5 inline-flex min-h-[46px] w-full items-center justify-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:opacity-70 ${
         isPopular
-          ? "from-accent bg-gradient-to-t to-blue-500 text-white shadow-lg shadow-accent/25"
-          : "bg-fg text-bg"
+          ? "bg-accent text-accent-on hover:bg-accent-hover"
+          : "border-border text-fg hover:border-accent hover:text-accent border bg-surface"
       }`}
     >
       {busy ? (

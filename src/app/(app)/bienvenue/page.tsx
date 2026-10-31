@@ -116,7 +116,7 @@ export default async function BienvenuePage() {
       <div className="text-center">
         <Link
           href="/spy"
-          className="bg-accent text-accent-on inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full px-7 text-sm font-semibold shadow-lg shadow-accent/25 transition-transform hover:scale-[1.02] active:scale-95"
+          className="bg-accent text-accent-on hover:bg-accent-hover focus-visible:ring-accent/40 inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full px-7 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2"
         >
           C&apos;est parti <Icon name="chevronRight" size={16} />
         </Link>
