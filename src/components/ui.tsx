@@ -33,9 +33,8 @@ export function PageHeader({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-start gap-3">
-        <span className="from-accent to-accent/40 mt-0.5 h-8 w-1.5 shrink-0 rounded-full bg-gradient-to-b" />
         <div>
-          <h1 className="text-lg font-bold tracking-tight lg:text-xl">{title}</h1>
+          <h1 className="text-xl font-bold tracking-tight lg:text-2xl">{title}</h1>
           {subtitle && (
             <p className="text-muted-foreground mt-0.5 text-sm">{subtitle}</p>
           )}

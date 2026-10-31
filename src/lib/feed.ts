@@ -44,6 +44,25 @@ const SEARCH_CONCURRENCY = 3; // scrapes Apify en parallèle (~40-55 s chacun)
 const COLLECT_BUDGET_MS = 150_000; // collecte : on ne lance plus de lot au-delà
 const MEDIA_BUDGET_MS = 110_000; // transcodage : budget par passage
 
+/**
+ * Couples (marché, niche) d'un run, en ALTERNANT les marchés : CI, SN, GA, FR,
+ * CI, SN… Avant, les marchés étaient pris l'un après l'autre et le plafond
+ * coupait la liste avant la France (jamais cherchée → aucune pub UE dans le
+ * feed). Les niches tournent d'un jour à l'autre pour toutes les couvrir.
+ */
+export function feedPairs(cap: number, day = Math.floor(Date.now() / 86_400_000)) {
+  const out: { market: string; n: (typeof FEED_NICHES)[number] }[] = [];
+  const total = FEED_MARKETS.length * FEED_NICHES.length;
+  for (let k = 0; k < total && out.length < cap; k++) {
+    const market = FEED_MARKETS[k % FEED_MARKETS.length];
+    const round = Math.floor(k / FEED_MARKETS.length);
+    // Décalage par marché pour ne pas chercher la même niche partout le même jour.
+    const ni = (round + day + FEED_MARKETS.indexOf(market) * 3) % FEED_NICHES.length;
+    out.push({ market, n: FEED_NICHES[ni] });
+  }
+  return out;
+}
+
 type FeedRow = Database["public"]["Tables"]["feed_ads"]["Insert"];
 type Payload = SpyAd & {
   media_stream_guid?: string | null;
@@ -119,7 +138,7 @@ export async function refreshFeed(
 ): Promise<{ found: number; searches: number; stored: number; purged: number; media: MediaPass }> {
   const cap = opts.cap ?? FEED_SEARCH_CAP;
   const start = Date.now();
-  const pairs = FEED_MARKETS.flatMap((market) => FEED_NICHES.map((n) => ({ market, n }))).slice(0, cap);
+  const pairs = feedPairs(cap);
   const found = new Map<string, { ad: SpyAd; niche: string }>();
   let searches = 0;
   let stored = 0;

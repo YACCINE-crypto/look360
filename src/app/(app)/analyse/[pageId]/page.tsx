@@ -7,6 +7,9 @@ import { CountryFlag, MeterBar, type Tone } from "@/components/dataviz";
 import { AdGrid } from "@/components/AdGrid";
 import { AdActivityChart } from "./AdActivityChart";
 import { SuivreButton } from "./SuivreButton";
+import { AudiencePanels } from "./AudiencePanels";
+import { mergeEuAudiences } from "@/lib/euAudience";
+import { estimateSpend, formatSpendRange, SPEND_METHOD } from "@/lib/spendEstimate";
 import { ajouterAuxProduits } from "../../spy/actions";
 import { activityByMonth, countryLabel, formatReach, cleanField, type SpyAd } from "@/lib/spy";
 import { getSubscription } from "@/lib/credits";
@@ -131,6 +134,19 @@ export default async function AnalysePage({
   const onInstagram = ads.filter((a) => a.platforms.some((p) => /instagram/i.test(p))).length;
   const avatarImg = top?.thumbnail_url ?? ads.find((a) => a.thumbnail_url)?.thumbnail_url ?? null;
 
+  // Audience UE détaillée (âge, sexe, pays) — somme des pubs de l'annonceur.
+  const euAudience = mergeEuAudiences(ads.map((a) => a.eu_audience));
+  // Dépense : chiffre Meta s'il existe (rare), sinon fourchette ESTIMÉE (UE).
+  const realSpend = ads.filter((a) => a.spend).length;
+  const est = ads.reduce(
+    (acc, a) => {
+      const e = a.spend ? null : estimateSpend(a.reach, a.country ?? country);
+      return e ? { low: acc.low + e.low, high: acc.high + e.high, n: acc.n + 1 } : acc;
+    },
+    { low: 0, high: 0, n: 0 },
+  );
+  const libraryUrl = `https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=${encodeURIComponent(country)}&view_all_page_id=${encodeURIComponent(pageId)}`;
+
   // Ouvrir la fiche = "j'ai vu" → on remet le badge "nouvelle pub" à zéro.
   if (userId) {
     await supabase
@@ -141,61 +157,41 @@ export default async function AnalysePage({
   }
 
   return (
-    <div className="space-y-5">
-      <Link
-        href="/spy"
-        className="text-muted-foreground hover:text-fg flex items-center gap-1 text-sm"
-      >
-        <Icon name="chevronRight" size={14} className="rotate-180" />
-        Spy Facebook
-      </Link>
-
-      {/* En-tête concurrent — fiche marque */}
-      <div className="border-border bg-surface shadow-card rounded-2xl border p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex min-w-0 items-start gap-3">
-            {/* Avatar = meilleure créative (fallback initiale) */}
-            <span className="border-border bg-input relative grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl border">
+    <div className="space-y-4">
+      {/* En-tête annonceur */}
+      <div className="border-border bg-surface shadow-card rounded-xl border">
+        <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-3">
+            <Link
+              href="/spy"
+              aria-label="Retour au Spy"
+              className="text-muted-foreground hover:bg-input hover:text-fg grid h-9 w-9 shrink-0 place-items-center rounded-md"
+            >
+              <Icon name="chevronRight" size={16} className="rotate-180" />
+            </Link>
+            <span className="border-border bg-input grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-lg border">
               {avatarImg ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={avatarImg} alt={pageName} className="h-full w-full object-cover" />
+                <img src={avatarImg} alt="" className="h-full w-full object-cover" />
               ) : (
-                <span className="text-muted-foreground text-lg font-bold">
-                  {pageName.slice(0, 2).toUpperCase()}
-                </span>
+                <span className="text-muted-foreground text-sm font-bold">{pageName.slice(0, 2).toUpperCase()}</span>
               )}
             </span>
             <div className="min-w-0">
-              <h1 className="truncate text-2xl font-extrabold tracking-tight">{pageName}</h1>
-              <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                {domaine && (
-                  <span className="flex items-center gap-1">
-                    <Icon name="external" size={13} /> {domaine}
-                  </span>
-                )}
-                <span className="flex items-center gap-1">
-                  <CountryFlag code={country} /> {countryLabel(country)}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Icon name="today" size={13} /> Depuis {formatDate(firstDate)}
-                </span>
-              </div>
-              <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                {likes != null && (
-                  <span className="bg-input text-muted-foreground inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium">
-                    <Icon name="users" size={12} /> {nf.format(likes)} likes
-                  </span>
-                )}
-                {platforms.map((pl) => (
-                  <span key={pl} className="bg-secondary text-accent rounded-full px-2 py-0.5 text-xs font-medium">
-                    {pl}
-                  </span>
-                ))}
-              </div>
+              <h1 className="truncate text-xl font-bold tracking-tight">{pageName}</h1>
+              {domaine && <p className="text-muted-foreground truncate text-sm">{domaine}</p>}
             </div>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
             <SuivreButton pageId={pageId} pageName={pageName} domaine={domaine} country={country} />
+            <a
+              href={libraryUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="border-border hover:bg-input inline-flex min-h-10 items-center gap-1.5 rounded-md border px-3 text-sm font-medium"
+            >
+              <Icon name="external" size={15} /> Ad Library
+            </a>
             {top && (
               <form action={ajouterAuxProduits}>
                 <input type="hidden" name="nom" value={pageName} />
@@ -206,7 +202,7 @@ export default async function AnalysePage({
                 <input type="hidden" name="marche" value={top.country ?? ""} />
                 <button
                   type="submit"
-                  className="bg-accent text-accent-on inline-flex min-h-[40px] items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-opacity hover:opacity-90"
+                  className="bg-accent text-accent-on hover:bg-accent-hover inline-flex min-h-10 items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-colors"
                 >
                   <Icon name="plus" size={16} /> Ajouter à mes produits
                 </button>
@@ -214,58 +210,72 @@ export default async function AnalysePage({
             )}
           </div>
         </div>
+        {/* Méta-données (données réelles) */}
+        <div className="border-border-soft text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t px-4 py-2.5 text-xs">
+          <span className="flex items-center gap-1.5">
+            <CountryFlag code={country} /> {countryLabel(country)}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Icon name="today" size={13} /> Première pub active : {formatDate(firstDate)}
+          </span>
+          {likes != null && (
+            <span className="flex items-center gap-1.5">
+              <Icon name="users" size={13} /> {nf.format(likes)} abonnés
+            </span>
+          )}
+          {platforms.length > 0 && <span>{platforms.join(" · ")}</span>}
+        </div>
       </div>
 
-      {/* KPI — uniquement des données réelles issues d'Apify */}
+      {/* Chiffres clés */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiTile label="Pubs actives" value={nf.format(ads.length)} icon="eye" hint="en diffusion" accent />
+        <KpiTile label="Pubs actives" value={nf.format(ads.length)} hint="en diffusion aujourd'hui" accent />
         <KpiTile
-          label="Audience cumulée"
+          label="Audience UE"
           value={hasAudience ? formatReach(audience) : "—"}
-          icon="users"
-          hint={hasAudience ? "portée UE (DSA)" : "hors UE : non publiée"}
+          hint={hasAudience ? "personnes touchées (Meta, DSA)" : "publiée seulement pour l'UE"}
         />
         <KpiTile
-          label="Créatives vidéo"
-          value={videosPct == null ? "—" : `${videosPct}%`}
-          icon="play"
-          hint={`${videos} vidéo${videos > 1 ? "s" : ""} / ${images} image${images > 1 ? "s" : ""}`}
+          label={realSpend > 0 && est.n === 0 ? "Dépense (Meta)" : "Dépense estimée"}
+          value={est.n > 0 ? formatSpendRange({ low: est.low, high: est.high, currency: "EUR", cpm: [0, 0] }) : "—"}
+          hint={est.n > 0 ? `estimation sur ${est.n} pub${est.n > 1 ? "s" : ""} UE` : "non publiée par Meta hors UE"}
+          title={SPEND_METHOD}
+          badge={est.n > 0 ? "estimation" : undefined}
         />
         <KpiTile
-          label="Ancienneté moy."
+          label="Ancienneté moyenne"
           value={ancienneteMoy == null ? "—" : `${ancienneteMoy} j`}
-          icon="clock"
           hint="de diffusion par pub"
         />
       </div>
 
-      {/* Graphe activité + répartitions */}
+      {/* Activité + formats */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         <Card className="p-5 lg:col-span-2">
-          <p className="text-muted-foreground mb-3 text-xs font-medium uppercase tracking-wide">
-            Activité publicitaire (pubs lancées / mois)
-          </p>
+          <h2 className="text-fg mb-3 text-sm font-semibold">Pubs lancées par mois</h2>
           <AdActivityChart data={chart} />
         </Card>
         <Card className="space-y-4 p-5">
           <div>
-            <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
-              Formats
-            </p>
+            <h2 className="text-fg mb-2 text-sm font-semibold">Formats</h2>
             <BreakRow label="Vidéo" n={videos} total={withMedia.length} tone="primary" />
             <BreakRow label="Image" n={images} total={withMedia.length} tone="muted" />
+            {videosPct != null && (
+              <p className="text-muted-foreground mt-1 text-xs">{videosPct} % de créatives vidéo</p>
+            )}
           </div>
           {(onFacebook > 0 || onInstagram > 0) && (
-            <div className="border-border border-t pt-3">
-              <p className="text-muted-foreground mb-2 text-xs font-medium uppercase tracking-wide">
-                Plateformes
-              </p>
+            <div className="border-border-soft border-t pt-3">
+              <h2 className="text-fg mb-2 text-sm font-semibold">Plateformes</h2>
               <BreakRow label="Facebook" n={onFacebook} total={ads.length} tone="primary" />
               <BreakRow label="Instagram" n={onInstagram} total={ads.length} tone="warning" />
             </div>
           )}
         </Card>
       </div>
+
+      {/* Audience UE réelle */}
+      {!failed && ads.length > 0 && <AudiencePanels audience={euAudience} totalReach={hasAudience ? audience : null} />}
 
       {/* Créatives */}
       {failed ? (
@@ -290,31 +300,31 @@ export default async function AnalysePage({
   );
 }
 
-/** Tuile KPI compacte (données réelles). */
+/** Tuile KPI compacte. */
 function KpiTile({
   label,
   value,
-  icon,
   hint,
   accent = false,
+  title,
+  badge,
 }: {
   label: string;
   value: string;
-  icon: Parameters<typeof Icon>[0]["name"];
   hint?: string;
   accent?: boolean;
+  title?: string;
+  badge?: string;
 }) {
   return (
-    <Card className="card-lift p-4">
-      <div className="flex items-start justify-between gap-2">
+    <Card className="p-4">
+      <div className="flex items-center justify-between gap-2" title={title}>
         <span className="text-muted-foreground text-xs font-medium">{label}</span>
-        <span className="bg-secondary text-accent grid h-8 w-8 shrink-0 place-items-center rounded-lg">
-          <Icon name={icon} size={16} />
-        </span>
+        {badge && (
+          <span className="border-border text-muted-foreground cursor-help rounded border px-1.5 text-xs">{badge}</span>
+        )}
       </div>
-      <p className={`mt-1 text-2xl font-extrabold tabular-nums ${accent ? "text-accent" : "text-fg"}`}>
-        {value}
-      </p>
+      <p className={`mt-1 truncate text-2xl font-bold tabular-nums ${accent ? "text-accent" : "text-fg"}`}>{value}</p>
       {hint && <p className="text-muted-foreground mt-0.5 text-xs">{hint}</p>}
     </Card>
   );

@@ -77,7 +77,7 @@ function Sidebar({
   onClose?: () => void;
 }) {
   return (
-    <aside className="bg-sidebar-bg text-sidebar-fg border-sidebar-border flex h-full w-sidebar flex-col border-r">
+    <aside className="bg-sidebar-bg text-sidebar-fg border-sidebar-border lg:border-r-0 flex h-full w-sidebar flex-col border-r">
       {/* Marque (wordmark blanc lisible sur navy) */}
       <div className="border-sidebar-border flex items-center justify-between border-b px-4 py-4">
         <span className="flex items-center gap-2">
@@ -162,7 +162,7 @@ export function AppShell({
   const isAdmin = role === "superadmin";
 
   return (
-    <div className="bg-bg flex h-screen overflow-hidden">
+    <div className="bg-bg lg:bg-sidebar-bg flex h-screen overflow-hidden">
       {/* Sidebar desktop */}
       <div className="hidden h-full lg:flex">
         <Sidebar
@@ -198,7 +198,7 @@ export function AppShell({
       )}
 
       {/* Colonne principale */}
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="bg-bg flex min-w-0 flex-1 flex-col overflow-hidden lg:my-2 lg:mr-2 lg:rounded-2xl">
         {/* Topbar mobile */}
         <header className="border-border bg-surface flex items-center justify-between border-b px-4 py-3 lg:hidden">
           <button

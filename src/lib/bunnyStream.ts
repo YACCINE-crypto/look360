@@ -19,7 +19,11 @@ const API = "https://video.bunnycdn.com";
 const LIBRARY = process.env.BUNNY_STREAM_LIBRARY_ID;
 const KEY = process.env.BUNNY_STREAM_API_KEY;
 const CDN_RAW = process.env.BUNNY_STREAM_CDN_HOST; // ex. vz-xxxx.b-cdn.net
-const CDN = (CDN_RAW || "").replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+const CDN = (CDN_RAW || "")
+  .trim()
+  .replace(/^https?:\/\//i, "")
+  .replace(/\/+$/, "")
+  .replace(/\.+$/, "");
 
 // Plafond d'une vidéo source envoyée au transcodage (les créas font < 50 Mo).
 const MAX_UPLOAD_BYTES = 200 * 1024 * 1024;

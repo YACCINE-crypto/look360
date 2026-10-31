@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getFeed } from "@/lib/feed";
 import { PageHeader } from "@/components/ui";
-import { AdGrid } from "@/components/AdGrid";
+import { FeedClient } from "./FeedClient";
 import { EmptyState } from "@/components/EmptyState";
 import { Sparkles } from "lucide-react";
 
@@ -13,13 +13,13 @@ export const dynamic = "force-dynamic";
  */
 export default async function RecherchePage() {
   const supabase = await createClient();
-  const feed = await getFeed(supabase, { limit: 48 }); // lecture RLS authenticated
+  const feed = await getFeed(supabase, { limit: 60 }); // lecture RLS authenticated
 
   return (
     <div className="space-y-4">
       <PageHeader
         title="Feed du jour"
-        subtitle="Pubs gagnantes repérées pour toi — à parcourir librement."
+        subtitle={`${feed.length} pubs actives repérées ce matin, en Afrique et en Europe, triées par score.`}
       >
         <span className="bg-secondary text-accent inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-semibold">
           Ne consomme aucune recherche
@@ -27,7 +27,7 @@ export default async function RecherchePage() {
       </PageHeader>
 
       {feed.length > 0 ? (
-        <AdGrid ads={feed} />
+        <FeedClient ads={feed} />
       ) : (
         <EmptyState
           icon={Sparkles}
