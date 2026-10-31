@@ -26,7 +26,13 @@ export function mediaStorageConfigured(): boolean {
 // Base CDN nettoyée : accepte "look360-media.b-cdn.net", "http(s)://…" et
 // les "/" en trop → toujours "https://look360-media.b-cdn.net".
 function cdnBase(): string {
-  const h = (CDN_HOST || "").replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+  // Un point final (« look360-media.b-cdn.net. ») casse le chargement des
+  // images dans les navigateurs : on le retire avec les espaces.
+  const h = (CDN_HOST || "")
+    .trim()
+    .replace(/^https?:\/\//i, "")
+    .replace(/\/+$/, "")
+    .replace(/\.+$/, "");
   return `https://${h}`;
 }
 
@@ -124,7 +130,10 @@ export function getUrl(key: string): string {
 /** Clé de stockage d'une URL de NOTRE CDN (null si l'URL n'en vient pas). */
 export function keyFromCdnUrl(url: string | null | undefined): string | null {
   const base = `${cdnBase()}/`;
-  if (!CDN_HOST || !url || !url.startsWith(base)) return null;
+  if (!CDN_HOST || !url) return null;
+  // Anciennes URL enregistrées avec un point final après le host.
+  url = url.replace(/^(https:\/\/[^/]+?)\.+\//i, "$1/");
+  if (!url.startsWith(base)) return null;
   const key = url.slice(base.length);
   return key && !key.includes("..") ? key : null;
 }
