@@ -37,13 +37,13 @@ function meta(e: ActivityEvent): {
       return {
         icon: "trending",
         label: `Passage à l'offre ${planLabel(e.plan)}${e.amount ? ` · ${fcfa(e.amount)}` : ""}`,
-        tint: "bg-success-bg text-success",
+        tint: "bg-success-bg text-success-fg",
       };
     case "pack":
       return {
         icon: "store",
         label: `Recharge de crédits${e.amount ? ` · ${fcfa(e.amount)}` : ""}`,
-        tint: "bg-success-bg text-success",
+        tint: "bg-success-bg text-success-fg",
       };
     case "search":
       return {

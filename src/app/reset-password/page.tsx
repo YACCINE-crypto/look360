@@ -13,7 +13,7 @@ export default function ResetPasswordPage() {
         <div className="mb-8 flex flex-col items-center text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/look360-logo.svg" alt="Look360" className="mb-3 h-12 w-auto" />
-          <p className="text-muted-foreground text-sm">Nouveau mot de passe</p>
+          <h1 className="text-muted-foreground text-sm font-normal">Nouveau mot de passe</h1>
         </div>
 
         <form action={formAction} className="border-border bg-surface space-y-4 rounded-xl border p-6 shadow-sm">
@@ -26,7 +26,7 @@ export default function ResetPasswordPage() {
             <PasswordInput id="confirm" name="confirm" autoComplete="new-password" minLength={8} />
           </div>
 
-          {error && <p className="text-danger text-sm">{error}</p>}
+          {error && <p className="text-danger-fg text-sm">{error}</p>}
 
           <button
             type="submit"

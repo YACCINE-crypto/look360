@@ -91,7 +91,7 @@ export function CountryMultiSelect({
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className={`border-border bg-input focus:border-accent flex min-h-[44px] w-full items-center justify-between gap-2 rounded-md border px-3 text-sm outline-none transition-colors ${
+        className={`border-border bg-input focus:border-accent focus-visible:shadow-focus flex min-h-[44px] w-full items-center justify-between gap-2 rounded-md border px-3 text-sm outline-none transition-colors ${
           open ? "border-accent" : ""
         }`}
       >
@@ -113,13 +113,13 @@ export function CountryMultiSelect({
           {selected.map((code) => (
             <span
               key={code}
-              className="bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded-full py-0.5 pl-2.5 pr-1 text-xs font-medium"
+              className="bg-secondary text-secondary-foreground inline-flex items-center gap-0.5 rounded-full pl-2.5 text-xs font-medium"
             >
               {countryLabel(code)}
               <button
                 type="button"
                 onClick={() => onChange(selected.filter((c) => c !== code))}
-                className="hover:bg-accent/15 grid h-4 w-4 place-items-center rounded-full"
+                className="hover:bg-accent/15 focus-visible:ring-accent/40 grid h-7 w-7 place-items-center rounded-full focus-visible:outline-none focus-visible:ring-2"
                 aria-label={`Retirer ${countryLabel(code)}`}
               >
                 <Icon name="x" size={11} />
@@ -130,7 +130,7 @@ export function CountryMultiSelect({
             <button
               type="button"
               onClick={() => onChange([])}
-              className="text-muted-foreground hover:text-fg text-xs font-medium underline"
+              className="text-muted-foreground hover:text-fg min-h-7 px-1 text-xs font-medium underline"
             >
               Tout effacer
             </button>
@@ -141,14 +141,15 @@ export function CountryMultiSelect({
       {open && (
         <div className="border-border bg-surface absolute z-50 mt-1 w-full min-w-[16rem] rounded-xl border p-2 shadow-xl">
           {/* Filtre texte */}
-          <div className="border-border bg-input mb-2 flex min-h-[38px] items-center gap-2 rounded-md border px-2.5">
+          <div className="border-border bg-input focus-within:border-accent mb-2 flex min-h-[38px] items-center gap-2 rounded-md border px-2.5">
             <Icon name="search" size={14} className="text-muted-foreground" />
             <input
               autoFocus
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               placeholder="Rechercher un pays…"
-              className="w-full bg-transparent text-sm outline-none"
+              aria-label="Rechercher un pays"
+              className="w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
             />
           </div>
 
@@ -166,7 +167,7 @@ export function CountryMultiSelect({
             ))}
           </div>
 
-          {note && <p className="text-warn mb-2 px-1 text-xs">{note}</p>}
+          {note && <p className="text-warn-fg mb-2 px-1 text-xs">{note}</p>}
 
           {/* Liste par région */}
           <div className="max-h-64 overflow-auto">
@@ -175,7 +176,7 @@ export function CountryMultiSelect({
               if (list.length === 0) return null;
               return (
                 <div key={r}>
-                  <p className="text-muted-foreground px-1 pb-0.5 pt-2 text-[11px] font-semibold uppercase tracking-wide">
+                  <p className="text-muted-foreground px-1 pb-0.5 pt-2 text-xs font-semibold uppercase tracking-wide">
                     {SPY_REGION_LABELS[r]}
                   </p>
                   {list.map((c) => {
@@ -200,7 +201,7 @@ export function CountryMultiSelect({
                         </span>
                         <span className="flex-1 truncate">{c.label}</span>
                         {isEUCountry(c.code) && (
-                          <span className="bg-secondary text-secondary-foreground rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
+                          <span className="bg-secondary text-secondary-foreground rounded-full px-1.5 py-0.5 text-xs font-semibold">
                             reach
                           </span>
                         )}

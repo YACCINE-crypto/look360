@@ -121,7 +121,7 @@ export function Revenus({
               />
             </div>
           </div>
-          <p className="text-muted-foreground/70 mt-3 text-[11px] leading-snug">
+          <p className="text-muted-foreground mt-3 text-xs leading-snug">
             Le coût est une estimation (paramètre ajustable). La marge suit le
             revenu réel encaissé et la consommation réelle de crédits.
           </p>
@@ -132,12 +132,12 @@ export function Revenus({
       <div>
         <div className="mb-3 flex items-center gap-2">
           <span
-            className={`grid h-8 w-8 place-items-center rounded-xl ${alertCount > 0 ? "bg-danger-bg text-danger" : "bg-success-bg text-success"}`}
+            className={`grid h-8 w-8 place-items-center rounded-xl ${alertCount > 0 ? "bg-danger-bg text-danger-fg" : "bg-success-bg text-success-fg"}`}
           >
             <Icon name="bell" size={16} />
           </span>
           <h2 className="text-fg text-lg font-bold">
-            Alertes {alertCount > 0 && <span className="text-danger">({alertCount})</span>}
+            Alertes {alertCount > 0 && <span className="text-danger-fg">({alertCount})</span>}
           </h2>
         </div>
 
@@ -234,7 +234,7 @@ function Kpi({
   const v = useCountUp(Math.round(value), active, reduce, 1000);
   const display = fcfa ? `${nf.format(v)} FCFA` : nf.format(v);
   const valueColor =
-    tone === "success" ? "text-success" : tone === "danger" ? "text-danger" : "text-fg";
+    tone === "success" ? "text-success-fg" : tone === "danger" ? "text-danger-fg" : "text-fg";
 
   return (
     <div
@@ -257,7 +257,7 @@ function Kpi({
         {sub && <p className="text-muted-foreground text-xs">{sub}</p>}
         {delta != null && (
           <span
-            className={`text-[11px] font-semibold ${delta >= 0 ? "text-success" : "text-danger"}`}
+            className={`text-xs font-semibold ${delta >= 0 ? "text-success-fg" : "text-danger-fg"}`}
           >
             {delta >= 0 ? "+" : ""}
             {delta} %
@@ -291,7 +291,7 @@ function Bars({ data }: { data: { month: string; total: number }[] }) {
     >
       {data.map((d) => (
         <div key={d.month} className="flex min-w-0 flex-1 flex-col items-center gap-1">
-          <span className="text-muted-foreground h-4 text-[10px] tabular-nums">
+          <span className="text-muted-foreground h-4 text-xs tabular-nums">
             {d.total > 0 ? compact(d.total) : ""}
           </span>
           <div className="flex w-full flex-1 items-end">
@@ -301,7 +301,7 @@ function Bars({ data }: { data: { month: string; total: number }[] }) {
               title={`${monthLabel(d.month)} : ${nf.format(d.total)} FCFA`}
             />
           </div>
-          <span className="text-muted-foreground/70 text-[10px]">{monthLabel(d.month)}</span>
+          <span className="text-muted-foreground text-xs">{monthLabel(d.month)}</span>
         </div>
       ))}
     </div>
@@ -322,7 +322,7 @@ function MiniRow({
   tone?: "success" | "danger";
 }) {
   const color =
-    tone === "success" ? "text-success" : tone === "danger" ? "text-danger" : "text-fg";
+    tone === "success" ? "text-success-fg" : tone === "danger" ? "text-danger-fg" : "text-fg";
   return (
     <div className="flex items-center justify-between gap-3">
       <span className="text-muted-foreground text-sm">{label}</span>
@@ -353,17 +353,17 @@ function AlertCard({
       <div className="border-border flex items-center justify-between border-b px-4 py-3">
         <div className="flex items-center gap-2">
           <span
-            className={`grid h-8 w-8 place-items-center rounded-lg ${count > 0 ? "bg-danger-bg text-danger" : "bg-input text-muted-foreground"}`}
+            className={`grid h-8 w-8 place-items-center rounded-lg ${count > 0 ? "bg-danger-bg text-danger-fg" : "bg-input text-muted-foreground"}`}
           >
             <Icon name={icon} size={15} />
           </span>
           <div>
             <p className="text-fg text-sm font-bold">{title}</p>
-            <p className="text-muted-foreground text-[11px]">{hint}</p>
+            <p className="text-muted-foreground text-xs">{hint}</p>
           </div>
         </div>
         <span
-          className={`rounded-full px-2 py-0.5 text-xs font-bold tabular-nums ${count > 0 ? "bg-danger-bg text-danger" : "bg-success-bg text-success"}`}
+          className={`rounded-full px-2 py-0.5 text-xs font-bold tabular-nums ${count > 0 ? "bg-danger-bg text-danger-fg" : "bg-success-bg text-success-fg"}`}
         >
           {count}
         </span>
@@ -396,10 +396,10 @@ function AlertRow({
     <Link href={href} className="hover:bg-input/50 flex items-center justify-between gap-3 px-4 py-2.5 transition-colors">
       <div className="min-w-0">
         <p className="text-fg truncate text-sm font-medium">{left}</p>
-        <p className="text-muted-foreground text-[11px]">{sub}</p>
+        <p className="text-muted-foreground text-xs">{sub}</p>
       </div>
       <span
-        className={`shrink-0 text-xs font-bold tabular-nums ${tone === "danger" ? "text-danger" : "text-muted-foreground"}`}
+        className={`shrink-0 text-xs font-bold tabular-nums ${tone === "danger" ? "text-danger-fg" : "text-muted-foreground"}`}
       >
         {right}
       </span>

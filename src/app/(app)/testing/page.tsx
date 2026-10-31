@@ -13,16 +13,16 @@ import { dernierTestParProduit } from "@/lib/score";
 
 // Verdict → pastille (tokens signal : vert / ambre / rouge).
 function verdictPill(tier: string | null): { label: string; cls: string } {
-  if (tier === "rentable") return { label: "Rentable", cls: "bg-success-bg text-success" };
-  if (tier === "moyen") return { label: "Moyen", cls: "bg-warn-bg text-warn" };
+  if (tier === "rentable") return { label: "Rentable", cls: "bg-success-bg text-success-fg" };
+  if (tier === "moyen") return { label: "Moyen", cls: "bg-warn-bg text-warn-fg" };
   if (tier === "pas_rentable" || tier === "marge_faible")
-    return { label: "Pas rentable", cls: "bg-danger-bg text-danger" };
+    return { label: "Pas rentable", cls: "bg-danger-bg text-danger-fg" };
   return { label: "À chiffrer", cls: "bg-input text-muted-foreground" };
 }
 function closingColor(tier: string | undefined): string {
-  if (tier === "faible") return "text-danger";
-  if (tier === "correct") return "text-warn";
-  if (tier === "normal" || tier === "super") return "text-success";
+  if (tier === "faible") return "text-danger-fg";
+  if (tier === "correct") return "text-warn-fg";
+  if (tier === "normal" || tier === "super") return "text-success-fg";
   return "text-muted-foreground";
 }
 
@@ -87,7 +87,7 @@ export default async function TestingPage() {
                       <Icon name="image" size={24} />
                     </div>
                   )}
-                  <span className={`absolute left-1 top-1 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${pill.cls}`}>
+                  <span className={`absolute left-1 top-1 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs font-semibold ${pill.cls}`}>
                     <span className="h-1.5 w-1.5 rounded-full bg-current" />
                     {pill.label}
                   </span>
@@ -107,11 +107,11 @@ export default async function TestingPage() {
 
                   <div className="mt-auto flex items-end justify-between gap-2 pt-2">
                     <div className="min-w-0">
-                      <p className="text-muted-foreground text-[11px]">Coût livré</p>
+                      <p className="text-muted-foreground text-xs">Coût livré</p>
                       <p className="truncate text-sm font-semibold">{formatFCFA(p.cout_livre_estime)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-muted-foreground text-[11px]">Marge est.</p>
+                      <p className="text-muted-foreground text-xs">Marge est.</p>
                       <p className={`text-sm font-semibold ${margeColorClass(r?.margePct ?? null)}`}>
                         {r?.margePct == null ? "—" : `${r.margePct.toFixed(0)}%`}
                       </p>
@@ -121,7 +121,7 @@ export default async function TestingPage() {
                   {/* Taux de closing (barre) */}
                   {r?.tauxConfirmation != null ? (
                     <div className="mt-2">
-                      <div className="mb-0.5 flex items-center justify-between text-[11px]">
+                      <div className="mb-0.5 flex items-center justify-between text-xs">
                         <span className="text-muted-foreground">Closing</span>
                         <span className={`font-semibold ${closingColor(r.confirmation?.tier)}`}>
                           {r.tauxConfirmation.toFixed(0)}%
@@ -141,7 +141,7 @@ export default async function TestingPage() {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-muted-foreground mt-2 text-[11px]">
+                    <p className="text-muted-foreground mt-2 text-xs">
                       Chiffres non saisis — ouvre la fiche.
                     </p>
                   )}

@@ -57,14 +57,14 @@ export function ProductCard({
         </div>
         {score != null && (
           <span
-            className={`absolute right-2 top-2 z-20 rounded-full px-2 py-0.5 text-[11px] font-semibold shadow-sm ${scoreMeta(score).badge}`}
+            className={`absolute right-2 top-2 z-20 rounded-full px-2 py-0.5 text-xs font-semibold shadow-sm ${scoreMeta(score).badge}`}
             title="Score produit gagnant (0–100)"
           >
             {score} · {scoreMeta(score).label}
           </span>
         )}
         {p.marche && (
-          <span className="bg-surface/90 text-fg absolute bottom-2 left-2 z-20 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold shadow-sm backdrop-blur">
+          <span className="bg-surface/90 text-fg absolute bottom-2 left-2 z-20 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold shadow-sm backdrop-blur">
             <CountryFlag code={p.marche} /> {p.marche}
           </span>
         )}
@@ -92,14 +92,14 @@ export function ProductCard({
           <ProgressRing value={hasClosing ? closing! : null} size={48} stroke={5} sublabel="closing" />
           <div className="min-w-0 flex-1 space-y-1.5">
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-muted-foreground text-[11px]">Marge est.</span>
+              <span className="text-muted-foreground text-xs">Marge est.</span>
               <span className={`text-sm font-bold tabular-nums ${margeColorClass(marge ?? null)}`}>
                 {hasMarge ? `${marge!.toFixed(0)}%` : "—"}
               </span>
             </div>
             <MeterBar value={hasMarge ? marge! : 0} tone={hasMarge ? margeTone(marge) : "muted"} height={6} />
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-muted-foreground text-[11px]">Coût livré</span>
+              <span className="text-muted-foreground text-xs">Coût livré</span>
               <span className="text-fg truncate text-xs font-semibold">
                 {formatFCFA(p.cout_livre_estime)}
               </span>
@@ -110,15 +110,15 @@ export function ProductCard({
         <div className="flex min-h-[18px] flex-wrap items-center gap-1.5">
           {p.statut_revue !== "approuve" && (
             <span
-              className={`inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium ${STATUT_REVUE_BADGE[p.statut_revue as StatutRevue]}`}
+              className={`inline-flex rounded-full px-1.5 py-0.5 text-xs font-medium ${STATUT_REVUE_BADGE[p.statut_revue as StatutRevue]}`}
             >
               {STATUT_REVUE_LABELS[p.statut_revue as StatutRevue]}
             </span>
           )}
           {echLabel && (
             <span
-              className={`inline-flex items-center gap-1 text-[11px] font-medium ${
-                urgent ? "text-warn" : "text-muted-foreground"
+              className={`inline-flex items-center gap-1 text-xs font-medium ${
+                urgent ? "text-warn-fg" : "text-muted-foreground"
               }`}
             >
               <Icon name="clock" size={11} />

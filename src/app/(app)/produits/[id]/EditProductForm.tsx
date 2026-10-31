@@ -148,7 +148,7 @@ export function EditProductForm({ produit }: { produit: Produit }) {
                       {uploading ? "Envoi…" : imageUrl ? "Changer" : "Téléverser"}
                     </button>
                     <input ref={fileRef} type="file" accept="image/*,video/*" onChange={handleFile} className="hidden" />
-                    {uploadError && <p className="text-danger mt-1 text-xs">{uploadError}</p>}
+                    {uploadError && <p className="text-danger-fg mt-1 text-xs">{uploadError}</p>}
                   </div>
                 </div>
               </div>
@@ -276,7 +276,7 @@ export function EditProductForm({ produit }: { produit: Produit }) {
                 <div className="border-border bg-input mt-3 flex items-center justify-between gap-3 rounded-md border px-3 py-2.5">
                   <div>
                     <p className={labelCls}>Coût livré (calculé)</p>
-                    <p className="text-muted-foreground text-[11px]">
+                    <p className="text-muted-foreground text-xs">
                       {typeAppro === "local"
                         ? "= prix d'achat local"
                         : mode === "aerien"

@@ -35,6 +35,9 @@
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-on);
   --color-input: var(--input);
+  --color-success-fg: var(--success-fg);
+  --color-warn-fg: var(--warn-fg);
+  --color-danger-fg: var(--danger-fg);
   --color-success-bg: var(--success-bg);
   --color-warn-bg: var(--warn-bg);
   --color-danger-bg: var(--danger-bg);
@@ -58,7 +61,7 @@
   --color-background: var(--bg);
   --color-foreground: var(--fg);
   --color-muted: var(--border);              /* surface claire (rails, hover) */
-  --color-muted-foreground: var(--muted);    /* texte atténué OpenDesign #64748b */
+  --color-muted-foreground: var(--muted);    /* texte atténué (#5b6b82, ≥ 4,5:1) */
   --color-primary: var(--accent);
   --color-primary-foreground: var(--accent-on);
   --color-warning: var(--warn);
@@ -82,6 +85,7 @@
   --shadow-lift: var(--elev-lift);
   --shadow-raised: var(--elev-raised);
   --shadow-ring: var(--elev-ring);
+  --shadow-focus: var(--focus-ring);
   --shadow-glow: 0 6px 20px -6px color-mix(in srgb, var(--accent) 45%, transparent);
 
   /* Largeur canonique de la sidebar */
@@ -101,6 +105,16 @@ html {
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
+  }
+}
+
+/* Focus clavier des champs : anneau --focus-ring en plus de la bordure accent
+   (un simple changement de bordure ne suffit pas, WCAG 2.4.7). En @layer base
+   pour que les utilitaires (ex. focus-visible:shadow-none) puissent l'annuler. */
+@layer base {
+  :where(input:not([type="checkbox"], [type="radio"], [type="range"]), select, textarea):focus-visible {
+    border-color: var(--accent);
+    box-shadow: var(--focus-ring);
   }
 }
 

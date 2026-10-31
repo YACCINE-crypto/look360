@@ -35,11 +35,11 @@ export function WinnerConfigForm({ config }: { config: WinnerConfig }) {
         className="flex w-full items-center justify-between gap-2 p-4 text-left"
       >
         <span className="flex items-center gap-2 text-sm font-semibold">
-          <Icon name="trophy" size={16} className="text-warn" />
+          <Icon name="trophy" size={16} className="text-warn-fg" />
           Critères du Winner Agent
           <span
-            className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
-              config.active ? "bg-success-bg text-success" : "bg-input text-muted-foreground"
+            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+              config.active ? "bg-success-bg text-success-fg" : "bg-input text-muted-foreground"
             }`}
           >
             {config.active ? "Actif" : "En pause"}

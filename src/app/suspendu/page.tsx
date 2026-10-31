@@ -30,7 +30,7 @@ export default async function SuspenduPage() {
     <main className="bg-bg flex min-h-screen items-center justify-center px-4 py-16">
       <div className="w-full max-w-sm text-center">
         <img src="/look360-logo.svg" alt="Look360" className="mx-auto mb-6 h-10 w-auto" />
-        <span className="bg-danger-bg text-danger mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl">
+        <span className="bg-danger-bg text-danger-fg mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl">
           <Icon name="lock" size={26} />
         </span>
         <h1 className="text-fg text-xl font-bold">Compte suspendu</h1>

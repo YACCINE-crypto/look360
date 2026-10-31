@@ -41,8 +41,10 @@ function AuthCard() {
       <main className="bg-bg flex min-h-screen items-center justify-center px-4 py-12">
         <div className="w-full max-w-sm">
           <div className="mb-6 flex flex-col items-center text-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/look360-logo.svg" alt="Look360" className="mb-3 h-12 w-auto" />
+            <h1 className="mb-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/look360-logo.svg" alt="Look360" className="h-12 w-auto" />
+            </h1>
           </div>
           <div className="border-border bg-surface space-y-3 rounded-2xl border p-6 text-center shadow-lg">
             <p className="text-lg font-semibold">Vérifie ta boîte mail 📩</p>
@@ -67,8 +69,10 @@ function AuthCard() {
       <div className="w-full max-w-sm">
         {/* Logo + sous-titre */}
         <div className="mb-6 flex flex-col items-center text-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/look360-logo.svg" alt="Look360" className="mb-3 h-12 w-auto" />
+          <h1 className="mb-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/look360-logo.svg" alt="Look360" className="h-12 w-auto" />
+          </h1>
           <p className="text-muted-foreground text-sm">
             Recherche &amp; testing produit COD
           </p>
@@ -86,12 +90,12 @@ function AuthCard() {
           </div>
 
           {reset && (
-            <div className="bg-success-bg text-success mb-4 rounded-lg p-3 text-sm">
+            <div className="bg-success-bg text-success-fg mb-4 rounded-lg p-3 text-sm">
               Mot de passe mis à jour. Connecte-toi.
             </div>
           )}
           {authError && (
-            <div className="bg-danger-bg text-danger mb-4 rounded-lg p-3 text-sm">
+            <div className="bg-danger-bg text-danger-fg mb-4 rounded-lg p-3 text-sm">
               Lien invalide ou expiré. Réessaie de te connecter ou de réinitialiser.
             </div>
           )}
@@ -113,7 +117,7 @@ function AuthCard() {
                 <PasswordInput id="login-password" name="password" autoComplete="current-password" />
               </div>
 
-              {loginError && <p className="text-danger text-sm">{loginError}</p>}
+              {loginError && <p className="text-danger-fg text-sm">{loginError}</p>}
 
               <button type="submit" disabled={loginPending} className={pill}>
                 {loginPending ? "Connexion…" : "Se connecter"}
@@ -135,7 +139,7 @@ function AuthCard() {
                 <p className="text-muted-foreground text-xs">8 caractères minimum.</p>
               </div>
 
-              {signupError && <p className="text-danger text-sm">{signupError}</p>}
+              {signupError && <p className="text-danger-fg text-sm">{signupError}</p>}
 
               <button type="submit" disabled={signupPending} className={pill}>
                 {signupPending ? "Création…" : "Créer un compte"}
@@ -145,7 +149,7 @@ function AuthCard() {
         </div>
 
         <p className="text-muted-foreground mt-4 flex items-center justify-center gap-1.5 text-center text-xs">
-          <Icon name="check" size={13} className="text-success" />
+          <Icon name="check" size={13} className="text-success-fg" />
           Isolation des comptes garantie — tes données restent privées.
         </p>
       </div>

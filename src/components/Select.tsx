@@ -74,7 +74,7 @@ export function Select({
         aria-expanded={open}
         aria-controls={open ? listId : undefined}
         onClick={() => !disabled && setOpen((o) => !o)}
-        className={`border-border bg-input focus:border-accent flex min-h-[44px] w-full items-center justify-between gap-2 rounded-md border px-3 text-sm outline-none transition-colors disabled:opacity-50 ${
+        className={`border-border bg-input focus:border-accent focus-visible:shadow-focus flex min-h-[44px] w-full items-center justify-between gap-2 rounded-md border px-3 text-sm outline-none transition-colors disabled:opacity-50 ${
           open ? "border-accent" : ""
         }`}
       >
@@ -106,7 +106,7 @@ export function Select({
           {groups
             ? groups.map((g) => (
                 <div key={g.label}>
-                  <p className="text-muted-foreground px-2 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide">
+                  <p className="text-muted-foreground px-2 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide">
                     {g.label}
                   </p>
                   {g.options.map((o) => (

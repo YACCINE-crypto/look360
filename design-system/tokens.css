@@ -9,7 +9,7 @@
   --surface-warm: #eef6ff;
   --fg: #111827;
   --fg-2: #334155;
-  --muted: #64748b;
+  --muted: #5b6b82; /* Look360 : assombri depuis #64748b (4,43:1 sur --bg) → ≥ 4,9:1 sur bg/input */
   --meta: #0ea5e9;
   --border: #d8e2ee;
   --border-soft: #edf3f8;
@@ -81,6 +81,13 @@
   --success-bg: color-mix(in srgb, var(--success) 16%, white);
   --warn-bg: color-mix(in srgb, var(--warn) 18%, white);
   --danger-bg: color-mix(in srgb, var(--danger) 15%, white);
+
+  /* Teintes TEXTE des signaux : --success/--warn/--danger sont des teintes de
+     fond / graphique (anneaux, barres, points) et échouent en texte (2,1–3,8:1).
+     Ces variantes passent ≥ 4,5:1 sur surface, bg, input et fonds doux. */
+  --success-fg: #047857;
+  --warn-fg: #a14a06;
+  --danger-fg: #b91c1c;
 
   /* Chips de statut produit */
   --chip-idee: #ede9fe;

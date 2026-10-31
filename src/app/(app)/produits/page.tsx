@@ -115,12 +115,12 @@ function buildStats(
   return [
     { label: "En suivi", value: String(enSuivi), icon: "pipeline", trend: trend(inSuivi), trendTone: "primary" },
     { label: "En test", value: String(enTest), icon: "flask", valueClass: "text-accent", trend: trend(inTest), trendTone: "primary" },
-    { label: "Validés", value: String(valides), icon: "check", valueClass: "text-success", trend: trend(isValide), trendTone: "success" },
+    { label: "Validés", value: String(valides), icon: "check", valueClass: "text-success-fg", trend: trend(isValide), trendTone: "success" },
     {
       label: "Taux closing moy.",
       value: tauxMoyen === null ? "—" : `${tauxMoyen.toFixed(0)} %`,
       icon: "search",
-      valueClass: tauxMoyen !== null && tauxMoyen >= 45 ? "text-success" : "",
+      valueClass: tauxMoyen !== null && tauxMoyen >= 45 ? "text-success-fg" : "",
     },
   ];
 }

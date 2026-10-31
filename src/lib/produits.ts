@@ -30,7 +30,7 @@ export const STATUT_BADGE: Record<Statut, string> = {
   en_test: "bg-chip-bleu text-chip-bleu-fg",
   valide: "bg-chip-valide text-chip-valide-fg",
   production: "bg-primary text-primary-foreground",
-  abandonne: "bg-danger-bg text-danger",
+  abandonne: "bg-danger-bg text-danger-fg",
 };
 
 // --- Statut de revue (workflow soumission agent -> validation admin) ---
@@ -47,8 +47,8 @@ export const STATUT_REVUE_LABELS: Record<StatutRevue, string> = {
 export const STATUT_REVUE_BADGE: Record<StatutRevue, string> = {
   soumis: "bg-chip-bleu text-chip-bleu-fg",
   en_analyse: "bg-warning-bg text-warning",
-  approuve: "bg-success-bg text-success",
-  rejete: "bg-danger-bg text-danger",
+  approuve: "bg-success-bg text-success-fg",
+  rejete: "bg-danger-bg text-danger-fg",
 };
 
 // --- Marchés ciblés (§8 : FCFA partout) ---

@@ -60,14 +60,14 @@ export async function SavedAds() {
               >
                 <CreativeMedia image={img} alt={pageName ?? ""} isVideo={ad.media_type === "video"}>
                   {ad.media_type === "video" && (
-                    <span className="bg-black/55 absolute left-2 top-2 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase text-white">
+                    <span className="bg-black/55 absolute left-2 top-2 rounded px-1.5 py-0.5 text-xs font-medium uppercase text-white">
                       Vidéo
                     </span>
                   )}
                   <span
-                    className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                    className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-xs font-medium ${
                       ad.media_stored
-                        ? "bg-success-bg text-success"
+                        ? "bg-success-bg text-success-fg"
                         : "bg-input text-muted-foreground"
                     }`}
                     title={ad.media_stored ? "Visuel archivé sur le CDN" : "Lien Meta (peut expirer)"}
@@ -88,17 +88,17 @@ export async function SavedAds() {
 
                   <div className="flex flex-wrap items-center gap-1.5">
                     {ad.pays_cible && (
-                      <span className="bg-input text-muted-foreground rounded-full px-2 py-0.5 text-[11px] font-medium">
+                      <span className="bg-input text-muted-foreground rounded-full px-2 py-0.5 text-xs font-medium">
                         {countryLabel(ad.pays_cible)}
                       </span>
                     )}
                     {typeof ad.variants_count === "number" && ad.variants_count > 1 && (
-                      <span className="bg-input text-muted-foreground rounded-full px-2 py-0.5 text-[11px] font-medium">
+                      <span className="bg-input text-muted-foreground rounded-full px-2 py-0.5 text-xs font-medium">
                         {ad.variants_count} variantes
                       </span>
                     )}
                     {ad.reach_estimate != null && (
-                      <span className="bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-[11px] font-semibold">
+                      <span className="bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-semibold">
                         Reach {formatReach(ad.reach_estimate)}
                       </span>
                     )}
@@ -162,7 +162,7 @@ export async function SavedAds() {
                       <input type="hidden" name="id" value={ad.id} />
                       <button
                         type="submit"
-                        className="text-danger hover:bg-danger-bg flex min-h-[32px] w-full items-center justify-center gap-1.5 rounded-md text-xs font-medium transition-colors"
+                        className="text-danger-fg hover:bg-danger-bg flex min-h-[32px] w-full items-center justify-center gap-1.5 rounded-md text-xs font-medium transition-colors"
                       >
                         <Icon name="trash" size={12} /> Retirer
                       </button>

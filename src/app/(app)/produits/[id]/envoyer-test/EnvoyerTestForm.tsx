@@ -200,7 +200,7 @@ export function EnvoyerTestForm({ produit }: { produit: Produit }) {
         <div className="border-border bg-input flex items-center justify-between rounded-md border px-3 py-2.5">
           <div>
             <p className={labelCls}>Coût livré (calculé)</p>
-            <p className="text-muted-foreground text-[11px]">
+            <p className="text-muted-foreground text-xs">
               {typeAppro === "local"
                 ? "= prix d'achat local"
                 : mode === "aerien"

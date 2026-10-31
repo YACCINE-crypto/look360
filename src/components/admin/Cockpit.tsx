@@ -126,7 +126,7 @@ function KpiCard({
     format === "fcfa" ? `${nf.format(v)} FCFA` : format === "pct" ? `${v} %` : nf.format(v);
 
   const valueColor =
-    tone === "success" ? "text-success" : tone === "danger" ? "text-danger" : "text-fg";
+    tone === "success" ? "text-success-fg" : tone === "danger" ? "text-danger-fg" : "text-fg";
 
   return (
     <div
@@ -140,7 +140,7 @@ function KpiCard({
         <div className="min-w-0">
           <p className="text-muted-foreground truncate text-sm font-medium">{label}</p>
           {period && !small && (
-            <p className="text-muted-foreground/70 mt-0.5 text-[11px]">{period}</p>
+            <p className="text-muted-foreground mt-0.5 text-xs">{period}</p>
           )}
         </div>
         <span className="bg-secondary text-accent grid h-9 w-9 shrink-0 place-items-center rounded-xl">
@@ -197,7 +197,7 @@ function PlanBreakdown({
           </div>
         ))}
       </div>
-      <p className="text-muted-foreground/70 mt-3 text-[11px]">
+      <p className="text-muted-foreground mt-3 text-xs">
         {total} compte{total > 1 ? "s" : ""} au total
       </p>
     </div>

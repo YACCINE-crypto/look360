@@ -208,17 +208,17 @@ export function closingTier(taux: number): ConfirmationTier {
 /** Couleur signal (token) pour un % de closing donné. */
 export function closingColorClass(taux: number | null): string {
   if (taux === null) return "text-muted-foreground";
-  if (taux >= 60) return "text-success";
+  if (taux >= 60) return "text-success-fg";
   if (taux >= 35) return "text-warning";
-  return "text-danger";
+  return "text-danger-fg";
 }
 
 /** Classe de couleur signal pour un % de marge (vert/ambre/rouge). */
 export function margeColorClass(margePct: number | null): string {
   if (margePct === null) return "text-muted-foreground";
-  if (margePct >= 30) return "text-success";
+  if (margePct >= 30) return "text-success-fg";
   if (margePct >= 15) return "text-warning";
-  return "text-danger";
+  return "text-danger-fg";
 }
 
 export function verdictMeta(tier: string | null) {

@@ -72,13 +72,14 @@ export function ProduitsClient({
         title="Mes produits"
         subtitle="Tes produits enregistrés, leurs chiffres et tes pubs sauvegardées."
       >
-        <div className="border-border bg-input hidden min-h-[44px] items-center gap-2 rounded-md border px-3 sm:flex">
+        <div className="border-border bg-input focus-within:border-accent focus-within:shadow-focus hidden min-h-[44px] items-center gap-2 rounded-md border px-3 transition-colors sm:flex">
           <Icon name="search" size={16} className="text-muted-foreground" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Rechercher un produit…"
-            className="placeholder:text-muted-foreground w-48 bg-transparent text-sm outline-none"
+            aria-label="Rechercher un produit"
+            className="placeholder:text-muted-foreground w-48 bg-transparent text-sm outline-none focus-visible:shadow-none"
           />
         </div>
         <AddProductPanel />
@@ -98,18 +99,19 @@ export function ProduitsClient({
       />
 
       {/* Recherche mobile (sous les filtres) */}
-      <div className="border-border bg-input flex min-h-[44px] items-center gap-2 rounded-md border px-3 sm:hidden">
+      <div className="border-border bg-input focus-within:border-accent focus-within:shadow-focus flex min-h-[44px] items-center gap-2 rounded-md border px-3 transition-colors sm:hidden">
         <Icon name="search" size={16} className="text-muted-foreground" />
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Rechercher un produit…"
-          className="placeholder:text-muted-foreground w-full bg-transparent text-sm outline-none"
+          aria-label="Rechercher un produit"
+          className="placeholder:text-muted-foreground w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
         />
       </div>
 
       {addError && (
-        <p className="bg-danger-bg text-danger rounded-lg p-3 text-sm">
+        <p className="bg-danger-bg text-danger-fg rounded-lg p-3 text-sm">
           {addError === "nom"
             ? "Le nom du produit est requis."
             : "Impossible d'enregistrer le produit. Réessaie."}

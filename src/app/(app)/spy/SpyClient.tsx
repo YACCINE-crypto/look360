@@ -282,13 +282,13 @@ export function SpyClient({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="flex flex-col gap-1.5 sm:col-span-2">
             <span className={labelCls}>Mot-clé (produit / niche)</span>
-            <div className="border-border bg-input flex min-h-[44px] items-center gap-2 rounded-md border px-3">
+            <div className="border-border bg-input focus-within:border-accent focus-within:shadow-focus flex min-h-[44px] items-center gap-2 rounded-md border px-3 transition-colors">
               <Icon name="search" size={16} className="text-muted-foreground" />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="ex. montre, ceinture, masseur…"
-                className="w-full bg-transparent text-sm outline-none"
+                className="w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
               />
             </div>
           </label>
@@ -309,7 +309,7 @@ export function SpyClient({
           </label>
           <label className="flex flex-col gap-1.5">
             <span className={labelCls}>
-              Reach min. {!euDispo && <span className="text-warn">(UE only)</span>}
+              Reach min. {!euDispo && <span className="text-warn-fg">(UE only)</span>}
             </span>
             <Select
               value={reachMin}
@@ -334,19 +334,19 @@ export function SpyClient({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm">
             <input
               type="checkbox"
               checked={statut === "all"}
               onChange={(e) => setStatut(e.target.checked ? "all" : "active")}
-              className="accent-primary h-4 w-4"
+              className="accent-primary h-5 w-5"
             />
             Inclure les pubs inactives
           </label>
           <span
             className={`rounded-full px-2.5 py-1 text-xs font-medium ${
               maxMarkets > 0 && markets > maxMarkets
-                ? "bg-warn-bg text-warn"
+                ? "bg-warn-bg text-warn-fg"
                 : "bg-input text-muted-foreground"
             }`}
             title={`Ton offre permet jusqu'à ${maxMarkets} marché${maxMarkets > 1 ? "s" : ""} par recherche`}
@@ -393,7 +393,7 @@ export function SpyClient({
       {status === "loading" && ads.length === 0 && <SkeletonGrid />}
 
       {status === "error" && (
-        <div className="bg-danger-bg text-danger rounded-xl p-4 text-sm">
+        <div className="bg-danger-bg text-danger-fg rounded-xl p-4 text-sm">
           {error} — réessaie dans un instant. (Le reste de Look360 fonctionne
           indépendamment de Spy.)
         </div>
@@ -414,7 +414,7 @@ export function SpyClient({
                   </p>
                 </div>
               </div>
-              <span className="bg-success-bg text-success inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold">
+              <span className="bg-success-bg text-success-fg inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold">
                 <Icon name="check" size={13} /> Gratuit
               </span>
             </div>
@@ -450,7 +450,7 @@ export function SpyClient({
             <p className="text-muted-foreground flex items-center gap-2 text-sm">
               {ads.length} pub(s) trouvée(s)
               {cached && (
-                <span className="bg-input text-muted-foreground rounded-full px-2 py-0.5 text-[11px] font-medium">
+                <span className="bg-input text-muted-foreground rounded-full px-2 py-0.5 text-xs font-medium">
                   ⚡ en cache
                 </span>
               )}
@@ -520,23 +520,31 @@ function playRequest(ad: SpyAd, url: string): PlayRequest {
 
 
 function scoreBadge(label: SpyAd["score_label"]): string {
-  if (label === "Fort potentiel") return "bg-success-bg text-success";
-  if (label === "Moyen") return "bg-warn-bg text-warn";
+  if (label === "Fort potentiel") return "bg-success-bg text-success-fg";
+  if (label === "Moyen") return "bg-warn-bg text-warn-fg";
   return "bg-input text-muted-foreground";
 }
 function ancienneteBadge(j: number | null): string {
   if (j == null) return "bg-input text-muted-foreground";
-  if (j >= 60) return "bg-success-bg text-success";
+  if (j >= 60) return "bg-success-bg text-success-fg";
   if (j >= 30) return "bg-chip-bleu text-chip-bleu-fg";
   return "bg-input text-muted-foreground";
 }
 
+const secondaryBtn =
+  "bg-input text-fg hover:bg-muted focus-visible:ring-accent/40 flex min-h-8 items-center justify-center gap-1 rounded-md px-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2";
+const outlineBtn =
+  "border-border hover:bg-input focus-visible:ring-accent/40 flex min-h-8 items-center justify-center gap-1 rounded-md border px-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2";
+
 export function SpyCard({
   ad,
+  rank,
   onAnalyze,
   onPlay,
 }: {
   ad: SpyAd;
+  /** Position dans un classement (Top Trend) — affichée en haut à gauche. */
+  rank?: number;
   onAnalyze?: (ad: SpyAd) => void;
   onPlay?: (v: PlayRequest) => void;
 }) {
@@ -596,14 +604,29 @@ export function SpyCard({
         onPlay={(u) => onPlay?.(playRequest(ad, u))}
       >
         <span
-          className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-semibold ${scoreBadge(ad.score_label)}`}
+          className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-xs font-semibold ${scoreBadge(ad.score_label)}`}
           title={ad.score_detail.join(" · ")}
         >
           Score {ad.score} · {ad.score_label}
         </span>
-        {ad.media_type !== "none" && (
-          <span className="bg-black/55 absolute left-2 top-2 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase text-white">
-            {ad.media_type === "video" ? "Vidéo" : "Image"}
+        {(rank != null || ad.media_type !== "none") && (
+          <span className="absolute left-2 top-2 flex items-center gap-1">
+            {rank != null && (
+              <span
+                className={`grid h-6 min-w-6 place-items-center rounded-full px-1.5 text-xs font-bold tabular-nums shadow-sm ${
+                  rank <= 3 ? "bg-accent text-accent-on" : "bg-surface/90 text-fg"
+                }`}
+                title={`Classement n° ${rank}`}
+              >
+                <span className="sr-only">Classement n° </span>
+                {rank}
+              </span>
+            )}
+            {ad.media_type !== "none" && (
+              <span className="bg-black/55 rounded px-1.5 py-0.5 text-xs font-medium uppercase text-white">
+                {ad.media_type === "video" ? "Vidéo" : "Image"}
+              </span>
+            )}
           </span>
         )}
         <button
@@ -613,7 +636,7 @@ export function SpyCard({
           aria-label={saved ? "Sauvegardée" : "Sauvegarder la pub"}
           className={`absolute bottom-2 left-2 grid h-9 w-9 place-items-center rounded-full border shadow-sm backdrop-blur transition-colors ${
             saved
-              ? "bg-success text-accent-on border-transparent"
+              ? "bg-success-fg text-accent-on border-transparent"
               : "bg-surface/90 text-fg border-border hover:bg-muted"
           }`}
         >
@@ -630,107 +653,105 @@ export function SpyCard({
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${ancienneteBadge(ad.jours_actifs)}`}>
+          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${ancienneteBadge(ad.jours_actifs)}`}>
             <Icon name="clock" size={11} />
             {ad.jours_actifs == null ? "—" : `Tourne depuis ${ad.jours_actifs} j`}
           </span>
           {ad.variants_count > 1 && (
-            <span className="bg-input text-muted-foreground rounded-full px-2 py-0.5 text-[11px] font-medium">
+            <span className="bg-input text-muted-foreground rounded-full px-2 py-0.5 text-xs font-medium">
               {ad.variants_count} variantes
             </span>
           )}
           {ad.targets_eu && ad.reach != null && (
-            <span className="bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" title="Reach UE (transparence DSA)">
+            <span className="bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold" title="Reach UE (transparence DSA)">
               <Icon name="eye" size={11} /> Reach {formatReach(ad.reach)}
             </span>
           )}
           {ad.targets_eu && ad.spend && (
-            <span className="bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" title="Dépense estimée (transparence DSA UE)">
+            <span className="bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold" title="Dépense estimée (transparence DSA UE)">
               <Icon name="trending" size={11} /> Dépense {ad.spend}
             </span>
           )}
         </div>
 
         {ad.platforms.length > 0 && (
-          <p className="text-muted-foreground truncate text-[11px]">{ad.platforms.join(" · ")}</p>
+          <p className="text-muted-foreground truncate text-xs">{ad.platforms.join(" · ")}</p>
         )}
 
         <div className="mt-auto space-y-2 pt-1">
-          {/* Ligne liens : Ad Library + boutique intelligente */}
-          <div className="flex gap-2">
-            <a
-              href={ad.ad_library_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="border-border hover:bg-input flex flex-1 items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors"
-            >
-              <Icon name="external" size={12} /> Ad Library
-            </a>
-            {ad.landing_url && isShop ? (
-              <a
-                href={ad.landing_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="border-border hover:bg-input flex flex-1 items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors"
-              >
-                <Icon name="external" size={12} /> Boutique
-              </a>
-            ) : kind ? (
-              <span
-                className="border-border text-muted-foreground flex flex-1 items-center justify-center gap-1 rounded-md border border-dashed px-2 py-1.5 text-xs font-medium"
-                title="Ce n'est pas une boutique"
-              >
-                {LANDING_LABEL[kind]}
-              </span>
-            ) : null}
-          </div>
-
-          {/* Ligne annonceur : Analyser + Surveiller */}
+          {/* Actions annonceur visibles ; liens secondaires repliés dans « Plus »
+              (la lecture vidéo passe par le bouton play du média). */}
           <div className="flex gap-2">
             <button
               onClick={() => onAnalyze?.(ad)}
               disabled={!ad.page_id}
-              className="bg-input text-fg hover:bg-muted flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+              className={`${secondaryBtn} flex-1 disabled:opacity-50`}
             >
               <Icon name="search" size={12} /> Analyser
             </button>
             <button
               onClick={follow}
               disabled={!ad.page_id || followed || pending}
-              className="bg-input text-fg hover:bg-muted flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors disabled:opacity-60"
+              className={`${secondaryBtn} flex-1 disabled:opacity-60`}
             >
               <Icon name={followed ? "check" : "bell"} size={12} />
               {followed ? "Surveillé" : pending ? "…" : "Surveiller"}
             </button>
           </div>
 
-          {/* Vidéo : regarder + télécharger */}
-          {ad.media_type === "video" && ad.media_url && (
-            <div className="flex gap-2">
-              <button
-                onClick={() => onPlay?.(playRequest(ad, ad.media_url!))}
-                className="border-border hover:bg-input flex flex-1 items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors"
+          <details className="group/more">
+            <summary
+              className={`${secondaryBtn} cursor-pointer list-none [&::-webkit-details-marker]:hidden`}
+            >
+              Plus
+              <Icon name="chevronDown" size={12} className="transition-transform group-open/more:rotate-180" />
+            </summary>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <a
+                href={ad.ad_library_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${outlineBtn} flex-1`}
               >
-                <Icon name="play" size={12} /> Regarder
-              </button>
-              {canDownload ? (
+                <Icon name="external" size={12} /> Ad Library
+              </a>
+              {ad.landing_url && isShop ? (
                 <a
-                  href={`/api/spy/video?url=${encodeURIComponent(ad.media_url)}`}
-                  className="border-border hover:bg-input flex flex-1 items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors"
+                  href={ad.landing_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${outlineBtn} flex-1`}
                 >
-                  <Icon name="download" size={12} /> Télécharger
+                  <Icon name="external" size={12} /> Boutique
                 </a>
-              ) : (
-                <Link
-                  href="/offres"
-                  title="Téléchargement inclus à partir de l'offre Starter"
-                  className="border-border text-muted-foreground hover:bg-input flex flex-1 items-center justify-center gap-1 rounded-md border border-dashed px-2 py-1.5 text-xs font-medium transition-colors"
+              ) : kind ? (
+                <span
+                  className="border-border text-muted-foreground flex min-h-8 flex-1 items-center justify-center gap-1 rounded-md border border-dashed px-2 text-xs font-medium"
+                  title="Ce n'est pas une boutique"
                 >
-                  <Icon name="lock" size={12} /> Télécharger
-                </Link>
-              )}
+                  {LANDING_LABEL[kind]}
+                </span>
+              ) : null}
+              {ad.media_type === "video" &&
+                ad.media_url &&
+                (canDownload ? (
+                  <a
+                    href={`/api/spy/video?url=${encodeURIComponent(ad.media_url)}`}
+                    className={`${outlineBtn} flex-1`}
+                  >
+                    <Icon name="download" size={12} /> Télécharger
+                  </a>
+                ) : (
+                  <Link
+                    href="/offres"
+                    title="Téléchargement inclus à partir de l'offre Starter"
+                    className={`${outlineBtn} text-muted-foreground flex-1 border-dashed`}
+                  >
+                    <Icon name="lock" size={12} /> Télécharger
+                  </Link>
+                ))}
             </div>
-          )}
+          </details>
 
           <form action={ajouterAuxProduits}>
             <input type="hidden" name="nom" value={pageName ?? ad.title ?? ""} />
