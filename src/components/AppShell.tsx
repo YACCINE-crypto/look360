@@ -25,7 +25,8 @@ function UsageBadge({
   return (
     <Link
       href="/offres"
-      className="bg-secondary text-secondary-foreground inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-opacity hover:opacity-90"
+      className="bg-secondary text-secondary-foreground inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition-opacity hover:opacity-90"
+      aria-label={hasQuota ? `Recherches utilisées ce mois : ${searchesUsed} sur ${searchesLimit}` : undefined}
       title={hasQuota ? "Recherches utilisées ce mois" : "Passe en Starter pour lancer tes recherches"}
     >
       {hasQuota ? (

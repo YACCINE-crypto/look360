@@ -334,12 +334,12 @@ export function SpyClient({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm">
             <input
               type="checkbox"
               checked={statut === "all"}
               onChange={(e) => setStatut(e.target.checked ? "all" : "active")}
-              className="accent-primary h-4 w-4"
+              className="accent-primary h-5 w-5"
             />
             Inclure les pubs inactives
           </label>

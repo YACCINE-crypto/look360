@@ -113,13 +113,13 @@ export function CountryMultiSelect({
           {selected.map((code) => (
             <span
               key={code}
-              className="bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded-full py-0.5 pl-2.5 pr-1 text-xs font-medium"
+              className="bg-secondary text-secondary-foreground inline-flex items-center gap-0.5 rounded-full pl-2.5 text-xs font-medium"
             >
               {countryLabel(code)}
               <button
                 type="button"
                 onClick={() => onChange(selected.filter((c) => c !== code))}
-                className="hover:bg-accent/15 grid h-4 w-4 place-items-center rounded-full"
+                className="hover:bg-accent/15 focus-visible:ring-accent/40 grid h-7 w-7 place-items-center rounded-full focus-visible:outline-none focus-visible:ring-2"
                 aria-label={`Retirer ${countryLabel(code)}`}
               >
                 <Icon name="x" size={11} />
@@ -130,7 +130,7 @@ export function CountryMultiSelect({
             <button
               type="button"
               onClick={() => onChange([])}
-              className="text-muted-foreground hover:text-fg text-xs font-medium underline"
+              className="text-muted-foreground hover:text-fg min-h-7 px-1 text-xs font-medium underline"
             >
               Tout effacer
             </button>
