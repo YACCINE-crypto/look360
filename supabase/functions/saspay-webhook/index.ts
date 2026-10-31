@@ -14,7 +14,7 @@
 
 import { json } from "../_shared/http.ts";
 import { adminClient } from "../_shared/supabase.ts";
-import { reconcileSaspay, SasPayProvider } from "../_shared/saspay.ts";
+import { applyTransaction, reconcileSaspay, SasPayProvider } from "../_shared/saspay.ts";
 
 declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void } | undefined;
 
@@ -30,7 +30,16 @@ Deno.serve(async (req) => {
     return json({ received: true, event: v.event });
   }
 
-  const work = reconcileSaspay(adminClient(), { limit: 30 })
+  const admin = adminClient();
+  const work = (async () => {
+    // 1) Voie directe : la transaction reçue → verify → notre paiement.
+    if (v.event === "transaction.success" && v.transactionId) {
+      const direct = await applyTransaction(admin, v.transactionId);
+      if (direct) return { direct };
+    }
+    // 2) Secours : rapprochement des paiements en attente.
+    return await reconcileSaspay(admin, { limit: 30 });
+  })()
     .then((r) => console.log("saspay webhook", v.event, v.transactionId ?? "", JSON.stringify(r)))
     .catch((e) => console.error("saspay webhook processing failed", e instanceof Error ? e.message : String(e)));
 

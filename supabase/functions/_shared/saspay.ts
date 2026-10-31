@@ -30,6 +30,8 @@ import {
 } from "./payments.ts";
 import type { adminClient } from "./supabase.ts";
 
+type Admin = ReturnType<typeof adminClient>;
+
 const DEFAULT_API = "https://api.saspay.me/api/v1";
 const MAX_SKEW_S = 300;
 
@@ -84,8 +86,12 @@ function dataOf(r: SaspayResponse): Record<string, unknown> {
   return (r.body.data ?? r.body) as Record<string, unknown>;
 }
 
-/** Identifiant de transaction porté par une session (string ou objet {id}). */
+/**
+ * Identifiant de transaction porté par une session. Format constaté en live :
+ * `transaction_id` (+ `transaction_status`) ; `transaction` gardé en repli.
+ */
 function transactionIdOf(d: Record<string, unknown>): string | null {
+  if (typeof d.transaction_id === "string" && d.transaction_id) return d.transaction_id;
   const t = d.transaction;
   if (typeof t === "string" && t) return t;
   if (t && typeof t === "object" && typeof (t as { id?: unknown }).id === "string") {
@@ -107,15 +113,41 @@ export async function sessionStatus(
 /** GET /payments/{id}/verify/ → statut RÉEL (seul SUCCESS autorise la livraison). */
 export async function verifyPayment(
   paymentId: string,
-): Promise<{ ok: boolean; status: string; currency: string | null; error?: string }> {
+): Promise<{ ok: boolean; status: string; currency: string | null; checkoutSession: string | null; error?: string }> {
   const r = await saspayFetch(`/payments/${encodeURIComponent(paymentId)}/verify/`);
-  if (r.status !== 200) return { ok: false, status: "", currency: null, error: saspayError(r) };
+  if (r.status !== 200) return { ok: false, status: "", currency: null, checkoutSession: null, error: saspayError(r) };
   const d = dataOf(r);
   return {
     ok: true,
     status: String(d.status ?? "").toUpperCase(),
     currency: typeof d.currency === "string" ? d.currency : null,
+    // Session de checkout d'origine (constaté en live) → notre provider_ref.
+    checkoutSession: typeof d.checkout_session === "string" ? d.checkout_session : null,
   };
+}
+
+/**
+ * Traitement direct d'une transaction (webhook) : verify → SUCCESS → session
+ * d'origine → apply_payment_success sur NOTRE paiement (provider_ref = session).
+ * Idempotent. Renvoie le résultat, ou null si la transaction n'est pas à nous.
+ */
+export async function applyTransaction(admin: Admin, transactionId: string): Promise<string | null> {
+  const v = await verifyPayment(transactionId);
+  if (!v.ok || v.status !== "SUCCESS" || !v.checkoutSession) return null;
+  const { data: pay } = await admin
+    .from("payments")
+    .select("id")
+    .eq("provider", "saspay")
+    .eq("provider_ref", v.checkoutSession)
+    .maybeSingle();
+  if (!pay) return null;
+  const { data, error } = await admin.rpc("apply_payment_success", {
+    p_provider: "saspay",
+    p_ref: v.checkoutSession,
+    p_txn: transactionId,
+  });
+  if (error) throw new Error(error.message);
+  return String(data);
 }
 
 export class SasPayProvider implements PaymentProvider {
@@ -200,7 +232,6 @@ export class SasPayProvider implements PaymentProvider {
   }
 }
 
-type Admin = ReturnType<typeof adminClient>;
 
 /**
  * Rapproche les paiements SasPay EN ATTENTE : statut de la session → id de
