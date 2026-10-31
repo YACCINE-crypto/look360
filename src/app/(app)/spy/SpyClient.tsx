@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/ui";
 import { Icon } from "@/components/Icon";
@@ -80,6 +80,13 @@ function sortAds(list: SpyAd[], t: string): SpyAd[] {
 
 type Status = "idle" | "loading" | "done" | "error";
 
+/** Dernière recherche Spy de l'onglet : restaurée au retour d'une analyse. */
+const SPY_STORE = "look360:spy:last";
+const SPY_SCROLL = "look360:spy:scroll";
+function scroller(): HTMLElement | null {
+  return document.querySelector("main");
+}
+
 export function SpyClient({
   searchesUsed = 0,
   searchesLimit = 0,
@@ -117,6 +124,52 @@ export function SpyClient({
   const router = useRouter();
 
   const jsonHeaders = { "Content-Type": "application/json" };
+
+  // Restaure la dernière recherche (et la position) au retour sur le Spy.
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      try {
+        const raw = sessionStorage.getItem(SPY_STORE);
+        if (!raw) return;
+        const v = JSON.parse(raw) as Record<string, unknown> & { ads?: SpyAd[] };
+        if (!Array.isArray(v.ads) || v.ads.length === 0) return;
+        setQ(String(v.q ?? ""));
+        if (Array.isArray(v.countries) && v.countries.length) setCountries(v.countries as string[]);
+        setPlatform(String(v.platform ?? ""));
+        setStatut(String(v.statut ?? "active"));
+        setMediaType(String(v.mediaType ?? "all"));
+        setAncienneteMin(String(v.ancienneteMin ?? "0"));
+        setReachMin(String(v.reachMin ?? "0"));
+        setVariantsMin(String(v.variantsMin ?? "0"));
+        setTri(String(v.tri ?? "score"));
+        setLimit(Number(v.limit) || DEFAULT_LIMIT);
+        setAds(v.ads);
+        setCached(Boolean(v.cached));
+        setStatus("done");
+        const y = Number(sessionStorage.getItem(SPY_SCROLL) || 0);
+        if (y > 0) {
+          // Après le rendu des cartes restaurées.
+          setTimeout(() => scroller()?.scrollTo({ top: y }), 50);
+        }
+      } catch {
+        /* stockage indisponible */
+      }
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  // Mémorise la recherche terminée (onglet courant uniquement).
+  useEffect(() => {
+    if (status !== "done" || ads.length === 0) return;
+    try {
+      sessionStorage.setItem(
+        SPY_STORE,
+        JSON.stringify({ q, countries, platform, statut, mediaType, ancienneteMin, reachMin, variantsMin, tri, limit, ads, cached }),
+      );
+    } catch {
+      /* quota de stockage */
+    }
+  }, [status, ads, q, countries, platform, statut, mediaType, ancienneteMin, reachMin, variantsMin, tri, limit, cached]);
 
   const euDispo = countries.some(isEUCountry);
   const markets = Math.max(1, countries.length);
@@ -171,6 +224,11 @@ export function SpyClient({
   }
 
   async function runSearch(searchLimit = limit) {
+    try {
+      sessionStorage.removeItem(SPY_SCROLL);
+    } catch {
+      /* ignore */
+    }
     setStatus("loading");
     setError(null);
     setProgress(0);
@@ -265,6 +323,11 @@ export function SpyClient({
 
   function analyze(ad: SpyAd) {
     if (!ad.page_id) return;
+    try {
+      sessionStorage.setItem(SPY_SCROLL, String(scroller()?.scrollTop ?? 0));
+    } catch {
+      /* ignore */
+    }
     router.push(
       `/analyse/${ad.page_id}?country=${encodeURIComponent(ad.country ?? "FR")}&name=${encodeURIComponent(ad.page_name ?? "")}`,
     );
