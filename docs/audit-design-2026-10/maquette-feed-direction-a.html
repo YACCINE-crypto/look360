@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maquette Feed A</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap">
+<style>
+/* Valeurs reprises de design-system/tokens.css */
+:root{
+  --bg:#f4f7fb; --surface:#ffffff; --surface-warm:#eef6ff;
+  --fg:#111827; --fg-2:#334155; --muted:#5b6b82;
+  --border:#d8e2ee; --border-soft:#edf3f8;
+  --accent:#1a56db; --accent-on:#fff; --accent-soft:#e8effc;
+  --success-fg:#047857; --success-bg:#e7f6ef;
+  --sidebar-bg:#0f1e3a; --sidebar-fg:#e6ecf5; --sidebar-muted:#93a3bb; --sidebar-active-bg:rgba(255,255,255,.08);
+  --radius-sm:8px; --radius-md:12px; --radius-lg:18px; --radius-pill:9999px;
+  --shadow-card:0 1px 2px rgba(15,30,58,.04),0 4px 12px -6px rgba(15,30,58,.08);
+  --font:'DM Sans',Inter,system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+body{font-family:var(--font);background:var(--sidebar-bg);color:var(--fg);font-size:14px;-webkit-font-smoothing:antialiased}
+.app{display:flex;min-height:100vh}
+/* Barre latérale */
+.side{width:232px;flex:none;padding:20px 12px;color:var(--sidebar-fg);display:flex;flex-direction:column;gap:2px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;padding:0 8px 18px}
+.logo i{width:30px;height:30px;border-radius:var(--radius-sm);background:var(--accent);display:grid;place-items:center;font-style:normal;font-size:13px}
+.grp{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--sidebar-muted);padding:14px 10px 6px}
+.nav{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);color:var(--sidebar-muted);font-weight:500}
+.nav.on{background:var(--sidebar-active-bg);color:#fff}
+.nav svg{width:17px;height:17px}
+.side .me{margin-top:auto;display:flex;gap:10px;align-items:center;padding:10px;border-top:1px solid rgba(255,255,255,.08)}
+.me b{display:block;font-size:13px}.me span{font-size:12px;color:var(--sidebar-muted)}
+.av{width:30px;height:30px;border-radius:50%;background:#24395f;display:grid;place-items:center;font-size:12px;font-weight:600;flex:none}
+/* Panneau de contenu */
+.main{flex:1;min-width:0;background:var(--bg);margin:8px 8px 8px 0;border-radius:var(--radius-lg);overflow:hidden}
+.top{display:flex;align-items:center;gap:12px;padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--border)}
+.search{flex:1;max-width:520px;display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;color:var(--muted)}
+.plan{margin-left:auto;font-size:12px;font-weight:600;color:var(--accent);background:var(--accent-soft);padding:5px 10px;border-radius:var(--radius-pill)}
+.head{padding:22px 24px 6px;display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.head h1{font-size:22px;font-weight:700;letter-spacing:-.01em}
+.head p{color:var(--muted);margin-top:3px}
+.head .meta{margin-left:auto;color:var(--muted);font-size:12.5px}
+.filters{display:flex;gap:8px;align-items:center;padding:12px 24px 16px;flex-wrap:wrap;border-bottom:1px solid var(--border-soft)}
+.f{white-space:nowrap;flex:none;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--surface);border-radius:var(--radius-pill);padding:6px 12px;font-weight:500;color:var(--fg-2);font-size:13px}
+.f.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.f svg{width:14px;height:14px;opacity:.7}
+.sort{margin-left:auto}
+.seg{display:inline-flex;flex:none;background:var(--border-soft);border-radius:var(--radius-sm);padding:3px;gap:2px;margin-right:6px}.seg>*{padding:5px 12px;border-radius:6px;font-size:13px;font-weight:500;color:var(--fg-2)}.seg b{background:var(--surface);box-shadow:var(--shadow-card);color:var(--fg);font-weight:600}
+.kpis div.hl{background:var(--surface-warm);border-radius:var(--radius-sm) 0 0 var(--radius-sm)}.kpis div.hl b{color:var(--accent)}
+.ph{width:100%;height:100%;display:grid;place-items:end center;padding-bottom:14px;color:var(--muted);font-size:12px;background:linear-gradient(135deg,var(--border-soft),var(--border))}
+.eu{font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-soft);padding:1px 6px;border-radius:var(--radius-pill)}
+.spend{padding:6px 12px 0;font-size:12px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;padding:18px 24px 28px}
+/* Carte pub */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-card);display:flex;flex-direction:column;overflow:visible;position:relative}
+.ch{display:flex;align-items:center;gap:10px;padding:12px 12px 10px}
+.ch .av{background:var(--surface-warm);color:var(--accent);width:32px;height:32px}
+.ch b{display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch small{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--success-fg)}
+.score{margin-left:auto;text-align:right;flex:none}
+.score strong{display:block;font-size:20px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;color:var(--success-fg)}
+.score span{font-size:11px;color:var(--muted)}
+.media{position:relative;aspect-ratio:4/5;background:var(--border-soft);overflow:hidden}
+.media img{width:100%;height:100%;object-fit:cover;display:block}
+.tag{position:absolute;left:10px;top:10px;background:rgba(17,24,39,.72);color:#fff;font-size:11px;font-weight:600;padding:3px 8px;border-radius:var(--radius-pill)}
+.play{position:absolute;inset:0;margin:auto;width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.92);display:grid;place-items:center}
+.txt{padding:10px 12px 0;color:var(--fg-2);font-size:13px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:47px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);margin:10px 12px 0;background:var(--bg);border-radius:var(--radius-sm)}
+.kpis div{padding:8px 8px;min-width:0}
+.kpis div+div{border-left:1px solid var(--border)}
+.kpis span{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpis b{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
+.src{display:flex;gap:6px;align-items:center;padding:10px 12px 0;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden}
+.src b{color:var(--fg-2);font-weight:500;overflow:hidden;text-overflow:ellipsis}
+.act{display:flex;gap:6px;padding:12px}
+.btn{flex:1;display:inline-flex;justify-content:center;align-items:center;gap:6px;border:1px solid var(--border);background:var(--surface);border-radius:var(--radius-sm);height:34px;font:inherit;font-weight:600;font-size:13px;color:var(--fg)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-on)}
+.ib{flex:none;width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--fg-2)}
+.ib svg,.btn svg{width:15px;height:15px}
+.menu{position:absolute;right:12px;bottom:52px;width:220px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:0 12px 32px -8px rgba(15,30,58,.25);padding:6px;z-index:5}
+.menu div{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:var(--radius-sm);font-size:13px;color:var(--fg-2)}
+.menu div:first-child{background:var(--bg);color:var(--fg);font-weight:600}
+.menu hr{border:0;border-top:1px solid var(--border-soft);margin:4px 0}
+.note{position:absolute;font-size:12px;background:#fff7d6;border:1px solid #f0d77a;color:#5c4400;padding:6px 9px;border-radius:var(--radius-sm);max-width:210px;box-shadow:var(--shadow-card);z-index:6}
+@media (max-width:700px){
+  .side{display:none}.main{margin:0;border-radius:0}
+  .grid{grid-template-columns:1fr;padding:14px 16px}.head,.filters,.top{padding-left:16px;padding-right:16px}
+  .filters{flex-wrap:nowrap;overflow-x:auto}.sort{display:none}.plan{display:none}.search{max-width:none}.search{white-space:nowrap;overflow:hidden}.media{aspect-ratio:1/1}.note{display:none}.head .meta{margin-left:0}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+ <symbol id="i-s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+ <symbol id="i-dn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></symbol>
+ <symbol id="i-bm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12v18l-6-4-6 4z"/></symbol>
+ <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></symbol>
+ <symbol id="i-more" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></symbol>
+ <symbol id="i-an" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5M4 19h16M8 15l4-5 3 3 5-6"/></symbol>
+ <symbol id="i-play" viewBox="0 0 24 24" fill="#111827"><path d="M8 5v14l11-7z"/></symbol>
+ <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10 21h4"/></symbol>
+ <symbol id="i-ext" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4h6v6M20 4l-9 9M19 14v6H4V5h6"/></symbol>
+ <symbol id="i-dl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14"/></symbol>
+ <symbol id="i-sort" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 4v16m0 0-3-3m3 3 3-3M17 20V4m0 0-3 3m3-3 3 3"/></symbol>
+</svg>
+<div class="app">
+ <aside class="side">
+  <div class="logo"><i>L</i>Look360</div>
+  <div class="grp">Trouver</div>
+  <div class="nav on"><svg><use href="#i-s"/></svg>Feed du jour</div>
+  <div class="nav"><svg><use href="#i-s"/></svg>Spy Facebook</div>
+  <div class="nav"><svg><use href="#i-an"/></svg>Top Trend</div>
+  <div class="nav"><svg><use href="#i-an"/></svg>Winners du jour</div>
+  <div class="grp">Suivre</div>
+  <div class="nav"><svg><use href="#i-bm"/></svg>Mes produits</div>
+  <div class="nav"><svg><use href="#i-bell"/></svg>Surveillance</div>
+  <div class="nav"><svg><use href="#i-an"/></svg>Testing</div>
+  <div class="nav"><svg><use href="#i-ext"/></svg>Vitrine winners</div>
+  <div class="me"><div class="av">Y</div><div><b>Yaccine</b><span>Business</span></div></div>
+ </aside>
+ <main class="main">
+  <div class="top">
+   <div class="search"><svg width="16" height="16"><use href="#i-s"/></svg>Rechercher une page, un produit, un mot-clé…</div>
+   <span class="plan">Ne consomme aucune recherche</span>
+  </div>
+  <div class="head">
+   <div><h1>Feed du jour</h1><p>Pubs actives repérées pour toi, triées par score.</p></div>
+   <div class="meta">60 pubs · mis à jour ce matin</div>
+  </div>
+  <div class="filters"><span class="seg"><b>Tous</b><span>Afrique</span><span>Europe</span></span>
+   <span class="f on">Pays : tous<svg><use href="#i-dn"/></svg></span>
+   <span class="f">Format<svg><use href="#i-dn"/></svg></span>
+   <span class="f">Plateforme<svg><use href="#i-dn"/></svg></span>
+   <span class="f">En diffusion depuis<svg><use href="#i-dn"/></svg></span>
+   <span class="f">Score minimum<svg><use href="#i-dn"/></svg></span>
+   <span class="f">Destination<svg><use href="#i-dn"/></svg></span>
+   <span class="f sort"><svg><use href="#i-sort"/></svg>Tri : meilleur score<svg><use href="#i-dn"/></svg></span>
+  </div>
+  <section class="grid" id="grid"></section>
+ </main>
+</div>
+<script>
+const ads=[
+ {p:"Yassir Sénégal",t:"Peu importe où vous êtes, Yassir répond présent pour tous vos déplacements. 🚗",s:87,j:352,v:6,pa:2,mt:"Image",d:"play.google.com",c:"Sénégal",img:"https://look360-media.b-cdn.net/feed/thumb/718d3357-dcc3-4df8-94c0-8e891ef11935.jpg"},
+ {p:"Leaf Co",t:"Les crèmes contour des yeux ne font rien pour les cernes creux. Le problème n'est pas l'hydratation…",s:85,j:134,v:1,mt:"Vidéo",d:"leaf-cosmetics.com",c:"France",reach:"6,1 M"},
+ {p:"Art du décor",t:"🚨 DERNIERS JOURS DE PROMO ! 🖼️ Grand format A3 à 7.000 F 🖼️ Moyen format A4 à 4.000 F",s:77,j:200,v:3,pa:2,mt:"Vidéo",d:"WhatsApp",c:"Côte d'Ivoire",img:"https://vz-740c7966-2b6.b-cdn.net/5abdb470-8066-474f-9982-20fe352d038c/thumbnail.jpg",menu:1},
+ {p:"Nutripure",t:"Votre solution tout-en-un pour une récupération post-entraînement 🌟💪 Avec Pure Recovery…",s:85,j:149,v:1,mt:"Vidéo",d:"nutripure.fr",c:"France",reach:"3,4 M"},
+];
+document.getElementById('grid').innerHTML=ads.map(a=>`
+<article class="card">
+ <div class="ch"><div class="av">${a.p[0]}</div><div style="min-width:0"><b>${a.p}</b><small><i class="dot"></i>Active · ${a.c}${a.reach?' <span class="eu">UE</span>':''}</small></div>
+  <div class="score"><strong>${a.s}</strong><span>Score</span></div></div>
+ <div class="media">${a.img?`<img src="${a.img}" alt="">`:`<div class="ph">Visuel Meta (non chargé dans la maquette)</div>`}<span class="tag">${a.mt}</span>${a.mt==='Vidéo'?'<span class="play"><svg width="18" height="18"><use href="#i-play"/></svg></span>':''}</div>
+ <p class="txt">${a.t}</p>
+ ${a.reach?`<div class="kpis"><div class="hl"><span>Audience UE</span><b>${a.reach}</b></div><div><span>En diffusion</span><b>${a.j} j</b></div><div><span>Variantes</span><b>${a.v}</b></div></div><p class="spend">Dépense : non publiée par Meta</p>`:`<div class="kpis"><div><span>En diffusion</span><b>${a.j} j</b></div><div><span>Variantes</span><b>${a.v}</b></div><div><span>Pubs actives</span><b>${a.pa}</b></div></div>`}
+ <div class="src">Destination <b>${a.d}</b></div>
+ <div class="act"><button class="btn primary"><svg><use href="#i-an"/></svg>Analyser</button>
+  <span class="ib" title="Ajouter à mes produits"><svg><use href="#i-plus"/></svg></span>
+  <span class="ib" title="Enregistrer"><svg><use href="#i-bm"/></svg></span>
+  <span class="ib" title="Plus"><svg><use href="#i-more"/></svg></span></div>
+ ${a.menu?`<div class="menu"><div><svg width="15" height="15"><use href="#i-plus"/></svg>Ajouter à mes produits</div><div><svg width="15" height="15"><use href="#i-bell"/></svg>Surveiller la page</div><hr><div><svg width="15" height="15"><use href="#i-ext"/></svg>Voir dans l'Ad Library</div><div><svg width="15" height="15"><use href="#i-ext"/></svg>Ouvrir la boutique</div><div><svg width="15" height="15"><use href="#i-dl"/></svg>Télécharger le média</div></div>`:''}
+</article>`).join('');
+</script>
+</body>
+</html>

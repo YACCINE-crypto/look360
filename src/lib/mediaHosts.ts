@@ -12,8 +12,10 @@ function hostUnder(host: string, domain: string): boolean {
 /** Host du CDN d'archive configuré (BUNNY_CDN_HOST), sans schéma ni "/". */
 export function archiveCdnHost(): string {
   return (process.env.BUNNY_CDN_HOST || "")
+    .trim()
     .replace(/^https?:\/\//i, "")
     .replace(/\/+$/, "")
+    .replace(/\.+$/, "")
     .toLowerCase();
 }
 
@@ -34,7 +36,7 @@ export function isAllowedMediaUrl(url: string, opts: { archive: boolean }): bool
   if (parsed.protocol !== "https:") return false;
   if (isMetaMediaHost(parsed.hostname)) return true;
   const archive = archiveCdnHost();
-  return opts.archive && archive !== "" && parsed.hostname.toLowerCase() === archive;
+  return opts.archive && archive !== "" && parsed.hostname.toLowerCase().replace(/\.+$/, "") === archive;
 }
 
 /**

@@ -4,6 +4,8 @@
 // Aucun secret ici (logique pure).
 // ============================================================================
 
+import { parseEuAudience, type EuAudience } from "@/lib/euAudience";
+
 /** Plafond de concurrents suivis (garde-fou coût Apify). */
 export const MAX_COMPETITORS = 20;
 
@@ -214,6 +216,10 @@ export type SpyAd = {
   targets_eu: boolean;
   reach: number | null;
   spend: string | null; // fourchette de dépense UE (transparence DSA), si Meta la publie
+  /** Audience UE détaillée (âge, sexe, pays, ciblage, payeur) — AAA Info. */
+  eu_audience?: EuAudience | null;
+  /** Champs Meta bruts rarement remplis (dépense, impressions, insights) — conservés tels quels pour vérification. */
+  meta_extra?: Record<string, unknown> | null;
   country: string | null;
   score: number;
   score_label: "Fort potentiel" | "Moyen" | "Faible";
@@ -290,6 +296,14 @@ export function normalizeApifyItem(raw: Record<string, unknown>, country: string
     ? formatSpend(aaa.spend ?? euT.spend ?? raw.spend ?? aaa.eu_total_spend ?? euT.eu_total_spend)
     : null;
 
+  const eu_audience = targets_eu ? parseEuAudience(aaa, euT) : null;
+  const extra: Record<string, unknown> = {};
+  for (const k of ["spend", "impressions_with_index", "currency", "insights", "reach_estimate"]) {
+    const v = raw[k];
+    if (v != null && !(typeof v === "object" && Object.keys(v as object).length === 0)) extra[k] = v;
+  }
+  const meta_extra = Object.keys(extra).length > 0 ? extra : null;
+
   const platforms = ((raw.publisher_platform ?? []) as string[]).map(
     (p) => PLATFORM_LABEL[p] ?? p,
   );
@@ -338,6 +352,8 @@ export function normalizeApifyItem(raw: Record<string, unknown>, country: string
     targets_eu,
     reach,
     spend,
+    eu_audience,
+    meta_extra,
     country: (snap.country_iso_code as string) ?? country ?? null,
     score,
     score_label,
