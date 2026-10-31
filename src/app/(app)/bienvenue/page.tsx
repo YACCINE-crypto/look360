@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Icon } from "@/components/Icon";
+import { getSubscription } from "@/lib/credits";
+import { planLabel } from "@/lib/billing";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +24,9 @@ export default async function BienvenuePage() {
     .eq("id", userId)
     .maybeSingle();
 
+  const plan = (await getSubscription(userId))?.plan ?? "free";
+  const isFree = plan === "free";
+
   const prenom =
     (profile?.nom as string | undefined)?.split(" ")[0] ??
     (claims?.claims?.email as string | undefined)?.split("@")[0] ??
@@ -31,7 +36,9 @@ export default async function BienvenuePage() {
     {
       icon: "search" as const,
       title: "Explore le feed des winners",
-      body: "Vois ce qui cartonne aujourd'hui (feed commun, gratuit). Pour lancer tes propres recherches Spy, passe en Starter.",
+      body: isFree
+        ? "Vois ce qui cartonne aujourd'hui (feed commun, gratuit). Pour lancer tes propres recherches Spy, passe en Starter."
+        : "Vois ce qui cartonne aujourd'hui (feed commun), puis lance tes propres recherches dans le Spy.",
       cta: "Ouvrir le feed",
       href: "/recherche",
     },
@@ -42,13 +49,21 @@ export default async function BienvenuePage() {
       cta: "Découvrir le testing",
       href: "/testing",
     },
-    {
-      icon: "trophy" as const,
-      title: "Passe payant quand tu gagnes",
-      body: "Plus de volume, Winner Agent automatique, Winners sur WhatsApp… quand tu es prêt, choisis ton offre.",
-      cta: "Voir les offres",
-      href: "/offres",
-    },
+    isFree
+      ? {
+          icon: "trophy" as const,
+          title: "Passe payant quand tu gagnes",
+          body: "Plus de volume, Winner Agent automatique, Winners sur WhatsApp… quand tu es prêt, choisis ton offre.",
+          cta: "Voir les offres",
+          href: "/offres",
+        }
+      : {
+          icon: "trophy" as const,
+          title: "Active ton Winner Agent",
+          body: "Règle tes critères : l'agent repère chaque jour les pubs qui correspondent à ta niche.",
+          cta: "Winners du jour",
+          href: "/winners",
+        },
   ];
 
   return (
@@ -62,11 +77,11 @@ export default async function BienvenuePage() {
           Bienvenue{prenom ? `, ${prenom}` : ""} 🎉
         </h1>
         <p className="text-muted-foreground mt-2 text-sm sm:text-base">
-          Ton compte <span className="text-fg font-semibold">Gratuit</span>{" "}
-          est activé — sans carte bancaire.
+          Ton offre <span className="text-fg font-semibold">{planLabel(plan)}</span>{" "}
+          est active{isFree ? " — sans carte bancaire" : ""}.
         </p>
         <span className="text-accent bg-secondary mt-4 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold">
-          <Icon name="trending" size={14} /> Feed des winners du jour offert
+          <Icon name="trending" size={14} /> Feed des winners du jour inclus
         </span>
       </div>
 
@@ -79,7 +94,7 @@ export default async function BienvenuePage() {
           >
             <span className="bg-secondary text-accent relative grid h-11 w-11 shrink-0 place-items-center rounded-xl">
               <Icon name={s.icon} size={20} />
-              <span className="border-surface bg-fg text-bg absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full border text-[10px] font-bold">
+              <span className="border-surface bg-fg text-bg absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full border text-xs font-bold">
                 {i + 1}
               </span>
             </span>
@@ -89,7 +104,7 @@ export default async function BienvenuePage() {
             </div>
             <Link
               href={s.href}
-              className="bg-fg text-bg inline-flex min-h-[42px] shrink-0 items-center justify-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-opacity hover:opacity-90"
+              className="border-border bg-surface text-fg hover:border-accent hover:text-accent focus-visible:ring-accent/40 inline-flex min-h-[42px] shrink-0 items-center justify-center gap-1.5 rounded-full border px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2"
             >
               {s.cta} <Icon name="chevronRight" size={15} />
             </Link>

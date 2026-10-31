@@ -282,13 +282,13 @@ export function SpyClient({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="flex flex-col gap-1.5 sm:col-span-2">
             <span className={labelCls}>Mot-clé (produit / niche)</span>
-            <div className="border-border bg-input flex min-h-[44px] items-center gap-2 rounded-md border px-3">
+            <div className="border-border bg-input focus-within:border-accent focus-within:shadow-focus flex min-h-[44px] items-center gap-2 rounded-md border px-3 transition-colors">
               <Icon name="search" size={16} className="text-muted-foreground" />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="ex. montre, ceinture, masseur…"
-                className="w-full bg-transparent text-sm outline-none"
+                className="w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
               />
             </div>
           </label>

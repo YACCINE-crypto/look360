@@ -21,8 +21,8 @@ export default async function RecherchePage() {
         title="Feed du jour"
         subtitle="Pubs gagnantes repérées pour toi — à parcourir librement."
       >
-        <span className="bg-success-bg text-success inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-semibold">
-          Gratuit · 0 recherche
+        <span className="bg-secondary text-accent inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-semibold">
+          Ne consomme aucune recherche
         </span>
       </PageHeader>
 

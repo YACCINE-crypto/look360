@@ -26,7 +26,7 @@ function ForgotPasswordForm() {
         <div className="mb-8 flex flex-col items-center text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/look360-logo.svg" alt="Look360" className="mb-3 h-12 w-auto" />
-          <p className="text-muted-foreground text-sm">Mot de passe oublié</p>
+          <h1 className="text-muted-foreground text-sm font-normal">Mot de passe oublié</h1>
         </div>
 
         {sent ? (

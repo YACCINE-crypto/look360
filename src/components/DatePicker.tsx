@@ -83,7 +83,7 @@ export function DatePicker({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={`border-border bg-input focus:border-accent flex min-h-[44px] w-full items-center justify-between gap-2 rounded-md border px-3 text-sm outline-none transition-colors ${
+        className={`border-border bg-input focus:border-accent focus-visible:shadow-focus flex min-h-[44px] w-full items-center justify-between gap-2 rounded-md border px-3 text-sm outline-none transition-colors ${
           open ? "border-accent" : ""
         }`}
       >

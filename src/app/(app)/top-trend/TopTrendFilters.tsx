@@ -56,9 +56,9 @@ export function TopTrendFilters() {
       </div>
       <label className="flex flex-1 flex-col gap-1.5">
         <span className="text-muted-foreground text-xs font-medium">Niche / mot-clé</span>
-        <div className="border-border bg-input flex min-h-[40px] items-center gap-2 rounded-md border px-3">
+        <div className="border-border bg-input focus-within:border-accent focus-within:shadow-focus flex min-h-[40px] items-center gap-2 rounded-md border px-3 transition-colors">
           <Icon name="search" size={16} className="text-muted-foreground" />
-          <input name="q" defaultValue={q} placeholder="filtrer…" className="w-full bg-transparent text-sm outline-none" />
+          <input name="q" defaultValue={q} placeholder="filtrer…" className="w-full bg-transparent text-sm outline-none focus-visible:shadow-none" />
         </div>
       </label>
     </form>

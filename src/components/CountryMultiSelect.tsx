@@ -91,7 +91,7 @@ export function CountryMultiSelect({
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className={`border-border bg-input focus:border-accent flex min-h-[44px] w-full items-center justify-between gap-2 rounded-md border px-3 text-sm outline-none transition-colors ${
+        className={`border-border bg-input focus:border-accent focus-visible:shadow-focus flex min-h-[44px] w-full items-center justify-between gap-2 rounded-md border px-3 text-sm outline-none transition-colors ${
           open ? "border-accent" : ""
         }`}
       >
@@ -141,14 +141,15 @@ export function CountryMultiSelect({
       {open && (
         <div className="border-border bg-surface absolute z-50 mt-1 w-full min-w-[16rem] rounded-xl border p-2 shadow-xl">
           {/* Filtre texte */}
-          <div className="border-border bg-input mb-2 flex min-h-[38px] items-center gap-2 rounded-md border px-2.5">
+          <div className="border-border bg-input focus-within:border-accent mb-2 flex min-h-[38px] items-center gap-2 rounded-md border px-2.5">
             <Icon name="search" size={14} className="text-muted-foreground" />
             <input
               autoFocus
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               placeholder="Rechercher un pays…"
-              className="w-full bg-transparent text-sm outline-none"
+              aria-label="Rechercher un pays"
+              className="w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
             />
           </div>
 

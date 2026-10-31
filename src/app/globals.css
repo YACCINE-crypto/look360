@@ -82,6 +82,7 @@
   --shadow-lift: var(--elev-lift);
   --shadow-raised: var(--elev-raised);
   --shadow-ring: var(--elev-ring);
+  --shadow-focus: var(--focus-ring);
   --shadow-glow: 0 6px 20px -6px color-mix(in srgb, var(--accent) 45%, transparent);
 
   /* Largeur canonique de la sidebar */
@@ -101,6 +102,16 @@ html {
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
+  }
+}
+
+/* Focus clavier des champs : anneau --focus-ring en plus de la bordure accent
+   (un simple changement de bordure ne suffit pas, WCAG 2.4.7). En @layer base
+   pour que les utilitaires (ex. focus-visible:shadow-none) puissent l'annuler. */
+@layer base {
+  :where(input:not([type="checkbox"], [type="radio"], [type="range"]), select, textarea):focus-visible {
+    border-color: var(--accent);
+    box-shadow: var(--focus-ring);
   }
 }
 
