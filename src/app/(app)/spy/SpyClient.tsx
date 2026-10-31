@@ -16,12 +16,14 @@ import { suivreConcurrent } from "../surveillance/actions";
 import {
   isEUCountry,
   formatReach,
+  countryLabel,
   landingKind,
   LANDING_LABEL,
   cleanField,
   type SpyAd,
 } from "@/lib/spy";
 import { useCanDownload } from "@/components/PlanProvider";
+import { estimateSpend, formatSpendRange, SPEND_METHOD } from "@/lib/spendEstimate";
 
 const nf = (n: number) => new Intl.NumberFormat("fr-FR").format(n);
 
@@ -519,22 +521,16 @@ function playRequest(ad: SpyAd, url: string): PlayRequest {
 }
 
 
-function scoreBadge(label: SpyAd["score_label"]): string {
-  if (label === "Fort potentiel") return "bg-success-bg text-success-fg";
-  if (label === "Moyen") return "bg-warn-bg text-warn-fg";
-  return "bg-input text-muted-foreground";
-}
-function ancienneteBadge(j: number | null): string {
-  if (j == null) return "bg-input text-muted-foreground";
-  if (j >= 60) return "bg-success-bg text-success-fg";
-  if (j >= 30) return "bg-chip-bleu text-chip-bleu-fg";
-  return "bg-input text-muted-foreground";
+function scoreTone(label: SpyAd["score_label"]): string {
+  if (label === "Fort potentiel") return "text-success-fg";
+  if (label === "Moyen") return "text-warn-fg";
+  return "text-muted-foreground";
 }
 
-const secondaryBtn =
-  "bg-input text-fg hover:bg-muted focus-visible:ring-accent/40 flex min-h-8 items-center justify-center gap-1 rounded-md px-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2";
-const outlineBtn =
-  "border-border hover:bg-input focus-visible:ring-accent/40 flex min-h-8 items-center justify-center gap-1 rounded-md border px-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2";
+const iconBtn =
+  "border-border bg-surface text-fg-2 hover:bg-input focus-visible:ring-accent/40 grid h-9 w-9 shrink-0 place-items-center rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:opacity-60";
+const menuItem =
+  "text-fg-2 hover:bg-input focus-visible:bg-input flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm focus-visible:outline-none disabled:opacity-60";
 
 export function SpyCard({
   ad,
@@ -594,165 +590,113 @@ export function SpyCard({
     });
   }
 
+  const eu = ad.targets_eu && ad.reach != null;
+  const estimate = eu && !ad.spend ? estimateSpend(ad.reach, ad.country) : null;
+  const destination = ad.landing_domain ?? (kind ? LANDING_LABEL[kind] : null);
+
   return (
-    <article className="group bg-surface border-border shadow-card card-lift flex h-full flex-col overflow-hidden rounded-xl border">
-      <CreativeMedia
-        image={ad.thumbnail_url}
-        alt={pageName ?? ""}
-        isVideo={ad.media_type === "video"}
-        playUrl={ad.media_url}
-        onPlay={(u) => onPlay?.(playRequest(ad, u))}
-      >
-        <span
-          className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-xs font-semibold ${scoreBadge(ad.score_label)}`}
-          title={ad.score_detail.join(" · ")}
-        >
-          Score {ad.score} · {ad.score_label}
-        </span>
-        {(rank != null || ad.media_type !== "none") && (
-          <span className="absolute left-2 top-2 flex items-center gap-1">
-            {rank != null && (
-              <span
-                className={`grid h-6 min-w-6 place-items-center rounded-full px-1.5 text-xs font-bold tabular-nums shadow-sm ${
-                  rank <= 3 ? "bg-accent text-accent-on" : "bg-surface/90 text-fg"
-                }`}
-                title={`Classement n° ${rank}`}
-              >
-                <span className="sr-only">Classement n° </span>
-                {rank}
-              </span>
-            )}
-            {ad.media_type !== "none" && (
-              <span className="bg-black/55 rounded px-1.5 py-0.5 text-xs font-medium uppercase text-white">
-                {ad.media_type === "video" ? "Vidéo" : "Image"}
-              </span>
-            )}
+    <article className="group bg-surface border-border shadow-card card-lift relative flex h-full flex-col rounded-xl border">
+      {/* En-tête : annonceur, statut, pays, score */}
+      <div className="flex items-center gap-2.5 p-3 pb-2.5">
+        {rank != null && (
+          <span
+            className={`grid h-6 min-w-6 shrink-0 place-items-center rounded-full px-1.5 text-xs font-bold tabular-nums ${
+              rank <= 3 ? "bg-accent text-accent-on" : "bg-input text-fg"
+            }`}
+            title={`Classement n° ${rank}`}
+          >
+            <span className="sr-only">Classement n° </span>
+            {rank}
           </span>
         )}
-        <button
-          onClick={save}
-          disabled={saving || saved}
-          title={saved ? "Sauvegardée" : "Sauvegarder la pub"}
-          aria-label={saved ? "Sauvegardée" : "Sauvegarder la pub"}
-          className={`absolute bottom-2 left-2 grid h-9 w-9 place-items-center rounded-full border shadow-sm backdrop-blur transition-colors ${
-            saved
-              ? "bg-success-fg text-accent-on border-transparent"
-              : "bg-surface/90 text-fg border-border hover:bg-muted"
-          }`}
-        >
-          <Icon name={saved ? "check" : "bookmark"} size={16} />
-        </button>
-      </CreativeMedia>
-
-      <div className="flex flex-1 flex-col gap-2 p-3">
-        <div className="min-w-0">
+        <span className="bg-secondary text-accent grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-semibold" aria-hidden>
+          {(pageName ?? "?").slice(0, 1).toUpperCase()}
+        </span>
+        <div className="min-w-0 flex-1">
           <h3 className="truncate text-sm font-semibold" title={pageName ?? ""}>
             {pageName ?? "Page inconnue"}
           </h3>
-          {adText && <p className="text-muted-foreground line-clamp-2 text-xs">{adText}</p>}
+          <p className="text-muted-foreground flex items-center gap-1.5 truncate text-xs">
+            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${ad.is_active ? "bg-success-fg" : "bg-muted-foreground"}`} />
+            {ad.is_active ? "Active" : "Inactive"}
+            {ad.country && <> · {countryLabel(ad.country)}</>}
+            {ad.targets_eu && (
+              <span className="bg-secondary text-accent rounded-full px-1.5 text-xs font-semibold leading-4">UE</span>
+            )}
+          </p>
         </div>
-
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${ancienneteBadge(ad.jours_actifs)}`}>
-            <Icon name="clock" size={11} />
-            {ad.jours_actifs == null ? "—" : `Tourne depuis ${ad.jours_actifs} j`}
-          </span>
-          {ad.variants_count > 1 && (
-            <span className="bg-input text-muted-foreground rounded-full px-2 py-0.5 text-xs font-medium">
-              {ad.variants_count} variantes
-            </span>
-          )}
-          {ad.targets_eu && ad.reach != null && (
-            <span className="bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold" title="Reach UE (transparence DSA)">
-              <Icon name="eye" size={11} /> Reach {formatReach(ad.reach)}
-            </span>
-          )}
-          {ad.targets_eu && ad.spend && (
-            <span className="bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold" title="Dépense estimée (transparence DSA UE)">
-              <Icon name="trending" size={11} /> Dépense {ad.spend}
-            </span>
-          )}
+        <div className="shrink-0 text-right" title={`${ad.score_label} — ${ad.score_detail.join(" · ")}`}>
+          <p className={`text-xl font-bold leading-none tabular-nums ${scoreTone(ad.score_label)}`}>{ad.score}</p>
+          <p className="text-muted-foreground mt-0.5 text-xs">Score</p>
         </div>
+      </div>
 
-        {ad.platforms.length > 0 && (
-          <p className="text-muted-foreground truncate text-xs">{ad.platforms.join(" · ")}</p>
+      <div className="overflow-hidden">
+        <CreativeMedia
+          image={ad.thumbnail_url}
+          alt={pageName ?? ""}
+          isVideo={ad.media_type === "video"}
+          playUrl={ad.media_url}
+          onPlay={(u) => onPlay?.(playRequest(ad, u))}
+        >
+          {ad.media_type !== "none" && (
+            <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-xs font-semibold text-white">
+              {ad.media_type === "video" ? "Vidéo" : "Image"}
+            </span>
+          )}
+        </CreativeMedia>
+      </div>
+
+      <div className="flex flex-1 flex-col p-3 pt-2.5">
+        <p className="text-fg-2 line-clamp-2 min-h-10 text-sm leading-5">{adText ?? ad.title ?? ""}</p>
+
+        {/* Chiffres clés — uniquement des données réelles */}
+        <dl className="bg-bg mt-2.5 grid grid-cols-3 overflow-hidden rounded-md">
+          {eu ? (
+            <Kpi label="Audience UE" value={formatReach(ad.reach)} highlight hint="Personnes touchées dans l'UE (donnée Meta, transparence DSA)" />
+          ) : (
+            <Kpi label="En diffusion" value={ad.jours_actifs == null ? "—" : `${ad.jours_actifs} j`} />
+          )}
+          {eu ? (
+            <Kpi label="En diffusion" value={ad.jours_actifs == null ? "—" : `${ad.jours_actifs} j`} />
+          ) : (
+            <Kpi label="Variantes" value={String(ad.variants_count)} />
+          )}
+          {eu ? (
+            <Kpi label="Variantes" value={String(ad.variants_count)} />
+          ) : (
+            <Kpi label="Pubs actives" value={ad.page_active_ads_count == null ? "—" : String(ad.page_active_ads_count)} hint="Pubs actives de cette page" />
+          )}
+        </dl>
+
+        {eu && (
+          <p className="text-muted-foreground mt-2 flex items-center gap-1 text-xs">
+            {ad.spend ? (
+              <>
+                Dépense (Meta) <b className="text-fg-2 font-medium">{ad.spend}</b>
+              </>
+            ) : estimate ? (
+              <span title={SPEND_METHOD} className="cursor-help">
+                Dépense estimée <b className="text-fg-2 font-medium tabular-nums">{formatSpendRange(estimate)}</b>{" "}
+                <span className="border-border rounded border px-1 text-xs">estimation</span>
+              </span>
+            ) : null}
+          </p>
+        )}
+        {destination && (
+          <p className="text-muted-foreground mt-1.5 truncate text-xs">
+            Destination <span className="text-fg-2 font-medium">{destination}</span>
+          </p>
         )}
 
-        <div className="mt-auto space-y-2 pt-1">
-          {/* Actions annonceur visibles ; liens secondaires repliés dans « Plus »
-              (la lecture vidéo passe par le bouton play du média). */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => onAnalyze?.(ad)}
-              disabled={!ad.page_id}
-              className={`${secondaryBtn} flex-1 disabled:opacity-50`}
-            >
-              <Icon name="search" size={12} /> Analyser
-            </button>
-            <button
-              onClick={follow}
-              disabled={!ad.page_id || followed || pending}
-              className={`${secondaryBtn} flex-1 disabled:opacity-60`}
-            >
-              <Icon name={followed ? "check" : "bell"} size={12} />
-              {followed ? "Surveillé" : pending ? "…" : "Surveiller"}
-            </button>
-          </div>
-
-          <details className="group/more">
-            <summary
-              className={`${secondaryBtn} cursor-pointer list-none [&::-webkit-details-marker]:hidden`}
-            >
-              Plus
-              <Icon name="chevronDown" size={12} className="transition-transform group-open/more:rotate-180" />
-            </summary>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <a
-                href={ad.ad_library_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`${outlineBtn} flex-1`}
-              >
-                <Icon name="external" size={12} /> Ad Library
-              </a>
-              {ad.landing_url && isShop ? (
-                <a
-                  href={ad.landing_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`${outlineBtn} flex-1`}
-                >
-                  <Icon name="external" size={12} /> Boutique
-                </a>
-              ) : kind ? (
-                <span
-                  className="border-border text-muted-foreground flex min-h-8 flex-1 items-center justify-center gap-1 rounded-md border border-dashed px-2 text-xs font-medium"
-                  title="Ce n'est pas une boutique"
-                >
-                  {LANDING_LABEL[kind]}
-                </span>
-              ) : null}
-              {ad.media_type === "video" &&
-                ad.media_url &&
-                (canDownload ? (
-                  <a
-                    href={`/api/spy/video?url=${encodeURIComponent(ad.media_url)}`}
-                    className={`${outlineBtn} flex-1`}
-                  >
-                    <Icon name="download" size={12} /> Télécharger
-                  </a>
-                ) : (
-                  <Link
-                    href="/offres"
-                    title="Téléchargement inclus à partir de l'offre Starter"
-                    className={`${outlineBtn} text-muted-foreground flex-1 border-dashed`}
-                  >
-                    <Icon name="lock" size={12} /> Télécharger
-                  </Link>
-                ))}
-            </div>
-          </details>
-
+        <div className="mt-auto flex items-center gap-1.5 pt-3">
+          <button
+            onClick={() => onAnalyze?.(ad)}
+            disabled={!ad.page_id}
+            className="bg-accent text-accent-on hover:bg-accent-hover focus-visible:ring-accent/40 flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:opacity-50"
+          >
+            <Icon name="chart" size={15} /> Analyser
+          </button>
           <form action={ajouterAuxProduits}>
             <input type="hidden" name="nom" value={pageName ?? ad.title ?? ""} />
             <input type="hidden" name="image_url" value={ad.thumbnail_url ?? (ad.media_type !== "video" ? ad.media_url : null) ?? ""} />
@@ -760,22 +704,66 @@ export function SpyCard({
             <input type="hidden" name="ad_library_url" value={ad.ad_library_url} />
             <input type="hidden" name="ad_text" value={adText ?? ""} />
             <input type="hidden" name="marche" value={ad.country ?? ""} />
-            <AddButton />
+            <button type="submit" title="Ajouter à mes produits" aria-label="Ajouter à mes produits" className={iconBtn}>
+              <Icon name="plus" size={16} />
+            </button>
           </form>
+          <button
+            onClick={save}
+            disabled={saving || saved}
+            title={saved ? "Sauvegardée" : "Sauvegarder la pub"}
+            aria-label={saved ? "Sauvegardée" : "Sauvegarder la pub"}
+            className={`${iconBtn} ${saved ? "text-success-fg border-success-fg" : ""}`}
+          >
+            <Icon name={saved ? "check" : "bookmark"} size={15} />
+          </button>
+          <details className="relative">
+            <summary aria-label="Plus d'actions" title="Plus d'actions" className={`${iconBtn} cursor-pointer list-none [&::-webkit-details-marker]:hidden`}>
+              <Icon name="more" size={16} />
+            </summary>
+            <div className="bg-surface border-border shadow-raised absolute bottom-full right-0 z-20 mb-2 w-56 rounded-xl border p-1.5">
+              <button onClick={follow} disabled={!ad.page_id || followed || pending} className={menuItem}>
+                <Icon name={followed ? "check" : "bell"} size={15} />
+                {followed ? "Page surveillée" : pending ? "…" : "Surveiller la page"}
+              </button>
+              <div className="border-border-soft my-1 border-t" />
+              <a href={ad.ad_library_url} target="_blank" rel="noopener noreferrer" className={menuItem}>
+                <Icon name="external" size={15} /> Voir dans l&apos;Ad Library
+              </a>
+              {ad.landing_url && isShop ? (
+                <a href={ad.landing_url} target="_blank" rel="noopener noreferrer" className={menuItem}>
+                  <Icon name="store" size={15} /> Ouvrir la boutique
+                </a>
+              ) : kind ? (
+                <span className={`${menuItem} text-muted-foreground cursor-default`} title="Ce n'est pas une boutique">
+                  <Icon name="store" size={15} /> {LANDING_LABEL[kind]}
+                </span>
+              ) : null}
+              {ad.media_type === "video" &&
+                ad.media_url &&
+                (canDownload ? (
+                  <a href={`/api/spy/video?url=${encodeURIComponent(ad.media_url)}`} className={menuItem}>
+                    <Icon name="download" size={15} /> Télécharger la vidéo
+                  </a>
+                ) : (
+                  <Link href="/offres" title="Téléchargement inclus à partir de l'offre Starter" className={`${menuItem} text-muted-foreground`}>
+                    <Icon name="lock" size={15} /> Télécharger (Starter)
+                  </Link>
+                ))}
+            </div>
+          </details>
         </div>
       </div>
     </article>
   );
 }
 
-function AddButton() {
+function Kpi({ label, value, highlight = false, hint }: { label: string; value: string; highlight?: boolean; hint?: string }) {
   return (
-    <button
-      type="submit"
-      className="bg-accent text-accent-on flex min-h-[38px] w-full items-center justify-center gap-1.5 rounded-md text-xs font-semibold transition-opacity hover:opacity-90"
-    >
-      <Icon name="plus" size={14} /> Ajouter à mes produits
-    </button>
+    <div className={`border-border min-w-0 px-2.5 py-2 [&+&]:border-l ${highlight ? "bg-secondary" : ""}`} title={hint}>
+      <dt className="text-muted-foreground truncate text-xs">{label}</dt>
+      <dd className={`truncate text-base font-semibold tabular-nums ${highlight ? "text-accent" : "text-fg"}`}>{value}</dd>
+    </div>
   );
 }
 

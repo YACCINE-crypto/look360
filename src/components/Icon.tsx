@@ -33,7 +33,9 @@ type IconName =
   | "sparkles"
   | "crown"
   | "settings"
-  | "x";
+  | "x"
+  | "more"
+  | "chart";
 
 const PATHS: Record<IconName, React.ReactNode> = {
   search: (
@@ -63,6 +65,14 @@ const PATHS: Record<IconName, React.ReactNode> = {
     </>
   ),
   plus: <path d="M12 5v14M5 12h14" />,
+  more: (
+    <>
+      <circle cx="5" cy="12" r="1.2" />
+      <circle cx="12" cy="12" r="1.2" />
+      <circle cx="19" cy="12" r="1.2" />
+    </>
+  ),
+  chart: <path d="M4 19V5M4 19h16M8 15l4-5 3 3 5-6" />,
   logout: (
     <>
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />

@@ -6,17 +6,18 @@ import { Icon } from "./Icon";
 import { planConfig } from "@/lib/billing";
 
 const ITEMS = [
-  { href: "/recherche", label: "Recherche", icon: "search" as const },
-  { href: "/produits", label: "Mes produits", icon: "pipeline" as const },
-  { href: "/spy", label: "Spy Facebook", icon: "eye" as const },
-  { href: "/winners", label: "Winners du jour", icon: "trophy" as const, needs: "winner" as const },
-  { href: "/vitrine", label: "Vitrine winners", icon: "store" as const, needs: "vitrine" as const },
-  { href: "/top-trend", label: "Top Trend", icon: "trending" as const },
-  { href: "/surveillance", label: "Surveillance", icon: "bell" as const, needs: "competitor" as const },
-  { href: "/testing", label: "Testing", icon: "flask" as const },
-  { href: "/validation", label: "Validation", icon: "inbox" as const, adminOnly: true },
-  { href: "/equipe", label: "Équipe", icon: "users" as const, adminOnly: true },
+  { href: "/recherche", label: "Feed du jour", icon: "sparkles" as const, group: "Trouver" },
+  { href: "/spy", label: "Spy Facebook", icon: "eye" as const, group: "Trouver" },
+  { href: "/top-trend", label: "Top Trend", icon: "trending" as const, group: "Trouver" },
+  { href: "/winners", label: "Winners du jour", icon: "trophy" as const, needs: "winner" as const, group: "Trouver" },
+  { href: "/produits", label: "Mes produits", icon: "pipeline" as const, group: "Suivre" },
+  { href: "/surveillance", label: "Surveillance", icon: "bell" as const, needs: "competitor" as const, group: "Suivre" },
+  { href: "/testing", label: "Testing", icon: "flask" as const, group: "Suivre" },
+  { href: "/vitrine", label: "Vitrine winners", icon: "store" as const, needs: "vitrine" as const, group: "Suivre" },
+  { href: "/validation", label: "Validation", icon: "inbox" as const, adminOnly: true, group: "Admin" },
+  { href: "/equipe", label: "Équipe", icon: "users" as const, adminOnly: true, group: "Admin" },
 ];
+const GROUPS = ["Trouver", "Suivre", "Admin"] as const;
 
 /** Une fonctionnalité est-elle verrouillée pour cette offre ? */
 function isLocked(needs: string | undefined, plan: string): boolean {
@@ -49,8 +50,11 @@ export function SidebarNav({
 }) {
   const isActive = useActive();
   return (
-    <nav className="flex flex-col gap-0.5">
-      {ITEMS.filter((it) => !it.adminOnly || isAdmin).map((it) => {
+    <nav className="flex flex-col gap-4">
+      {GROUPS.filter((g) => g !== "Admin" || isAdmin).map((g) => (
+        <div key={g} className="flex flex-col gap-0.5">
+          <p className="text-sidebar-muted px-3 pb-1 text-xs font-medium uppercase tracking-wider">{g}</p>
+      {ITEMS.filter((it) => it.group === g && (!it.adminOnly || isAdmin)).map((it) => {
         const active = isActive(it.href);
         const locked = isLocked(it.needs, plan);
         return (
@@ -82,6 +86,8 @@ export function SidebarNav({
           </Link>
         );
       })}
+        </div>
+      ))}
     </nav>
   );
 }
