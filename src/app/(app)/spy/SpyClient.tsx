@@ -531,6 +531,11 @@ function ancienneteBadge(j: number | null): string {
   return "bg-input text-muted-foreground";
 }
 
+const secondaryBtn =
+  "bg-input text-fg hover:bg-muted focus-visible:ring-accent/40 flex min-h-8 items-center justify-center gap-1 rounded-md px-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2";
+const outlineBtn =
+  "border-border hover:bg-input focus-visible:ring-accent/40 flex min-h-8 items-center justify-center gap-1 rounded-md border px-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2";
+
 export function SpyCard({
   ad,
   rank,
@@ -674,81 +679,79 @@ export function SpyCard({
         )}
 
         <div className="mt-auto space-y-2 pt-1">
-          {/* Ligne liens : Ad Library + boutique intelligente */}
-          <div className="flex gap-2">
-            <a
-              href={ad.ad_library_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="border-border hover:bg-input flex flex-1 items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors"
-            >
-              <Icon name="external" size={12} /> Ad Library
-            </a>
-            {ad.landing_url && isShop ? (
-              <a
-                href={ad.landing_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="border-border hover:bg-input flex flex-1 items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors"
-              >
-                <Icon name="external" size={12} /> Boutique
-              </a>
-            ) : kind ? (
-              <span
-                className="border-border text-muted-foreground flex flex-1 items-center justify-center gap-1 rounded-md border border-dashed px-2 py-1.5 text-xs font-medium"
-                title="Ce n'est pas une boutique"
-              >
-                {LANDING_LABEL[kind]}
-              </span>
-            ) : null}
-          </div>
-
-          {/* Ligne annonceur : Analyser + Surveiller */}
+          {/* Actions annonceur visibles ; liens secondaires repliés dans « Plus »
+              (la lecture vidéo passe par le bouton play du média). */}
           <div className="flex gap-2">
             <button
               onClick={() => onAnalyze?.(ad)}
               disabled={!ad.page_id}
-              className="bg-input text-fg hover:bg-muted flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
+              className={`${secondaryBtn} flex-1 disabled:opacity-50`}
             >
               <Icon name="search" size={12} /> Analyser
             </button>
             <button
               onClick={follow}
               disabled={!ad.page_id || followed || pending}
-              className="bg-input text-fg hover:bg-muted flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors disabled:opacity-60"
+              className={`${secondaryBtn} flex-1 disabled:opacity-60`}
             >
               <Icon name={followed ? "check" : "bell"} size={12} />
               {followed ? "Surveillé" : pending ? "…" : "Surveiller"}
             </button>
           </div>
 
-          {/* Vidéo : regarder + télécharger */}
-          {ad.media_type === "video" && ad.media_url && (
-            <div className="flex gap-2">
-              <button
-                onClick={() => onPlay?.(playRequest(ad, ad.media_url!))}
-                className="border-border hover:bg-input flex flex-1 items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors"
+          <details className="group/more">
+            <summary
+              className={`${secondaryBtn} cursor-pointer list-none [&::-webkit-details-marker]:hidden`}
+            >
+              Plus
+              <Icon name="chevronDown" size={12} className="transition-transform group-open/more:rotate-180" />
+            </summary>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <a
+                href={ad.ad_library_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${outlineBtn} flex-1`}
               >
-                <Icon name="play" size={12} /> Regarder
-              </button>
-              {canDownload ? (
+                <Icon name="external" size={12} /> Ad Library
+              </a>
+              {ad.landing_url && isShop ? (
                 <a
-                  href={`/api/spy/video?url=${encodeURIComponent(ad.media_url)}`}
-                  className="border-border hover:bg-input flex flex-1 items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors"
+                  href={ad.landing_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${outlineBtn} flex-1`}
                 >
-                  <Icon name="download" size={12} /> Télécharger
+                  <Icon name="external" size={12} /> Boutique
                 </a>
-              ) : (
-                <Link
-                  href="/offres"
-                  title="Téléchargement inclus à partir de l'offre Starter"
-                  className="border-border text-muted-foreground hover:bg-input flex flex-1 items-center justify-center gap-1 rounded-md border border-dashed px-2 py-1.5 text-xs font-medium transition-colors"
+              ) : kind ? (
+                <span
+                  className="border-border text-muted-foreground flex min-h-8 flex-1 items-center justify-center gap-1 rounded-md border border-dashed px-2 text-xs font-medium"
+                  title="Ce n'est pas une boutique"
                 >
-                  <Icon name="lock" size={12} /> Télécharger
-                </Link>
-              )}
+                  {LANDING_LABEL[kind]}
+                </span>
+              ) : null}
+              {ad.media_type === "video" &&
+                ad.media_url &&
+                (canDownload ? (
+                  <a
+                    href={`/api/spy/video?url=${encodeURIComponent(ad.media_url)}`}
+                    className={`${outlineBtn} flex-1`}
+                  >
+                    <Icon name="download" size={12} /> Télécharger
+                  </a>
+                ) : (
+                  <Link
+                    href="/offres"
+                    title="Téléchargement inclus à partir de l'offre Starter"
+                    className={`${outlineBtn} text-muted-foreground flex-1 border-dashed`}
+                  >
+                    <Icon name="lock" size={12} /> Télécharger
+                  </Link>
+                ))}
             </div>
-          )}
+          </details>
 
           <form action={ajouterAuxProduits}>
             <input type="hidden" name="nom" value={pageName ?? ad.title ?? ""} />
