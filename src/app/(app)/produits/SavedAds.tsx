@@ -67,7 +67,7 @@ export async function SavedAds() {
                   <span
                     className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-medium ${
                       ad.media_stored
-                        ? "bg-success-bg text-success"
+                        ? "bg-success-bg text-success-fg"
                         : "bg-input text-muted-foreground"
                     }`}
                     title={ad.media_stored ? "Visuel archivé sur le CDN" : "Lien Meta (peut expirer)"}
@@ -162,7 +162,7 @@ export async function SavedAds() {
                       <input type="hidden" name="id" value={ad.id} />
                       <button
                         type="submit"
-                        className="text-danger hover:bg-danger-bg flex min-h-[32px] w-full items-center justify-center gap-1.5 rounded-md text-xs font-medium transition-colors"
+                        className="text-danger-fg hover:bg-danger-bg flex min-h-[32px] w-full items-center justify-center gap-1.5 rounded-md text-xs font-medium transition-colors"
                       >
                         <Icon name="trash" size={12} /> Retirer
                       </button>

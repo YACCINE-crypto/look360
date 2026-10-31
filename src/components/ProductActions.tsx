@@ -54,7 +54,7 @@ export function ProductActions({
           <input type="hidden" name="id" value={id} />
           <button
             type="submit"
-            className={`${iconBtn} hover:bg-danger-bg hover:text-danger`}
+            className={`${iconBtn} hover:bg-danger-bg hover:text-danger-fg`}
             aria-label="Supprimer"
             title="Supprimer"
           >

@@ -126,7 +126,7 @@ function KpiCard({
     format === "fcfa" ? `${nf.format(v)} FCFA` : format === "pct" ? `${v} %` : nf.format(v);
 
   const valueColor =
-    tone === "success" ? "text-success" : tone === "danger" ? "text-danger" : "text-fg";
+    tone === "success" ? "text-success-fg" : tone === "danger" ? "text-danger-fg" : "text-fg";
 
   return (
     <div

@@ -269,7 +269,7 @@ export default async function AnalysePage({
 
       {/* Créatives */}
       {failed ? (
-        <div className="bg-danger-bg text-danger rounded-xl p-4 text-sm">
+        <div className="bg-danger-bg text-danger-fg rounded-xl p-4 text-sm">
           Impossible de récupérer les pubs de cette page pour le moment. Réessaie
           dans un instant.
         </div>
@@ -399,7 +399,7 @@ function AnalyseGate({
           </Link>
         ) : (
           <div className="space-y-3">
-            <div className="bg-danger-bg text-danger rounded-md p-3 text-sm">
+            <div className="bg-danger-bg text-danger-fg rounded-md p-3 text-sm">
               {!canAnalyse
                 ? "L'analyse de concurrent est réservée aux offres payantes. Passe en Starter pour l'utiliser."
                 : "Tu as atteint ta limite de recherches ce mois-ci. Passe à une offre supérieure pour continuer."}

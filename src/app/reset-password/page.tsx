@@ -26,7 +26,7 @@ export default function ResetPasswordPage() {
             <PasswordInput id="confirm" name="confirm" autoComplete="new-password" minLength={8} />
           </div>
 
-          {error && <p className="text-danger text-sm">{error}</p>}
+          {error && <p className="text-danger-fg text-sm">{error}</p>}
 
           <button
             type="submit"

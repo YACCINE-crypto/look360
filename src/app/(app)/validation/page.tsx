@@ -102,13 +102,13 @@ export default async function ValidationPage() {
                 )}
                 <form action={rejeter}>
                   <input type="hidden" name="id" value={p.id} />
-                  <button className="text-danger border-danger/40 hover:bg-danger-bg inline-flex min-h-[44px] items-center gap-1.5 rounded-md border px-3 text-sm font-semibold">
+                  <button className="text-danger-fg border-danger/40 hover:bg-danger-bg inline-flex min-h-[44px] items-center gap-1.5 rounded-md border px-3 text-sm font-semibold">
                     <Icon name="x" size={15} /> Rejeter
                   </button>
                 </form>
                 <form action={approuver}>
                   <input type="hidden" name="id" value={p.id} />
-                  <button className="bg-success text-accent-on inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-3 text-sm font-semibold transition-opacity hover:opacity-90">
+                  <button className="bg-success-fg text-accent-on inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-3 text-sm font-semibold transition-opacity hover:opacity-90">
                     <Icon name="check" size={15} /> Approuver
                   </button>
                 </form>

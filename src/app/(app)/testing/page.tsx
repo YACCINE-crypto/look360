@@ -13,16 +13,16 @@ import { dernierTestParProduit } from "@/lib/score";
 
 // Verdict → pastille (tokens signal : vert / ambre / rouge).
 function verdictPill(tier: string | null): { label: string; cls: string } {
-  if (tier === "rentable") return { label: "Rentable", cls: "bg-success-bg text-success" };
-  if (tier === "moyen") return { label: "Moyen", cls: "bg-warn-bg text-warn" };
+  if (tier === "rentable") return { label: "Rentable", cls: "bg-success-bg text-success-fg" };
+  if (tier === "moyen") return { label: "Moyen", cls: "bg-warn-bg text-warn-fg" };
   if (tier === "pas_rentable" || tier === "marge_faible")
-    return { label: "Pas rentable", cls: "bg-danger-bg text-danger" };
+    return { label: "Pas rentable", cls: "bg-danger-bg text-danger-fg" };
   return { label: "À chiffrer", cls: "bg-input text-muted-foreground" };
 }
 function closingColor(tier: string | undefined): string {
-  if (tier === "faible") return "text-danger";
-  if (tier === "correct") return "text-warn";
-  if (tier === "normal" || tier === "super") return "text-success";
+  if (tier === "faible") return "text-danger-fg";
+  if (tier === "correct") return "text-warn-fg";
+  if (tier === "normal" || tier === "super") return "text-success-fg";
   return "text-muted-foreground";
 }
 

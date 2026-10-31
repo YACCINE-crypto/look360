@@ -309,7 +309,7 @@ export function SpyClient({
           </label>
           <label className="flex flex-col gap-1.5">
             <span className={labelCls}>
-              Reach min. {!euDispo && <span className="text-warn">(UE only)</span>}
+              Reach min. {!euDispo && <span className="text-warn-fg">(UE only)</span>}
             </span>
             <Select
               value={reachMin}
@@ -346,7 +346,7 @@ export function SpyClient({
           <span
             className={`rounded-full px-2.5 py-1 text-xs font-medium ${
               maxMarkets > 0 && markets > maxMarkets
-                ? "bg-warn-bg text-warn"
+                ? "bg-warn-bg text-warn-fg"
                 : "bg-input text-muted-foreground"
             }`}
             title={`Ton offre permet jusqu'à ${maxMarkets} marché${maxMarkets > 1 ? "s" : ""} par recherche`}
@@ -393,7 +393,7 @@ export function SpyClient({
       {status === "loading" && ads.length === 0 && <SkeletonGrid />}
 
       {status === "error" && (
-        <div className="bg-danger-bg text-danger rounded-xl p-4 text-sm">
+        <div className="bg-danger-bg text-danger-fg rounded-xl p-4 text-sm">
           {error} — réessaie dans un instant. (Le reste de Look360 fonctionne
           indépendamment de Spy.)
         </div>
@@ -414,7 +414,7 @@ export function SpyClient({
                   </p>
                 </div>
               </div>
-              <span className="bg-success-bg text-success inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold">
+              <span className="bg-success-bg text-success-fg inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold">
                 <Icon name="check" size={13} /> Gratuit
               </span>
             </div>
@@ -520,13 +520,13 @@ function playRequest(ad: SpyAd, url: string): PlayRequest {
 
 
 function scoreBadge(label: SpyAd["score_label"]): string {
-  if (label === "Fort potentiel") return "bg-success-bg text-success";
-  if (label === "Moyen") return "bg-warn-bg text-warn";
+  if (label === "Fort potentiel") return "bg-success-bg text-success-fg";
+  if (label === "Moyen") return "bg-warn-bg text-warn-fg";
   return "bg-input text-muted-foreground";
 }
 function ancienneteBadge(j: number | null): string {
   if (j == null) return "bg-input text-muted-foreground";
-  if (j >= 60) return "bg-success-bg text-success";
+  if (j >= 60) return "bg-success-bg text-success-fg";
   if (j >= 30) return "bg-chip-bleu text-chip-bleu-fg";
   return "bg-input text-muted-foreground";
 }
@@ -613,7 +613,7 @@ export function SpyCard({
           aria-label={saved ? "Sauvegardée" : "Sauvegarder la pub"}
           className={`absolute bottom-2 left-2 grid h-9 w-9 place-items-center rounded-full border shadow-sm backdrop-blur transition-colors ${
             saved
-              ? "bg-success text-accent-on border-transparent"
+              ? "bg-success-fg text-accent-on border-transparent"
               : "bg-surface/90 text-fg border-border hover:bg-muted"
           }`}
         >

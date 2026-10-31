@@ -87,7 +87,7 @@ export default async function VitrinePage() {
                   <span className="text-fg font-semibold">
                     {w.categorie ?? "Catégorie"}
                   </span>
-                  <span className="bg-success-bg text-success inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold">
+                  <span className="bg-success-bg text-success-fg inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold">
                     <Icon name="check" size={11} strokeWidth={3} /> Validé
                   </span>
                 </div>
@@ -96,7 +96,7 @@ export default async function VitrinePage() {
                 </p>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="bg-bg rounded-lg p-2.5 text-center">
-                    <p className="text-success text-lg font-extrabold tabular-nums">
+                    <p className="text-success-fg text-lg font-extrabold tabular-nums">
                       {w.closing_pct ?? "—"} %
                     </p>
                     <p className="text-muted-foreground text-[10px]">

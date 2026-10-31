@@ -118,7 +118,7 @@ export function ProductCard({
           {echLabel && (
             <span
               className={`inline-flex items-center gap-1 text-[11px] font-medium ${
-                urgent ? "text-warn" : "text-muted-foreground"
+                urgent ? "text-warn-fg" : "text-muted-foreground"
               }`}
             >
               <Icon name="clock" size={11} />

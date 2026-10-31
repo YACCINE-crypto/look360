@@ -154,7 +154,7 @@ export default async function SurveillancePage() {
                     <button
                       type="submit"
                       aria-label="Retirer de la surveillance"
-                      className="text-muted-foreground hover:text-danger hover:bg-danger-bg border-border inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-md border px-3 text-sm font-medium transition-colors"
+                      className="text-muted-foreground hover:text-danger-fg hover:bg-danger-bg border-border inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-md border px-3 text-sm font-medium transition-colors"
                     >
                       <Icon name="trash" size={14} /> Retirer
                     </button>

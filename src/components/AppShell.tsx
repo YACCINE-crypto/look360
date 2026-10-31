@@ -127,7 +127,7 @@ function Sidebar({
         <form action={logout}>
           <button
             type="submit"
-            className="text-sidebar-muted hover:text-danger flex min-h-[40px] w-full items-center gap-2 rounded-lg px-2 text-sm transition-colors"
+            className="text-sidebar-muted hover:text-danger-fg flex min-h-[40px] w-full items-center gap-2 rounded-lg px-2 text-sm transition-colors"
           >
             <LogOut size={15} />
             Déconnexion

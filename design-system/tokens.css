@@ -82,6 +82,13 @@
   --warn-bg: color-mix(in srgb, var(--warn) 18%, white);
   --danger-bg: color-mix(in srgb, var(--danger) 15%, white);
 
+  /* Teintes TEXTE des signaux : --success/--warn/--danger sont des teintes de
+     fond / graphique (anneaux, barres, points) et échouent en texte (2,1–3,8:1).
+     Ces variantes passent ≥ 4,5:1 sur surface, bg, input et fonds doux. */
+  --success-fg: #047857;
+  --warn-fg: #a14a06;
+  --danger-fg: #b91c1c;
+
   /* Chips de statut produit */
   --chip-idee: #ede9fe;
   --chip-idee-fg: #6d28d9;

@@ -92,13 +92,13 @@ export function TestClient({ produit, initial }: Props) {
           </span>
           <form action={validerProduit}>
             <input type="hidden" name="produit_id" value={produit.id} />
-            <button className="bg-success text-accent-on inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-90">
+            <button className="bg-success-fg text-accent-on inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-90">
               <Icon name="check" size={15} /> Valider le produit
             </button>
           </form>
           <form action={abandonnerProduit}>
             <input type="hidden" name="produit_id" value={produit.id} />
-            <button className="text-danger border-danger/40 hover:bg-danger-bg inline-flex min-h-[44px] items-center gap-1.5 rounded-md border px-4 py-2 text-sm font-semibold transition-colors">
+            <button className="text-danger-fg border-danger/40 hover:bg-danger-bg inline-flex min-h-[44px] items-center gap-1.5 rounded-md border px-4 py-2 text-sm font-semibold transition-colors">
               <Icon name="x" size={15} /> Rejeter
             </button>
           </form>
@@ -199,7 +199,7 @@ export function TestClient({ produit, initial }: Props) {
                 <span
                   className={
                     r.beneficeProjete !== null && r.beneficeProjete < 0
-                      ? "text-danger"
+                      ? "text-danger-fg"
                       : ""
                   }
                 >
@@ -211,7 +211,7 @@ export function TestClient({ produit, initial }: Props) {
                 </span>
               </Metric>
               <Metric label="ROAS" hint="retour sur budget pub">
-                <span className="text-warn">
+                <span className="text-warn-fg">
                   {r.roas === null ? "—" : `${r.roas.toFixed(1)}x`}
                 </span>
               </Metric>
@@ -364,22 +364,22 @@ function Field({
         inputMode="decimal"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`${inputCls} ${highlight ? "border-success bg-success-bg text-success font-semibold" : ""}`}
+        className={`${inputCls} ${highlight ? "border-success bg-success-bg text-success-fg font-semibold" : ""}`}
       />
     </label>
   );
 }
 
 function confColor(tier?: ConfirmationTier): string {
-  if (tier === "faible") return "text-danger";
-  if (tier === "correct") return "text-warn";
-  return "text-success";
+  if (tier === "faible") return "text-danger-fg";
+  if (tier === "correct") return "text-warn-fg";
+  return "text-success-fg";
 }
 function marginColor(margePct: number | null): string {
   if (margePct === null) return "";
-  if (margePct >= 30) return "text-success";
-  if (margePct >= 15) return "text-warn";
-  return "text-danger";
+  if (margePct >= 30) return "text-success-fg";
+  if (margePct >= 15) return "text-warn-fg";
+  return "text-danger-fg";
 }
 function verdictTone(tier: string): Tone {
   if (tier === "rentable") return "success";

@@ -47,7 +47,7 @@ function ForgotPasswordForm() {
               <input id="email" name="email" type="email" autoComplete="email" required className={inputCls} />
             </div>
 
-            {error && <p className="text-danger text-sm">{error}</p>}
+            {error && <p className="text-danger-fg text-sm">{error}</p>}
 
             <button
               type="submit"

@@ -375,7 +375,7 @@ export function VideoLightbox({
 
         {phase === "error" ? (
           <div className="bg-input px-6 py-8 text-center">
-            <span className="bg-danger-bg text-danger mx-auto mb-3 grid h-12 w-12 place-items-center rounded-xl">
+            <span className="bg-danger-bg text-danger-fg mx-auto mb-3 grid h-12 w-12 place-items-center rounded-xl">
               <Icon name="eyeOff" size={24} />
             </span>
             <p className="text-fg font-semibold">Lecture impossible</p>

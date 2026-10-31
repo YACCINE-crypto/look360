@@ -98,7 +98,7 @@ export function scoreMeta(score: number): { label: string; badge: string } {
   if (score >= 70)
     return {
       label: "Fort",
-      badge: "bg-success-bg text-success",
+      badge: "bg-success-bg text-success-fg",
     };
   if (score >= 40)
     return {

@@ -116,7 +116,7 @@ export function AddProductPanel() {
                       className="hidden"
                     />
                     {uploadError && (
-                      <p className="text-danger mt-1 text-xs">{uploadError}</p>
+                      <p className="text-danger-fg mt-1 text-xs">{uploadError}</p>
                     )}
                   </div>
                 </div>

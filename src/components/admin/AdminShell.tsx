@@ -96,7 +96,7 @@ function Sidebar({
         <form action={logout}>
           <button
             type="submit"
-            className="text-muted-foreground hover:bg-input hover:text-danger flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors"
+            className="text-muted-foreground hover:bg-input hover:text-danger-fg flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors"
           >
             <Icon name="logout" size={16} />
             Déconnexion

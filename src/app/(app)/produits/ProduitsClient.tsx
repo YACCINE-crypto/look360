@@ -111,7 +111,7 @@ export function ProduitsClient({
       </div>
 
       {addError && (
-        <p className="bg-danger-bg text-danger rounded-lg p-3 text-sm">
+        <p className="bg-danger-bg text-danger-fg rounded-lg p-3 text-sm">
           {addError === "nom"
             ? "Le nom du produit est requis."
             : "Impossible d'enregistrer le produit. Réessaie."}

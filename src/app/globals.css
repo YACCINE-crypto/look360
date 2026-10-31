@@ -35,6 +35,9 @@
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-on);
   --color-input: var(--input);
+  --color-success-fg: var(--success-fg);
+  --color-warn-fg: var(--warn-fg);
+  --color-danger-fg: var(--danger-fg);
   --color-success-bg: var(--success-bg);
   --color-warn-bg: var(--warn-bg);
   --color-danger-bg: var(--danger-bg);

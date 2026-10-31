@@ -213,9 +213,9 @@ export default function OffresClient({
         <div
           className={`flex items-center gap-2 rounded-xl border p-3 text-sm ${
             payReturn === "success"
-              ? "bg-success-bg text-success border-success/30"
+              ? "bg-success-bg text-success-fg border-success/30"
               : payReturn === "failed"
-                ? "bg-danger-bg text-danger border-danger/30"
+                ? "bg-danger-bg text-danger-fg border-danger/30"
                 : "bg-secondary text-secondary-foreground border-accent/20"
           }`}
         >
@@ -230,7 +230,7 @@ export default function OffresClient({
         </div>
       )}
       {payError && (
-        <div className="bg-danger-bg text-danger border-danger/30 rounded-xl border p-3 text-sm">
+        <div className="bg-danger-bg text-danger-fg border-danger/30 rounded-xl border p-3 text-sm">
           Le paiement n&apos;a pas pu démarrer. Réessaie dans un instant.
         </div>
       )}
@@ -275,7 +275,7 @@ export default function OffresClient({
           <p className="text-fg flex items-center gap-2 font-semibold">
             Gratuit — Découvre ce qui marche
             {current === "free" && (
-              <span className="bg-success-bg text-success rounded-full px-2 py-0.5 text-[11px] font-semibold">
+              <span className="bg-success-bg text-success-fg rounded-full px-2 py-0.5 text-[11px] font-semibold">
                 Actuelle
               </span>
             )}
@@ -336,7 +336,7 @@ export default function OffresClient({
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-bold">{cfg.label}</h3>
                   {isCurrent && (
-                    <span className="bg-success-bg text-success rounded-full px-2 py-0.5 text-[11px] font-semibold">
+                    <span className="bg-success-bg text-success-fg rounded-full px-2 py-0.5 text-[11px] font-semibold">
                       Actuelle
                     </span>
                   )}
@@ -391,8 +391,8 @@ export default function OffresClient({
                     <span
                       className={`mt-0.5 grid h-5 w-5 shrink-0 place-content-center rounded-full ${
                         f.on
-                          ? "bg-success-bg text-success"
-                          : "bg-danger-bg text-danger"
+                          ? "bg-success-bg text-success-fg"
+                          : "bg-danger-bg text-danger-fg"
                       }`}
                     >
                       {f.on ? (

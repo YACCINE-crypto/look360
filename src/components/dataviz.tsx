@@ -8,16 +8,16 @@ import { marcheFlag, marcheLabel } from "@/lib/produits";
 export type Tone = "success" | "warning" | "danger" | "muted" | "primary";
 
 const TONE_TEXT: Record<Tone, string> = {
-  success: "text-success",
-  warning: "text-warn",
-  danger: "text-danger",
+  success: "text-success-fg",
+  warning: "text-warn-fg",
+  danger: "text-danger-fg",
   muted: "text-muted-foreground",
   primary: "text-accent",
 };
 const TONE_SOFT: Record<Tone, string> = {
-  success: "bg-success-bg text-success",
-  warning: "bg-warn-bg text-warn",
-  danger: "bg-danger-bg text-danger",
+  success: "bg-success-bg text-success-fg",
+  warning: "bg-warn-bg text-warn-fg",
+  danger: "bg-danger-bg text-danger-fg",
   muted: "bg-input text-muted-foreground",
   primary: "bg-secondary text-accent",
 };

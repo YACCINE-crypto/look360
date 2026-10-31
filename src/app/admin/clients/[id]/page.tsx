@@ -75,7 +75,7 @@ export default async function AdminClientDetailPage({
             <span className="bg-secondary text-accent rounded-full px-2.5 py-1 text-xs font-semibold">
               {planLabel(c.plan)}
             </span>
-            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${c.suspended ? "bg-danger-bg text-danger" : st === "active" ? "bg-success-bg text-success" : "bg-input text-muted-foreground"}`}>
+            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${c.suspended ? "bg-danger-bg text-danger-fg" : st === "active" ? "bg-success-bg text-success-fg" : "bg-input text-muted-foreground"}`}>
               {c.suspended ? "Suspendu" : st === "active" ? "Abonnement actif" : st === "expired" ? "Abonnement expiré" : st}
             </span>
           </div>
@@ -160,8 +160,8 @@ export default async function AdminClientDetailPage({
             <button
               className={`min-h-[42px] w-full rounded-lg text-sm font-semibold ${
                 c.suspended
-                  ? "bg-success text-accent-on"
-                  : "bg-danger text-accent-on"
+                  ? "bg-success-fg text-accent-on"
+                  : "bg-danger-fg text-accent-on"
               }`}
             >
               {c.suspended ? "Réactiver" : "Suspendre"}
@@ -254,7 +254,7 @@ function Row({
           {new Date(date).toLocaleString("fr-FR")}
         </p>
       </div>
-      <span className={`shrink-0 text-sm font-semibold tabular-nums ${tone === "success" ? "text-success" : "text-fg"}`}>
+      <span className={`shrink-0 text-sm font-semibold tabular-nums ${tone === "success" ? "text-success-fg" : "text-fg"}`}>
         {right}
       </span>
     </div>

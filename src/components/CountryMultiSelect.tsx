@@ -167,7 +167,7 @@ export function CountryMultiSelect({
             ))}
           </div>
 
-          {note && <p className="text-warn mb-2 px-1 text-xs">{note}</p>}
+          {note && <p className="text-warn-fg mb-2 px-1 text-xs">{note}</p>}
 
           {/* Liste par région */}
           <div className="max-h-64 overflow-auto">

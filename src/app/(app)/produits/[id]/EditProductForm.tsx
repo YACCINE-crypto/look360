@@ -148,7 +148,7 @@ export function EditProductForm({ produit }: { produit: Produit }) {
                       {uploading ? "Envoi…" : imageUrl ? "Changer" : "Téléverser"}
                     </button>
                     <input ref={fileRef} type="file" accept="image/*,video/*" onChange={handleFile} className="hidden" />
-                    {uploadError && <p className="text-danger mt-1 text-xs">{uploadError}</p>}
+                    {uploadError && <p className="text-danger-fg mt-1 text-xs">{uploadError}</p>}
                   </div>
                 </div>
               </div>
