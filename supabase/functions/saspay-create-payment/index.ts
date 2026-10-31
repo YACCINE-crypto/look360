@@ -91,7 +91,11 @@ Deno.serve(async (req) => {
     checkoutUrl = result.checkoutUrl;
     reference = result.providerRef;
   } catch (e) {
-    console.error("create-payment failed:", e instanceof Error ? e.message : String(e));
+    // Montant envoyé + mode test dans le log (aucune donnée sensible).
+    console.error(
+      `create-payment failed (amount=${amount} test=${isTest} provider=${provider.name}):`,
+      e instanceof Error ? e.message : String(e),
+    );
     return json({ error: "payment_init_failed" }, 502);
   }
 
