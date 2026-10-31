@@ -48,7 +48,9 @@ export function CreativeMedia({
         />
       ) : (
         <div className="text-muted-foreground flex h-full w-full flex-col items-center justify-center gap-1.5 px-4 text-center">
-          <Icon name={isVideo ? "play" : "image"} size={26} />
+          {/* Vidéo : le bouton play est superposé au centre → on réserve sa
+              place pour que le message passe dessous, sans chevauchement. */}
+          {isVideo ? <span aria-hidden className="h-12 w-12" /> : <Icon name="image" size={26} />}
           {image && <span className="text-xs">Aperçu indisponible</span>}
         </div>
       )}

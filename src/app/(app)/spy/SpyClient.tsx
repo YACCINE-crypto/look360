@@ -533,10 +533,13 @@ function ancienneteBadge(j: number | null): string {
 
 export function SpyCard({
   ad,
+  rank,
   onAnalyze,
   onPlay,
 }: {
   ad: SpyAd;
+  /** Position dans un classement (Top Trend) — affichée en haut à gauche. */
+  rank?: number;
   onAnalyze?: (ad: SpyAd) => void;
   onPlay?: (v: PlayRequest) => void;
 }) {
@@ -601,9 +604,24 @@ export function SpyCard({
         >
           Score {ad.score} · {ad.score_label}
         </span>
-        {ad.media_type !== "none" && (
-          <span className="bg-black/55 absolute left-2 top-2 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase text-white">
-            {ad.media_type === "video" ? "Vidéo" : "Image"}
+        {(rank != null || ad.media_type !== "none") && (
+          <span className="absolute left-2 top-2 flex items-center gap-1">
+            {rank != null && (
+              <span
+                className={`grid h-6 min-w-6 place-items-center rounded-full px-1.5 text-xs font-bold tabular-nums shadow-sm ${
+                  rank <= 3 ? "bg-accent text-accent-on" : "bg-surface/90 text-fg"
+                }`}
+                title={`Classement n° ${rank}`}
+              >
+                <span className="sr-only">Classement n° </span>
+                {rank}
+              </span>
+            )}
+            {ad.media_type !== "none" && (
+              <span className="bg-black/55 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase text-white">
+                {ad.media_type === "video" ? "Vidéo" : "Image"}
+              </span>
+            )}
           </span>
         )}
         <button
