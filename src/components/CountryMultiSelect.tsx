@@ -176,7 +176,7 @@ export function CountryMultiSelect({
               if (list.length === 0) return null;
               return (
                 <div key={r}>
-                  <p className="text-muted-foreground px-1 pb-0.5 pt-2 text-[11px] font-semibold uppercase tracking-wide">
+                  <p className="text-muted-foreground px-1 pb-0.5 pt-2 text-xs font-semibold uppercase tracking-wide">
                     {SPY_REGION_LABELS[r]}
                   </p>
                   {list.map((c) => {
@@ -201,7 +201,7 @@ export function CountryMultiSelect({
                         </span>
                         <span className="flex-1 truncate">{c.label}</span>
                         {isEUCountry(c.code) && (
-                          <span className="bg-secondary text-secondary-foreground rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
+                          <span className="bg-secondary text-secondary-foreground rounded-full px-1.5 py-0.5 text-xs font-semibold">
                             reach
                           </span>
                         )}

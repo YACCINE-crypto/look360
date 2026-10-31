@@ -61,7 +61,7 @@
   --color-background: var(--bg);
   --color-foreground: var(--fg);
   --color-muted: var(--border);              /* surface claire (rails, hover) */
-  --color-muted-foreground: var(--muted);    /* texte atténué OpenDesign #64748b */
+  --color-muted-foreground: var(--muted);    /* texte atténué (#5b6b82, ≥ 4,5:1) */
   --color-primary: var(--accent);
   --color-primary-foreground: var(--accent-on);
   --color-warning: var(--warn);

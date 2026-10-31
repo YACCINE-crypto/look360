@@ -135,7 +135,7 @@ export default async function AdminClientDetailPage({
               <option value="pro">Pro</option>
               <option value="business">Business</option>
             </select>
-            <p className="text-muted-foreground text-[11px]">
+            <p className="text-muted-foreground text-xs">
               Applique l&apos;offre + les crédits mensuels correspondants.
             </p>
             <button className="bg-fg text-bg min-h-[42px] w-full rounded-lg text-sm font-semibold">
@@ -216,7 +216,7 @@ function detailText(detail: Record<string, unknown>): string {
 function Fig({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-bg rounded-lg p-3">
-      <p className="text-muted-foreground text-[11px]">{label}</p>
+      <p className="text-muted-foreground text-xs">{label}</p>
       <p className="text-fg text-base font-bold tabular-nums">{value}</p>
     </div>
   );
@@ -250,7 +250,7 @@ function Row({
     <div className="flex items-center justify-between gap-3 px-4 py-2.5">
       <div className="min-w-0">
         <p className="text-fg truncate text-sm">{left}</p>
-        <p className="text-muted-foreground text-[11px]">
+        <p className="text-muted-foreground text-xs">
           {new Date(date).toLocaleString("fr-FR")}
         </p>
       </div>

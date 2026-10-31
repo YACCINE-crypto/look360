@@ -87,7 +87,7 @@
     },
     {
       "name": "--muted",
-      "value": "#64748b",
+      "value": "#5b6b82",
       "type": "color",
       "layer": "A1-identity",
       "confidence": "high",

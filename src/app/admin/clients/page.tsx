@@ -156,7 +156,7 @@ export default async function AdminClientsPage({
                         {r.email ?? r.nom ?? "—"}
                       </span>
                       {r.suspended && (
-                        <span className="bg-danger-bg text-danger-fg ml-2 rounded-full px-1.5 py-0.5 text-[10px] font-bold">
+                        <span className="bg-danger-bg text-danger-fg ml-2 rounded-full px-1.5 py-0.5 text-xs font-bold">
                           suspendu
                         </span>
                       )}
@@ -185,7 +185,7 @@ export default async function AdminClientsPage({
                       {st === "active" ? "Actif" : st === "expired" ? "Expiré" : st}
                     </span>
                     {r.current_period_end && (
-                      <span className="text-muted-foreground/70 mt-0.5 block text-[11px]">
+                      <span className="text-muted-foreground mt-0.5 block text-xs">
                         {st === "active" ? "Échéance " : "Fin "}
                         {new Date(r.current_period_end).toLocaleDateString("fr-FR")}
                       </span>
@@ -203,7 +203,7 @@ export default async function AdminClientsPage({
                             {b.txt}
                           </span>
                           {r.last_payment_at && (
-                            <span className="text-muted-foreground/70 mt-0.5 block text-[11px]">
+                            <span className="text-muted-foreground mt-0.5 block text-xs">
                               {new Date(r.last_payment_at).toLocaleDateString("fr-FR")}
                             </span>
                           )}

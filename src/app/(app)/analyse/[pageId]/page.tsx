@@ -315,7 +315,7 @@ function KpiTile({
       <p className={`mt-1 text-2xl font-extrabold tabular-nums ${accent ? "text-accent" : "text-fg"}`}>
         {value}
       </p>
-      {hint && <p className="text-muted-foreground mt-0.5 text-[11px]">{hint}</p>}
+      {hint && <p className="text-muted-foreground mt-0.5 text-xs">{hint}</p>}
     </Card>
   );
 }

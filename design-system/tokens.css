@@ -9,7 +9,7 @@
   --surface-warm: #eef6ff;
   --fg: #111827;
   --fg-2: #334155;
-  --muted: #64748b;
+  --muted: #5b6b82; /* Look360 : assombri depuis #64748b (4,43:1 sur --bg) → ≥ 4,9:1 sur bg/input */
   --meta: #0ea5e9;
   --border: #d8e2ee;
   --border-soft: #edf3f8;

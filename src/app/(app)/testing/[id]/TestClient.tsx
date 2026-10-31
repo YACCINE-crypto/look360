@@ -164,7 +164,7 @@ export function TestClient({ produit, initial }: Props) {
                   <p className={`text-lg font-bold leading-tight ${confColor(r.confirmation?.tier)}`}>
                     {r.confirmation ? CONFIRMATION_SHORT[r.confirmation.tier] : "À chiffrer"}
                   </p>
-                  <p className="text-muted-foreground/80 mt-0.5 text-[11px]">Objectif ≥ 60 %</p>
+                  <p className="text-muted-foreground/80 mt-0.5 text-xs">Objectif ≥ 60 %</p>
                 </div>
               </div>
 
@@ -184,7 +184,7 @@ export function TestClient({ produit, initial }: Props) {
                     targetLabel="Objectif 30 %"
                     height={10}
                   />
-                  <div className="text-muted-foreground/70 mt-1 flex justify-between text-[10px]">
+                  <div className="text-muted-foreground mt-1 flex justify-between text-xs">
                     <span>0 %</span>
                     <span>Objectif 30 %</span>
                     <span>100 %</span>

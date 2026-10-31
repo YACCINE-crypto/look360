@@ -450,7 +450,7 @@ export function SpyClient({
             <p className="text-muted-foreground flex items-center gap-2 text-sm">
               {ads.length} pub(s) trouvée(s)
               {cached && (
-                <span className="bg-input text-muted-foreground rounded-full px-2 py-0.5 text-[11px] font-medium">
+                <span className="bg-input text-muted-foreground rounded-full px-2 py-0.5 text-xs font-medium">
                   ⚡ en cache
                 </span>
               )}
@@ -599,7 +599,7 @@ export function SpyCard({
         onPlay={(u) => onPlay?.(playRequest(ad, u))}
       >
         <span
-          className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-semibold ${scoreBadge(ad.score_label)}`}
+          className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-xs font-semibold ${scoreBadge(ad.score_label)}`}
           title={ad.score_detail.join(" · ")}
         >
           Score {ad.score} · {ad.score_label}
@@ -618,7 +618,7 @@ export function SpyCard({
               </span>
             )}
             {ad.media_type !== "none" && (
-              <span className="bg-black/55 rounded px-1.5 py-0.5 text-[10px] font-medium uppercase text-white">
+              <span className="bg-black/55 rounded px-1.5 py-0.5 text-xs font-medium uppercase text-white">
                 {ad.media_type === "video" ? "Vidéo" : "Image"}
               </span>
             )}
@@ -648,29 +648,29 @@ export function SpyCard({
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${ancienneteBadge(ad.jours_actifs)}`}>
+          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${ancienneteBadge(ad.jours_actifs)}`}>
             <Icon name="clock" size={11} />
             {ad.jours_actifs == null ? "—" : `Tourne depuis ${ad.jours_actifs} j`}
           </span>
           {ad.variants_count > 1 && (
-            <span className="bg-input text-muted-foreground rounded-full px-2 py-0.5 text-[11px] font-medium">
+            <span className="bg-input text-muted-foreground rounded-full px-2 py-0.5 text-xs font-medium">
               {ad.variants_count} variantes
             </span>
           )}
           {ad.targets_eu && ad.reach != null && (
-            <span className="bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" title="Reach UE (transparence DSA)">
+            <span className="bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold" title="Reach UE (transparence DSA)">
               <Icon name="eye" size={11} /> Reach {formatReach(ad.reach)}
             </span>
           )}
           {ad.targets_eu && ad.spend && (
-            <span className="bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" title="Dépense estimée (transparence DSA UE)">
+            <span className="bg-secondary text-secondary-foreground inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold" title="Dépense estimée (transparence DSA UE)">
               <Icon name="trending" size={11} /> Dépense {ad.spend}
             </span>
           )}
         </div>
 
         {ad.platforms.length > 0 && (
-          <p className="text-muted-foreground truncate text-[11px]">{ad.platforms.join(" · ")}</p>
+          <p className="text-muted-foreground truncate text-xs">{ad.platforms.join(" · ")}</p>
         )}
 
         <div className="mt-auto space-y-2 pt-1">

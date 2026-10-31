@@ -121,7 +121,7 @@ export function Revenus({
               />
             </div>
           </div>
-          <p className="text-muted-foreground/70 mt-3 text-[11px] leading-snug">
+          <p className="text-muted-foreground mt-3 text-xs leading-snug">
             Le coût est une estimation (paramètre ajustable). La marge suit le
             revenu réel encaissé et la consommation réelle de crédits.
           </p>
@@ -257,7 +257,7 @@ function Kpi({
         {sub && <p className="text-muted-foreground text-xs">{sub}</p>}
         {delta != null && (
           <span
-            className={`text-[11px] font-semibold ${delta >= 0 ? "text-success-fg" : "text-danger-fg"}`}
+            className={`text-xs font-semibold ${delta >= 0 ? "text-success-fg" : "text-danger-fg"}`}
           >
             {delta >= 0 ? "+" : ""}
             {delta} %
@@ -291,7 +291,7 @@ function Bars({ data }: { data: { month: string; total: number }[] }) {
     >
       {data.map((d) => (
         <div key={d.month} className="flex min-w-0 flex-1 flex-col items-center gap-1">
-          <span className="text-muted-foreground h-4 text-[10px] tabular-nums">
+          <span className="text-muted-foreground h-4 text-xs tabular-nums">
             {d.total > 0 ? compact(d.total) : ""}
           </span>
           <div className="flex w-full flex-1 items-end">
@@ -301,7 +301,7 @@ function Bars({ data }: { data: { month: string; total: number }[] }) {
               title={`${monthLabel(d.month)} : ${nf.format(d.total)} FCFA`}
             />
           </div>
-          <span className="text-muted-foreground/70 text-[10px]">{monthLabel(d.month)}</span>
+          <span className="text-muted-foreground text-xs">{monthLabel(d.month)}</span>
         </div>
       ))}
     </div>
@@ -359,7 +359,7 @@ function AlertCard({
           </span>
           <div>
             <p className="text-fg text-sm font-bold">{title}</p>
-            <p className="text-muted-foreground text-[11px]">{hint}</p>
+            <p className="text-muted-foreground text-xs">{hint}</p>
           </div>
         </div>
         <span
@@ -396,7 +396,7 @@ function AlertRow({
     <Link href={href} className="hover:bg-input/50 flex items-center justify-between gap-3 px-4 py-2.5 transition-colors">
       <div className="min-w-0">
         <p className="text-fg truncate text-sm font-medium">{left}</p>
-        <p className="text-muted-foreground text-[11px]">{sub}</p>
+        <p className="text-muted-foreground text-xs">{sub}</p>
       </div>
       <span
         className={`shrink-0 text-xs font-bold tabular-nums ${tone === "danger" ? "text-danger-fg" : "text-muted-foreground"}`}

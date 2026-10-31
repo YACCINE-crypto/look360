@@ -100,7 +100,7 @@ export default async function SurveillancePage() {
               >
                 {/* Badge "nouvelle pub détectée" */}
                 {nouvelles > 0 && (
-                  <span className="bg-accent text-accent-on absolute -top-2 right-3 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold shadow-sm">
+                  <span className="bg-accent text-accent-on absolute -top-2 right-3 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold shadow-sm">
                     <span className="relative flex h-1.5 w-1.5">
                       <span className="bg-accent-on absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" />
                       <span className="bg-accent-on relative inline-flex h-1.5 w-1.5 rounded-full" />

@@ -38,7 +38,7 @@ export function WinnerConfigForm({ config }: { config: WinnerConfig }) {
           <Icon name="trophy" size={16} className="text-warn-fg" />
           Critères du Winner Agent
           <span
-            className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
               config.active ? "bg-success-bg text-success-fg" : "bg-input text-muted-foreground"
             }`}
           >

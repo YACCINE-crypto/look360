@@ -115,7 +115,7 @@ export function DatePicker({
             </button>
           </div>
 
-          <div className="text-muted-foreground mb-1 grid grid-cols-7 text-center text-[11px] font-medium">
+          <div className="text-muted-foreground mb-1 grid grid-cols-7 text-center text-xs font-medium">
             {DOW.map((d, i) => (
               <span key={i}>{d}</span>
             ))}

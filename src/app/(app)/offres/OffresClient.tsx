@@ -79,7 +79,7 @@ function features(p: Plan): Feat[] {
       label: (
         <>
           Téléchargement des vidéos de pub{" "}
-          <span className="text-muted-foreground/70">({nf(l.monthlyDownloads)}/mois)</span>
+          <span className="text-muted-foreground">({nf(l.monthlyDownloads)}/mois)</span>
         </>
       ),
       on: l.monthlyDownloads > 0,
@@ -275,7 +275,7 @@ export default function OffresClient({
           <p className="text-fg flex items-center gap-2 font-semibold">
             Gratuit — Découvre ce qui marche
             {current === "free" && (
-              <span className="bg-success-bg text-success-fg rounded-full px-2 py-0.5 text-[11px] font-semibold">
+              <span className="bg-success-bg text-success-fg rounded-full px-2 py-0.5 text-xs font-semibold">
                 Actuelle
               </span>
             )}
@@ -336,7 +336,7 @@ export default function OffresClient({
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-bold">{cfg.label}</h3>
                   {isCurrent && (
-                    <span className="bg-success-bg text-success-fg rounded-full px-2 py-0.5 text-[11px] font-semibold">
+                    <span className="bg-success-bg text-success-fg rounded-full px-2 py-0.5 text-xs font-semibold">
                       Actuelle
                     </span>
                   )}
@@ -352,7 +352,7 @@ export default function OffresClient({
                   <span className="text-muted-foreground text-base font-medium line-through">
                     {fcfa(cfg.priceNormal)}
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-2 py-0.5 text-[11px] font-extrabold text-white shadow-sm">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-2 py-0.5 text-xs font-extrabold text-white shadow-sm">
                     <Sparkles size={11} />−{pct}%
                   </span>
                 </div>

@@ -106,7 +106,7 @@ export function Select({
           {groups
             ? groups.map((g) => (
                 <div key={g.label}>
-                  <p className="text-muted-foreground px-2 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide">
+                  <p className="text-muted-foreground px-2 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide">
                     {g.label}
                   </p>
                   {g.options.map((o) => (
