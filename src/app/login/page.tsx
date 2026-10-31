@@ -41,10 +41,10 @@ function AuthCard() {
       <main className="bg-bg flex min-h-screen items-center justify-center px-4 py-12">
         <div className="w-full max-w-sm">
           <div className="mb-6 flex flex-col items-center text-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <h1 className="mb-3">
-            <img src="/look360-logo.svg" alt="Look360" className="h-12 w-auto" />
-          </h1>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/look360-logo.svg" alt="Look360" className="h-12 w-auto" />
+            </h1>
           </div>
           <div className="border-border bg-surface space-y-3 rounded-2xl border p-6 text-center shadow-lg">
             <p className="text-lg font-semibold">Vérifie ta boîte mail 📩</p>
@@ -69,8 +69,10 @@ function AuthCard() {
       <div className="w-full max-w-sm">
         {/* Logo + sous-titre */}
         <div className="mb-6 flex flex-col items-center text-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/look360-logo.svg" alt="Look360" className="mb-3 h-12 w-auto" />
+          <h1 className="mb-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/look360-logo.svg" alt="Look360" className="h-12 w-auto" />
+          </h1>
           <p className="text-muted-foreground text-sm">
             Recherche &amp; testing produit COD
           </p>
