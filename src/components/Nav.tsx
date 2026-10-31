@@ -6,7 +6,7 @@ import { Icon } from "./Icon";
 import { planConfig } from "@/lib/billing";
 
 const ITEMS = [
-  { href: "/recherche", label: "Feed du jour", icon: "sparkles" as const, group: "Trouver" },
+  { href: "/recherche", label: "Feed du jour", icon: "today" as const, group: "Trouver" },
   { href: "/spy", label: "Spy Facebook", icon: "eye" as const, group: "Trouver" },
   { href: "/top-trend", label: "Top Trend", icon: "trending" as const, group: "Trouver" },
   { href: "/winners", label: "Winners du jour", icon: "trophy" as const, needs: "winner" as const, group: "Trouver" },

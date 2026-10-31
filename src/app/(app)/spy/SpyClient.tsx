@@ -760,7 +760,7 @@ export function SpyCard({
 
 function Kpi({ label, value, highlight = false, hint }: { label: string; value: string; highlight?: boolean; hint?: string }) {
   return (
-    <div className={`border-border min-w-0 px-2.5 py-2 [&+&]:border-l ${highlight ? "bg-secondary" : ""}`} title={hint}>
+    <div className={`border-border min-w-0 px-2 py-2 [&+&]:border-l ${highlight ? "bg-secondary" : ""}`} title={hint}>
       <dt className="text-muted-foreground truncate text-xs">{label}</dt>
       <dd className={`truncate text-base font-semibold tabular-nums ${highlight ? "text-accent" : "text-fg"}`}>{value}</dd>
     </div>
