@@ -142,14 +142,14 @@ export function ShopCard({ shop, thumbs = [] }: { shop: Shop; thumbs?: string[] 
             </span>
           )}
         </div>
-        <dl className="bg-bg mt-auto grid grid-cols-3 overflow-hidden rounded-md pt-0 text-xs">
+        <dl className="bg-bg mt-auto grid grid-cols-[1fr_1.7fr_1fr] overflow-hidden rounded-md pt-0 text-xs">
           <div className="px-2 py-2">
             <dt className="text-muted-foreground truncate">Produits</dt>
             <dd className="text-fg text-base font-semibold tabular-nums">{shop.product_count != null ? nf.format(shop.product_count) : "—"}</dd>
           </div>
           <div className="border-border border-l px-2 py-2">
             <dt className="text-muted-foreground truncate">Prix</dt>
-            <dd className="text-fg truncate text-sm font-semibold tabular-nums">
+            <dd className="text-fg text-sm font-semibold tabular-nums whitespace-nowrap" title={shop.price_max != null ? `jusqu'à ${formatPrice(shop.price_max, shop.currency)}` : undefined}>
               {shop.price_min != null ? formatPrice(shop.price_min, shop.currency) : "—"}
             </dd>
           </div>

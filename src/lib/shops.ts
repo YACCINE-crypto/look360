@@ -106,7 +106,7 @@ export function formatPrice(v: number | null, currency: string | null): string {
     return new Intl.NumberFormat("fr-FR", {
       style: "currency",
       currency: currency || "EUR",
-      maximumFractionDigits: v >= 1000 ? 0 : 2,
+      maximumFractionDigits: v >= 1000 || ["XOF", "XAF", "GNF"].includes(currency ?? "") ? 0 : 2,
     }).format(v);
   } catch {
     return `${v} ${currency ?? ""}`.trim();
