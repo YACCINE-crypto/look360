@@ -8,12 +8,21 @@ const chip =
   "border-border bg-surface text-fg-2 hover:bg-input focus-visible:ring-accent/40 h-9 shrink-0 cursor-pointer appearance-none rounded-full border pl-3 pr-8 text-sm font-medium focus-visible:outline-none focus-visible:ring-2";
 
 /** Filtres de la page Boutiques & produits (état dans l'URL, partageable). */
-export function BoutiquesFilters({ tab, counts }: { tab: "produits" | "boutiques"; counts?: Record<string, number> }) {
+export function BoutiquesFilters({
+  tab,
+  counts,
+  niches = [],
+}: {
+  tab: "produits" | "boutiques";
+  counts?: Record<string, number>;
+  niches?: string[];
+}) {
   const router = useRouter();
   const sp = useSearchParams();
   const [q, setQ] = useState(sp.get("q") ?? "");
   const zone = sp.get("zone") ?? "all";
   const sort = sp.get("sort") ?? "pubs";
+  const niche = sp.get("niche") ?? "";
   const ads = sp.get("ads") !== "0";
 
   function set(patch: Record<string, string | null>) {
@@ -57,6 +66,7 @@ export function BoutiquesFilters({ tab, counts }: { tab: "produits" | "boutiques
               ["all", "Tous"],
               ["africa", "Afrique"],
               ["europe", "Europe"],
+              ["america", "Amérique"],
             ] as const
           ).map(([z, label]) => (
             <button
@@ -88,6 +98,25 @@ export function BoutiquesFilters({ tab, counts }: { tab: "produits" | "boutiques
             className="w-full bg-transparent text-sm outline-none"
           />
         </form>
+
+        {niches.length > 0 && (
+          <label className="relative shrink-0">
+            <span className="sr-only">Niche</span>
+            <select
+              value={niche}
+              onChange={(e) => set({ niche: e.target.value || null })}
+              className={`${chip} ${niche ? "border-accent text-accent bg-secondary" : ""}`}
+            >
+              <option value="">Toutes les niches</option>
+              {niches.map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+            <Icon name="chevronDown" size={14} className="text-muted-foreground pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" />
+          </label>
+        )}
 
         {tab === "produits" && (
           <button

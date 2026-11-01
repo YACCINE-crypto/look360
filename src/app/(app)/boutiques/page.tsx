@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { PageHeader } from "@/components/ui";
 import { ShopCard, ShopProductCard, UnlockMore } from "@/components/shops/ShopCards";
 import { currentAccess, FREE_PREVIEW } from "@/lib/access";
-import { listProducts, listShops, type ProductSort, type ShopSort, type Zone } from "@/lib/shopQueries";
+import { listNiches, listProducts, listShops, type ProductSort, type ShopSort, type Zone } from "@/lib/shopQueries";
 import { BoutiquesFilters } from "./BoutiquesFilters";
 
 export const dynamic = "force-dynamic";
@@ -18,26 +18,27 @@ const PAGE = 48;
 export default async function BoutiquesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; zone?: string; q?: string; sort?: string; ads?: string; page?: string }>;
+  searchParams: Promise<{ tab?: string; zone?: string; q?: string; sort?: string; ads?: string; page?: string; niche?: string }>;
 }) {
   const sp = await searchParams;
   const tab = sp.tab === "boutiques" ? "boutiques" : "produits";
-  const zone: Zone = sp.zone === "africa" || sp.zone === "europe" ? sp.zone : "all";
+  const zone: Zone = sp.zone === "africa" || sp.zone === "europe" || sp.zone === "america" ? sp.zone : "all";
   const q = (sp.q ?? "").slice(0, 80);
   const page = Math.max(1, Number(sp.page) || 1);
-  const { paid } = await currentAccess();
+  const [{ paid }, niches] = await Promise.all([currentAccess(), listNiches()]);
+  const niche = sp.niche && niches.includes(sp.niche) ? sp.niche : undefined;
   const limit = paid ? PAGE * page : FREE_PREVIEW;
 
   let grid: React.ReactNode;
   let total = 0;
   if (tab === "produits") {
     const sort: ProductSort = sp.sort === "recent" || sp.sort === "promo" ? sp.sort : "pubs";
-    const res = await listProducts({ zone, q, sort, withAds: sp.ads !== "0", limit });
+    const res = await listProducts({ zone, q, sort, withAds: sp.ads !== "0", limit, niche });
     total = res.total;
     grid = res.items.map((p) => <ShopProductCard key={p.id} product={p} shop={p.shops} />);
   } else {
     const sort: ShopSort = sp.sort === "produits" || sp.sort === "cod" ? sp.sort : "pubs";
-    const res = await listShops({ zone, q, sort, limit });
+    const res = await listShops({ zone, q, sort, limit, niche });
     total = res.total;
     grid = res.shops.map((s) => <ShopCard key={s.id} shop={s} thumbs={res.thumbs.get(s.id)} />);
   }
@@ -55,7 +56,7 @@ export default async function BoutiquesPage({
         subtitle="Les boutiques Shopify derrière les pubs repérées : catalogue, prix et pubs qui mènent à chaque produit. Mis à jour tous les 7 jours."
       />
       <Suspense>
-        <BoutiquesFilters tab={tab} />
+        <BoutiquesFilters tab={tab} niches={niches} />
       </Suspense>
 
       {total === 0 ? (

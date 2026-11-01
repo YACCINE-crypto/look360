@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      discovery_keywords: {
+        Row: {
+          id: number
+          niche: string
+          keyword: string
+          zone: string
+          enabled: boolean
+          runs: number
+          last_run_at: string | null
+          last_country: string | null
+          last_count: number | null
+          last_source: string | null
+        }
+        Insert: {
+          id?: number
+          niche?: string
+          keyword?: string
+          zone?: string
+          enabled?: boolean
+          runs?: number
+          last_run_at?: string | null
+          last_country?: string | null
+          last_count?: number | null
+          last_source?: string | null
+        }
+        Update: {
+          id?: number
+          niche?: string
+          keyword?: string
+          zone?: string
+          enabled?: boolean
+          runs?: number
+          last_run_at?: string | null
+          last_country?: string | null
+          last_count?: number | null
+          last_source?: string | null
+        }
+        Relationships: []
+      }
       shops: {
         Row: {
           id: string
@@ -43,6 +82,7 @@ export type Database = {
           next_crawl_at: string
           crawl_attempts: number
           last_error: string | null
+          niches: string[]
         }
         Insert: {
           id?: string
@@ -72,6 +112,7 @@ export type Database = {
           next_crawl_at?: string
           crawl_attempts?: number
           last_error?: string | null
+          niches?: string[]
         }
         Update: {
           id?: string
@@ -101,6 +142,7 @@ export type Database = {
           next_crawl_at?: string
           crawl_attempts?: number
           last_error?: string | null
+          niches?: string[]
         }
         Relationships: []
       }
@@ -129,6 +171,7 @@ export type Database = {
           ads_active: number
           first_ad_date: string | null
           eu_reach: number | null
+          niche: string | null
         }
         Insert: {
           id?: string
@@ -154,6 +197,7 @@ export type Database = {
           ads_active?: number
           first_ad_date?: string | null
           eu_reach?: number | null
+          niche?: string | null
         }
         Update: {
           id?: string
@@ -179,6 +223,7 @@ export type Database = {
           ads_active?: number
           first_ad_date?: string | null
           eu_reach?: number | null
+          niche?: string | null
         }
         Relationships: [
           {
@@ -201,6 +246,7 @@ export type Database = {
           country: string | null
           reach: number | null
           seen_at: string
+          niche: string | null
         }
         Insert: {
           ad_archive_id?: string
@@ -212,6 +258,7 @@ export type Database = {
           country?: string | null
           reach?: number | null
           seen_at?: string
+          niche?: string | null
         }
         Update: {
           ad_archive_id?: string
@@ -223,6 +270,7 @@ export type Database = {
           country?: string | null
           reach?: number | null
           seen_at?: string
+          niche?: string | null
         }
         Relationships: []
       }
