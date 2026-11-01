@@ -228,7 +228,7 @@ function Stat({ label, value, hint, accent = false, title }: { label: string; va
   return (
     <div title={title}>
       <dt className="text-muted-foreground text-xs">{label}</dt>
-      <dd className={`truncate text-xl font-bold tabular-nums ${accent ? "text-accent" : "text-fg"}`}>{value}</dd>
+      <dd className={`text-xl font-bold leading-tight tabular-nums ${accent ? "text-accent" : "text-fg"}`}>{value}</dd>
       {hint && <p className="text-muted-foreground truncate text-xs">{hint}</p>}
     </div>
   );
