@@ -88,3 +88,51 @@ export async function abandonnerProduit(formData: FormData): Promise<void> {
   revalidatePath("/produits");
   redirect("/testing");
 }
+
+/**
+ * Enregistrement AUTOMATIQUE des chiffres du test (sans bouton) : met à jour
+ * le dernier test s'il date de moins de 12 h, sinon en crée un nouveau
+ * (l'historique reste lisible sans une ligne par frappe).
+ */
+export async function autosaveTest(input: {
+  produit_id: string;
+  marche: string | null;
+  prix_vente_prevu: number | null;
+  commandes_recues: number | null;
+  commandes_confirmees: number | null;
+  depense_pub: number | null;
+  cout_produit_estime: number | null;
+  frais_livraison_prevu: number | null;
+}): Promise<{ ok: boolean; savedAt?: string }> {
+  if (!input.produit_id) return { ok: false };
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData?.claims?.sub) return { ok: false };
+
+  const clean = (v: number | null) => (v == null || !Number.isFinite(v) ? null : v);
+  const values = {
+    prix_vente_prevu: clean(input.prix_vente_prevu),
+    commandes_recues: input.commandes_recues == null ? null : Math.round(input.commandes_recues),
+    commandes_confirmees: input.commandes_confirmees == null ? null : Math.round(input.commandes_confirmees),
+    depense_pub: clean(input.depense_pub),
+    cout_produit_estime: clean(input.cout_produit_estime),
+    frais_livraison_prevu: clean(input.frais_livraison_prevu),
+  };
+  const verdict = verdictTierFromInput(values);
+
+  const { data: last } = await supabase
+    .from("tests")
+    .select("id, created_at")
+    .eq("produit_id", input.produit_id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const recent = last && Date.now() - Date.parse(last.created_at) < 12 * 3600_000;
+  const { error } = recent
+    ? await supabase.from("tests").update({ ...values, verdict }).eq("id", last.id)
+    : await supabase.from("tests").insert({ produit_id: input.produit_id, marche: input.marche, ...values, verdict });
+  if (error) return { ok: false };
+  revalidatePath("/testing");
+  return { ok: true, savedAt: new Date().toISOString() };
+}

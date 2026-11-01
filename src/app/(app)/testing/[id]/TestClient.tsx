@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { ProgressRing, MeterBar, VerdictBadge, closingTone, margeTone, type Tone } from "@/components/dataviz";
 import { computeTest, type ConfirmationTier } from "@/lib/testing";
 import { marcheLabel, externalUrl } from "@/lib/produits";
-import { saveTest, validerProduit, abandonnerProduit } from "../actions";
+import { autosaveTest, validerProduit, abandonnerProduit } from "../actions";
 
 const CONFIRMATION_SHORT: Record<ConfirmationTier, string> = {
   faible: "Closing faible",
@@ -15,9 +15,7 @@ const CONFIRMATION_SHORT: Record<ConfirmationTier, string> = {
   super: "Excellent closing",
 };
 
-const inputCls =
-  "w-full min-h-[44px] rounded-md border border-border bg-input px-3 py-2 text-sm outline-none focus:border-accent";
-const fieldLabel = "text-xs font-medium text-muted-foreground";
+const nf = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 });
 
 type Props = {
   produit: {
@@ -45,8 +43,6 @@ type Props = {
 };
 
 export function TestClient({ produit, initial }: Props) {
-  const [impressions, setImpressions] = useState(initial.impressions);
-  const [clics, setClics] = useState(initial.clics);
   const [recues, setRecues] = useState(initial.recues);
   const [confirmees, setConfirmees] = useState(initial.confirmees);
   const [prix, setPrix] = useState(initial.prix);
@@ -72,6 +68,54 @@ export function TestClient({ produit, initial }: Props) {
   const duree = joursDepuis(produit.date_lancement_testing);
   const reco = recommandation(r);
 
+  // Enregistrement automatique (800 ms après la dernière saisie).
+  const [save, setSave] = useState<{ state: "idle" | "saving" | "saved" | "error"; at?: string }>({ state: "idle" });
+  const [deciding, startDecision] = useTransition();
+  const savedKey = useRef<string | null>(null);
+  const pending = useRef<Promise<unknown> | null>(null);
+  const values = { prix, recues, confirmees, pub, coutProduit, frais };
+  const key = JSON.stringify(values);
+
+  function persist() {
+    const p = autosaveTest({
+      produit_id: produit.id,
+      marche: produit.marche,
+      prix_vente_prevu: n(prix),
+      commandes_recues: n(recues),
+      commandes_confirmees: n(confirmees),
+      depense_pub: n(pub),
+      cout_produit_estime: n(coutProduit),
+      frais_livraison_prevu: n(frais),
+    }).then((res) => setSave(res.ok ? { state: "saved", at: res.savedAt } : { state: "error" }));
+    pending.current = p;
+    return p;
+  }
+
+  useEffect(() => {
+    // Rien à enregistrer tant que les chiffres n'ont pas changé.
+    if (savedKey.current === null) savedKey.current = key;
+    if (savedKey.current === key) return;
+    const t = setTimeout(() => {
+      savedKey.current = key;
+      setSave({ state: "saving" });
+      persist();
+    }, 800);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+
+  function decide(action: typeof validerProduit) {
+    startDecision(async () => {
+      // On enregistre d'abord les derniers chiffres saisis.
+      await persist();
+      const fd = new FormData();
+      fd.set("produit_id", produit.id);
+      await action(fd);
+    });
+  }
+
+  const cpa = n(pub) != null && (n(confirmees) ?? 0) > 0 ? n(pub)! / n(confirmees)! : null;
+
   return (
     <div className="space-y-6">
       {/* Barre d'action */}
@@ -81,28 +125,12 @@ export function TestClient({ produit, initial }: Props) {
           className="text-muted-foreground hover:text-fg flex items-center gap-1 text-sm"
         >
           <Icon name="chevronRight" size={14} className="rotate-180" />
-          Recherche <span className="text-muted-foreground">/</span>
+          Testing <span className="text-muted-foreground">/</span>
           <span className="text-fg font-medium">
             {produit.nom ?? "Sans nom"}
           </span>
         </Link>
-        <div className="flex items-center gap-2">
-          <span className="bg-chip-bleu text-chip-bleu-fg rounded-md px-2 py-1 text-xs font-medium">
-            En test
-          </span>
-          <form action={validerProduit}>
-            <input type="hidden" name="produit_id" value={produit.id} />
-            <button className="bg-success-fg text-accent-on inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-90">
-              <Icon name="check" size={15} /> Valider le produit
-            </button>
-          </form>
-          <form action={abandonnerProduit}>
-            <input type="hidden" name="produit_id" value={produit.id} />
-            <button className="text-danger-fg border-danger/40 hover:bg-danger-bg inline-flex min-h-[44px] items-center gap-1.5 rounded-md border px-4 py-2 text-sm font-semibold transition-colors">
-              <Icon name="x" size={15} /> Rejeter
-            </button>
-          </form>
-        </div>
+        <span className="bg-chip-bleu text-chip-bleu-fg rounded-md px-2 py-1 text-xs font-medium">En test</span>
       </div>
 
       {/* En-tête produit */}
@@ -264,52 +292,126 @@ export function TestClient({ produit, initial }: Props) {
             </div>
           )}
 
-          {/* Chiffres réels — formulaire de sauvegarde */}
-          <form action={saveTest} className="space-y-3">
-            <input type="hidden" name="produit_id" value={produit.id} />
-            <input type="hidden" name="marche" value={produit.marche ?? ""} />
-            <input type="hidden" name="prix_vente_prevu" value={prix} />
-            <input type="hidden" name="commandes_recues" value={recues} />
-            <input type="hidden" name="commandes_confirmees" value={confirmees} />
-            <input type="hidden" name="depense_pub" value={pub} />
-            <input type="hidden" name="cout_produit_estime" value={coutProduit} />
-            <input type="hidden" name="frais_livraison_prevu" value={frais} />
+          {/* Chiffres du test — enregistrés automatiquement */}
+          <section className="border-border bg-surface shadow-card rounded-xl border">
+            <header className="border-border-soft flex items-center justify-between gap-2 border-b px-5 py-3.5">
+              <h2 className="text-sm font-semibold">Chiffres du test</h2>
+              <SaveStatus state={save.state} at={save.at} />
+            </header>
 
-            <h2 className="text-sm font-semibold">Chiffres réels du test</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Impressions" value={impressions} onChange={setImpressions} />
-              <Field label="Clics" value={clics} onChange={setClics} />
-              <Field label="Commandes passées" value={recues} onChange={setRecues} />
-              <Field
-                label="Commandes confirmées"
-                value={confirmees}
-                onChange={setConfirmees}
-                highlight
-              />
-              <Field label="Prix de vente (FCFA)" value={prix} onChange={setPrix} />
-              <Field label="Coût produit (FCFA)" value={coutProduit} onChange={setCoutProduit} />
-            </div>
-            <Field
-              label="Budget pub dépensé (FCFA)"
-              value={pub}
-              onChange={setPub}
-            />
-            <Field
-              label="Frais livraison / commande (FCFA)"
-              value={frais}
-              onChange={setFrais}
-            />
+            <FieldGroup title="Commandes" aside={r.tauxConfirmation != null ? `Closing ${r.tauxConfirmation.toFixed(0)} %` : undefined}>
+              <NumField label="Passées" unit="cmd" value={recues} onChange={setRecues} />
+              <NumField label="Confirmées" unit="cmd" value={confirmees} onChange={setConfirmees} />
+            </FieldGroup>
 
-            <button
-              type="submit"
-              className="bg-accent text-accent-on flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md py-2.5 text-sm font-semibold transition-opacity hover:opacity-90"
-            >
-              <Icon name="clock" size={15} /> Recalculer &amp; enregistrer
-            </button>
-          </form>
+            <FieldGroup title="Prix et coûts" aside={r.margePct != null ? `Marge ${r.margePct.toFixed(0)} %` : undefined}>
+              <NumField label="Prix de vente" unit="FCFA" value={prix} onChange={setPrix} />
+              <NumField label="Coût produit" unit="FCFA" value={coutProduit} onChange={setCoutProduit} />
+              <NumField label="Livraison / commande" unit="FCFA" value={frais} onChange={setFrais} wide />
+            </FieldGroup>
+
+            <FieldGroup title="Publicité" aside={cpa != null ? `${nf.format(cpa)} FCFA / cmd confirmée` : undefined} last>
+              <NumField label="Budget pub dépensé" unit="FCFA" value={pub} onChange={setPub} wide />
+            </FieldGroup>
+          </section>
+        </div>
+      </div>
+
+      {/* Décision — en bas de la fiche */}
+      <div className="border-border bg-surface/95 shadow-raised sticky bottom-3 z-20 flex flex-col gap-3 rounded-xl border p-4 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold">Décision sur ce produit</p>
+          <p className="text-muted-foreground truncate text-xs">
+            {r.verdict ? `Verdict actuel : ${r.verdict.label}` : "Renseigne les chiffres pour obtenir un verdict"}
+            {save.state === "saving" ? " · enregistrement…" : ""}
+          </p>
+        </div>
+        <div className="flex shrink-0 gap-2">
+          <button
+            type="button"
+            disabled={deciding}
+            onClick={() => decide(abandonnerProduit)}
+            className="text-danger-fg border-border hover:border-danger-fg hover:bg-danger-bg inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-md border px-4 text-sm font-semibold transition-colors disabled:opacity-60 sm:flex-none"
+          >
+            <Icon name="x" size={15} /> Rejeter
+          </button>
+          <button
+            type="button"
+            disabled={deciding}
+            onClick={() => decide(validerProduit)}
+            className="bg-success-fg text-accent-on inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-md px-5 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60 sm:flex-none"
+          >
+            <Icon name="check" size={15} /> {deciding ? "…" : "Valider le produit"}
+          </button>
         </div>
       </div>
     </div>
+  );
+}
+
+function SaveStatus({ state, at }: { state: "idle" | "saving" | "saved" | "error"; at?: string }) {
+  if (state === "idle") return <span className="text-muted-foreground text-xs">Enregistrement automatique</span>;
+  if (state === "saving") return <span className="text-muted-foreground text-xs">Enregistrement…</span>;
+  if (state === "error") return <span className="text-danger-fg text-xs font-medium">Échec de l&apos;enregistrement</span>;
+  const t = at ? new Date(at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : "";
+  return (
+    <span className="text-success-fg flex items-center gap-1 text-xs font-medium">
+      <Icon name="check" size={12} /> Enregistré {t && `à ${t}`}
+    </span>
+  );
+}
+
+function FieldGroup({
+  title,
+  aside,
+  last = false,
+  children,
+}: {
+  title: string;
+  aside?: string;
+  last?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <fieldset className={`px-5 py-4 ${last ? "" : "border-border-soft border-b"}`}>
+      <legend className="sr-only">{title}</legend>
+      <div className="mb-3 flex items-baseline justify-between gap-2">
+        <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">{title}</p>
+        {aside && <p className="text-accent text-xs font-semibold tabular-nums">{aside}</p>}
+      </div>
+      <div className="grid grid-cols-2 gap-3">{children}</div>
+    </fieldset>
+  );
+}
+
+/** Champ numérique : grand chiffre aligné à droite, unité intégrée. */
+function NumField({
+  label,
+  unit,
+  value,
+  onChange,
+  wide = false,
+}: {
+  label: string;
+  unit: string;
+  value: string;
+  onChange: (v: string) => void;
+  wide?: boolean;
+}) {
+  return (
+    <label className={`group block ${wide ? "col-span-2" : ""}`}>
+      <span className="text-fg-2 mb-1 block text-xs font-medium">{label}</span>
+      <span className="border-border bg-bg group-focus-within:border-accent group-focus-within:bg-surface group-focus-within:shadow-focus flex h-11 items-center gap-2 rounded-md border px-3 transition-colors">
+        <input
+          inputMode="decimal"
+          value={value}
+          onChange={(e) => onChange(e.target.value.replace(/[^\d.,\s]/g, ""))}
+          placeholder="0"
+          className="placeholder:text-muted-foreground/50 min-w-0 flex-1 bg-transparent text-right text-base font-semibold tabular-nums outline-none"
+        />
+        <span className="text-muted-foreground shrink-0 text-xs">{unit}</span>
+      </span>
+    </label>
   );
 }
 
@@ -343,30 +445,6 @@ function Metric({
       <p className="mt-1 text-2xl font-bold tabular-nums">{children}</p>
       {hint && <p className="text-muted-foreground mt-0.5 text-xs">{hint}</p>}
     </div>
-  );
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  highlight,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  highlight?: boolean;
-}) {
-  return (
-    <label className="block space-y-1.5">
-      <span className={fieldLabel}>{label}</span>
-      <input
-        inputMode="decimal"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={`${inputCls} ${highlight ? "border-success bg-success-bg text-success-fg font-semibold" : ""}`}
-      />
-    </label>
   );
 }
 
