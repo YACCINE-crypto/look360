@@ -20,6 +20,8 @@ export async function listProducts(o: {
   withAds: boolean;
   limit: number;
   offset?: number;
+  /** Minimum de pubs actives (sélection « meilleurs »). */
+  minActive?: number;
 }): Promise<{ items: ProductWithShop[]; total: number }> {
   const supabase = await createClient();
   let query = supabase
@@ -30,6 +32,7 @@ export async function listProducts(o: {
   if (o.zone === "africa") query = query.not("shops.ad_countries", "ov", EU);
   if (o.q) query = query.ilike("title", like(o.q));
   if (o.withAds) query = query.gt("ads_count", 0);
+  if (o.minActive) query = query.gte("ads_active", o.minActive);
   if (o.sort === "promo") query = query.not("compare_at_price", "is", null);
   query =
     o.sort === "recent"
@@ -47,6 +50,7 @@ export async function listShops(o: {
   sort: ShopSort;
   limit: number;
   offset?: number;
+  minActive?: number;
 }): Promise<{ shops: Shop[]; total: number; thumbs: Map<string, string[]> }> {
   const supabase = await createClient();
   let query = supabase.from("shops").select(SHOP_COLS, { count: "exact" }).eq("status", "ok");
@@ -54,6 +58,7 @@ export async function listShops(o: {
   if (o.zone === "africa") query = query.not("ad_countries", "ov", EU);
   if (o.q) query = query.or(`domain.ilike.${like(o.q)},name.ilike.${like(o.q)}`);
   if (o.sort === "cod") query = query.not("cod_apps", "eq", "{}");
+  if (o.minActive) query = query.gte("ads_active", o.minActive);
   query =
     o.sort === "produits"
       ? query.order("product_count", { ascending: false, nullsFirst: false })
