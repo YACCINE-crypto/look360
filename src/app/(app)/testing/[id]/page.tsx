@@ -42,6 +42,7 @@ export default async function FicheTestPage({
         lien_concurrent: produit.lien_concurrent,
         lien_ad_library: produit.lien_ad_library,
         date_lancement_testing: produit.date_lancement_testing,
+        image_url: produit.image_url ?? null,
       }}
       initial={{
         impressions: "",

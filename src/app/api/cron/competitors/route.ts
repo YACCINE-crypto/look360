@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getWebPush, type PushPayload, type StoredSubscription } from "@/lib/webpush";
 import { runSpySearch } from "@/lib/apify";
 import { planConfig } from "@/lib/billing";
+import type { Json } from "@/lib/database.types";
 
 type WatchRow = { id: string; user_id: string; created_at: string } & Record<string, unknown>;
 
@@ -109,6 +110,28 @@ export async function GET(request: Request) {
         .from("competitors_watch")
         .update({ known_ad_ids: union, last_checked_at: nowIso, new_ads_count: badge })
         .eq("id", c.id);
+
+      // Historique (page Surveillance) : nouvelles pubs insérées, pubs déjà
+      // connues marquées « vues aujourd'hui » (les absentes sont coupées).
+      if (ads.length > 0) {
+        await supabase.from("competitor_ads").upsert(
+          ads.map((a) => ({
+            page_id: c.page_id,
+            ad_archive_id: a.ad_archive_id,
+            payload: a as unknown as Json,
+            start_date: a.start_date,
+            first_seen: nowIso,
+            last_seen: nowIso,
+            baseline: known.size === 0,
+          })),
+          { onConflict: "page_id,ad_archive_id", ignoreDuplicates: true },
+        );
+        await supabase
+          .from("competitor_ads")
+          .update({ last_seen: nowIso })
+          .eq("page_id", c.page_id)
+          .in("ad_archive_id", ids);
+      }
       checked++;
 
       // On ne notifie que s'il y avait déjà une baseline (évite de notifier

@@ -29,6 +29,7 @@ type Props = {
     lien_concurrent: string | null;
     lien_ad_library: string | null;
     date_lancement_testing: string | null;
+    image_url: string | null;
   };
   initial: {
     impressions: string;
@@ -65,8 +66,12 @@ export function TestClient({ produit, initial }: Props) {
     frais_livraison_prevu: n(frais),
   });
 
+  // Verdict seulement quand les chiffres essentiels sont saisis (sinon « -0 »
+  // et « Pas rentable » s'affichaient sur une fiche vide).
+  const ready = n(prix) != null && n(confirmees) != null;
+  const verdict = ready ? r.verdict : null;
   const duree = joursDepuis(produit.date_lancement_testing);
-  const reco = recommandation(r);
+  const reco = recommandation({ ...r, verdict });
 
   // Enregistrement automatique (800 ms après la dernière saisie).
   const [save, setSave] = useState<{ state: "idle" | "saving" | "saved" | "error"; at?: string }>({ state: "idle" });
@@ -133,26 +138,31 @@ export function TestClient({ produit, initial }: Props) {
         <span className="bg-chip-bleu text-chip-bleu-fg rounded-md px-2 py-1 text-xs font-medium">En test</span>
       </div>
 
-      {/* En-tête produit */}
-      <div className="flex items-center gap-4">
-        <span className="bg-input text-muted-foreground grid h-14 w-14 place-items-center rounded-lg">
-          <Icon name="image" size={22} />
-        </span>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {produit.nom ?? "Sans nom"}
-          </h1>
-          <p className="text-muted-foreground text-sm">
-            {marcheLabel(produit.marche)}
-            {produit.date_lancement_testing &&
-              ` · Lancé le ${formatDate(produit.date_lancement_testing)}`}
-          </p>
-        </div>
-      </div>
-
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Colonne principale */}
         <div className="space-y-6 lg:col-span-2">
+        {/* En-tête produit */}
+        <div className="flex items-center gap-4">
+          <span className="border-border bg-input text-muted-foreground grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-xl border">
+            {produit.image_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={produit.image_url} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <Icon name="image" size={22} />
+            )}
+          </span>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              {produit.nom ?? "Sans nom"}
+            </h1>
+            <p className="text-muted-foreground text-sm">
+              {marcheLabel(produit.marche)}
+              {produit.date_lancement_testing &&
+                ` · Lancé le ${formatDate(produit.date_lancement_testing)}`}
+            </p>
+          </div>
+        </div>
+
           <div className="border-border bg-surface rounded-xl border p-6">
             <div className="flex items-start justify-between">
               <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">
@@ -166,9 +176,9 @@ export function TestClient({ produit, initial }: Props) {
               </div>
             </div>
 
-            {r.verdict ? (
+            {verdict ? (
               <div className="mt-3">
-                <VerdictBadge label={r.verdict.label} tone={verdictTone(r.verdict.tier)} size="lg" />
+                <VerdictBadge label={verdict.label} tone={verdictTone(verdict.tier)} size="lg" />
               </div>
             ) : (
               <span className="text-muted-foreground mt-3 inline-block text-sm">
@@ -226,12 +236,12 @@ export function TestClient({ produit, initial }: Props) {
               <Metric label="Bénéfice projeté" hint="FCFA">
                 <span
                   className={
-                    r.beneficeProjete !== null && r.beneficeProjete < 0
+                    ready && r.beneficeProjete !== null && r.beneficeProjete < 0
                       ? "text-danger-fg"
                       : ""
                   }
                 >
-                  {r.beneficeProjete === null
+                  {r.beneficeProjete === null || !ready
                     ? "—"
                     : new Intl.NumberFormat("fr-FR", {
                         maximumFractionDigits: 0,
@@ -264,6 +274,29 @@ export function TestClient({ produit, initial }: Props) {
 
         {/* Colonne droite */}
         <div className="space-y-6">
+          {/* Chiffres du test — enregistrés automatiquement */}
+          <section className="border-border bg-surface shadow-card rounded-xl border">
+            <header className="border-border-soft flex items-center justify-between gap-2 border-b px-5 py-3.5">
+              <h2 className="text-sm font-semibold">Chiffres du test</h2>
+              <SaveStatus state={save.state} at={save.at} />
+            </header>
+
+            <FieldGroup title="Commandes" aside={r.tauxConfirmation != null ? `Closing ${r.tauxConfirmation.toFixed(0)} %` : undefined}>
+              <NumField label="Passées" unit="cmd" value={recues} onChange={setRecues} />
+              <NumField label="Confirmées" unit="cmd" value={confirmees} onChange={setConfirmees} />
+            </FieldGroup>
+
+            <FieldGroup title="Prix et coûts" aside={r.margePct != null ? `Marge ${r.margePct.toFixed(0)} %` : undefined}>
+              <NumField label="Prix de vente" unit="FCFA" value={prix} onChange={setPrix} />
+              <NumField label="Coût produit" unit="FCFA" value={coutProduit} onChange={setCoutProduit} />
+              <NumField label="Livraison / commande" unit="FCFA" value={frais} onChange={setFrais} wide />
+            </FieldGroup>
+
+            <FieldGroup title="Publicité" aside={cpa != null ? `${nf.format(cpa)} FCFA / cmd confirmée` : undefined} last>
+              <NumField label="Budget pub dépensé" unit="FCFA" value={pub} onChange={setPub} wide />
+            </FieldGroup>
+          </section>
+
           {produit.angle_marketing && (
             <div>
               <h2 className="mb-2 text-sm font-semibold">Angle marketing</h2>
@@ -292,28 +325,6 @@ export function TestClient({ produit, initial }: Props) {
             </div>
           )}
 
-          {/* Chiffres du test — enregistrés automatiquement */}
-          <section className="border-border bg-surface shadow-card rounded-xl border">
-            <header className="border-border-soft flex items-center justify-between gap-2 border-b px-5 py-3.5">
-              <h2 className="text-sm font-semibold">Chiffres du test</h2>
-              <SaveStatus state={save.state} at={save.at} />
-            </header>
-
-            <FieldGroup title="Commandes" aside={r.tauxConfirmation != null ? `Closing ${r.tauxConfirmation.toFixed(0)} %` : undefined}>
-              <NumField label="Passées" unit="cmd" value={recues} onChange={setRecues} />
-              <NumField label="Confirmées" unit="cmd" value={confirmees} onChange={setConfirmees} />
-            </FieldGroup>
-
-            <FieldGroup title="Prix et coûts" aside={r.margePct != null ? `Marge ${r.margePct.toFixed(0)} %` : undefined}>
-              <NumField label="Prix de vente" unit="FCFA" value={prix} onChange={setPrix} />
-              <NumField label="Coût produit" unit="FCFA" value={coutProduit} onChange={setCoutProduit} />
-              <NumField label="Livraison / commande" unit="FCFA" value={frais} onChange={setFrais} wide />
-            </FieldGroup>
-
-            <FieldGroup title="Publicité" aside={cpa != null ? `${nf.format(cpa)} FCFA / cmd confirmée` : undefined} last>
-              <NumField label="Budget pub dépensé" unit="FCFA" value={pub} onChange={setPub} wide />
-            </FieldGroup>
-          </section>
         </div>
       </div>
 
@@ -322,7 +333,7 @@ export function TestClient({ produit, initial }: Props) {
         <div className="min-w-0">
           <p className="text-sm font-semibold">Décision sur ce produit</p>
           <p className="text-muted-foreground truncate text-xs">
-            {r.verdict ? `Verdict actuel : ${r.verdict.label}` : "Renseigne les chiffres pour obtenir un verdict"}
+            {verdict ? `Verdict actuel : ${verdict.label}` : "Renseigne le prix et les commandes confirmées pour obtenir un verdict"}
             {save.state === "saving" ? " · enregistrement…" : ""}
           </p>
         </div>
@@ -449,6 +460,7 @@ function Metric({
 }
 
 function confColor(tier?: ConfirmationTier): string {
+  if (!tier) return "text-muted-foreground";
   if (tier === "faible") return "text-danger-fg";
   if (tier === "correct") return "text-warn-fg";
   return "text-success-fg";
