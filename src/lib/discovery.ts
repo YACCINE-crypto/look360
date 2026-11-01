@@ -4,13 +4,15 @@ import { searchSpyWithCache } from "@/lib/spyCache";
 import type { SpyFilters } from "@/lib/spy";
 
 // ============================================================================
-// Découverte automatique : le système cherche lui-même les mots-clés de
-// discovery_keywords (niche × zone), en rotation, dans un BUDGET quotidien.
+// Découverte HEBDOMADAIRE : une fois tous les 7 jours, le système cherche
+// lui-même les mots-clés de discovery_keywords (niche × zone), dans un BUDGET
+// par semaine. (Chaque matin, on s'enrichit seulement des recherches déjà
+// faites par les utilisateurs — cron /api/cron/shops, sans appel Apify.)
 // Économie Apify :
 //  1) une recherche faite récemment sur ce mot-clé et cette zone (par un
 //     utilisateur ou le système) est réutilisée — aucun appel ;
 //  2) le cache exact (12 h) de searchSpyWithCache s'applique ensuite ;
-//  3) un mot-clé n'est recherché qu'une fois tous les REFRESH_DAYS par zone ;
+//  3) une combinaison mot-clé × zone n'est recherchée qu'une fois par semaine ;
 //  4) arrêt immédiat si Apify refuse (crédit épuisé).
 // ============================================================================
 
@@ -20,8 +22,8 @@ export const ZONE_COUNTRIES: Record<string, string[]> = {
   america: ["CA", "US"],
 };
 
-const REFRESH_DAYS = 14;
-const REUSE_DAYS = 14;
+const REFRESH_DAYS = 7;
+const REUSE_DAYS = 7;
 const CONCURRENCY = 3;
 
 type Due = { id: number; keyword: string; zone: string; runs: number };
@@ -100,4 +102,16 @@ export async function runDiscovery(budget: number, deadlineMs: number): Promise<
   await Promise.all(Array.from({ length: CONCURRENCY }, worker));
   if (stop) report.stoppedReason = stop;
   return report;
+}
+
+/** Recherches Apify déjà faites par la découverte cette semaine. */
+export async function discoveryUsedThisWeek(): Promise<number> {
+  const admin = createAdminClient();
+  const since = new Date(Date.now() - 6 * 86_400_000).toISOString();
+  const { count } = await admin
+    .from("discovery_keywords")
+    .select("id", { count: "exact", head: true })
+    .eq("last_source", "apify")
+    .gte("last_run_at", since);
+  return count ?? 0;
 }
