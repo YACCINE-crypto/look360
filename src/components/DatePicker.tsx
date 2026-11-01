@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Icon } from "./Icon";
 
 const MONTHS = [
@@ -45,11 +46,44 @@ export function DatePicker({
   const selected = parseIso(value);
   const [view, setView] = useState<Date>(() => selected ?? new Date());
   const ref = useRef<HTMLDivElement>(null);
+  const pop = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  // Calendrier rendu au-dessus de tout (portail, position fixe) : il n'est plus
+  // coupé par un panneau qui défile, et se replace vers le haut / la gauche
+  // quand la place manque.
+  useLayoutEffect(() => {
+    if (!open) return;
+    function place() {
+      const btn = ref.current?.getBoundingClientRect();
+      if (!btn) return;
+      const w = pop.current?.offsetWidth ?? 272;
+      const h = pop.current?.offsetHeight ?? 340;
+      const m = 8;
+      let left = Math.min(btn.left, window.innerWidth - w - m);
+      left = Math.max(m, left);
+      let top = btn.bottom + 4;
+      if (top + h > window.innerHeight - m && btn.top - h - 4 >= m) top = btn.top - h - 4;
+      top = Math.max(m, Math.min(top, window.innerHeight - h - m));
+      setPos({ top, left });
+    }
+    place();
+    const id = requestAnimationFrame(place);
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      cancelAnimationFrame(id);
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
     function onDoc(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (ref.current?.contains(t) || pop.current?.contains(t)) return;
+      setOpen(false);
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
@@ -91,8 +125,15 @@ export function DatePicker({
         <Icon name="calendar" size={16} className="text-muted-foreground shrink-0" />
       </button>
 
-      {open && (
-        <div className="border-border bg-surface absolute z-50 mt-1 w-[17rem] rounded-xl border p-3 shadow-xl">
+      {open &&
+        createPortal(
+        <div
+          ref={pop}
+          role="dialog"
+          aria-label="Choisir une date"
+          style={{ top: pos?.top ?? -9999, left: pos?.left ?? -9999 }}
+          className="border-border bg-surface shadow-raised fixed z-[70] w-[17rem] max-w-[calc(100vw-16px)] rounded-xl border p-3"
+        >
           <div className="mb-2 flex items-center justify-between">
             <button
               type="button"
@@ -172,8 +213,9 @@ export function DatePicker({
               Aujourd&apos;hui
             </button>
           </div>
-        </div>
-      )}
+        </div>,
+          document.body,
+        )}
     </div>
   );
 }

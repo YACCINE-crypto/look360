@@ -1,7 +1,7 @@
 "use client";
 
 import { createPortal } from "react-dom";
-import { useRef, useState } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { useSearchParams } from "next/navigation";
 import { createProduit } from "@/app/(app)/recherche/actions";
 import { MARCHES, CATEGORIES } from "@/lib/produits";
@@ -16,8 +16,12 @@ const inputCls =
   "w-full min-h-[44px] rounded-md border border-border bg-input px-3 py-2 text-sm outline-none focus:border-accent";
 const labelCls = "text-xs font-medium text-muted-foreground";
 
+const noop = () => () => {};
+
 export function AddProductPanel() {
   const params = useSearchParams();
+  // Le portail n'existe que dans le navigateur (pas de `document` côté serveur).
+  const mounted = useSyncExternalStore(noop, () => true, () => false);
   const [open, setOpen] = useState(
     params.get("add") === "1" || params.has("error"),
   );
@@ -60,6 +64,7 @@ export function AddProductPanel() {
       </button>
 
       {open &&
+        mounted &&
         createPortal(
         <div className="fixed inset-0 z-40 flex justify-end">
           <div
@@ -67,9 +72,16 @@ export function AddProductPanel() {
             onClick={() => setOpen(false)}
             aria-hidden="true"
           />
-          <div className="bg-surface relative z-10 flex h-full w-full max-w-md flex-col overflow-y-auto p-6 shadow-xl">
-            <div className="mb-1 flex items-center justify-between">
-              <h2 className="text-lg font-bold">Nouveau produit</h2>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-product-title"
+            className="bg-surface shadow-raised relative z-10 flex h-full w-full max-w-md flex-col"
+          >
+            {/* En-tête fixe */}
+            <div className="border-border-soft shrink-0 border-b px-6 pb-4 pt-5">
+            <div className="flex items-center justify-between">
+              <h2 id="add-product-title" className="text-lg font-bold">Nouveau produit</h2>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -79,12 +91,15 @@ export function AddProductPanel() {
                 <Icon name="x" size={18} />
               </button>
             </div>
-            <p className="text-muted-foreground mb-5 text-xs">
+            <p className="text-muted-foreground text-xs">
               Repère le produit maintenant — le coût et la rentabilité se saisissent
               plus tard, au moment de l&apos;envoyer en test.
             </p>
+            </div>
 
-            <form action={createProduit} className="space-y-4">
+            <form action={createProduit} className="flex min-h-0 flex-1 flex-col">
+              {/* Champs (seule zone qui défile) */}
+              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-5">
               <input type="hidden" name="redirect_to" value="/produits" />
               <input type="hidden" name="image_url" value={imageUrl} />
 
@@ -193,20 +208,23 @@ export function AddProductPanel() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 pt-1">
+              </div>
+
+              {/* Actions toujours visibles */}
+              <div className="border-border-soft bg-surface flex shrink-0 items-center justify-end gap-2 border-t px-6 py-4">
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="text-fg-2 hover:bg-input inline-flex min-h-[44px] items-center justify-center rounded-md px-4 py-2 text-sm font-semibold"
+                >
+                  Annuler
+                </button>
                 <button
                   type="submit"
                   disabled={uploading}
                   className="bg-accent text-accent-on inline-flex min-h-[44px] items-center justify-center rounded-md px-5 py-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
                 >
-                  Enregistrer
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="bg-input text-fg inline-flex min-h-[44px] items-center justify-center rounded-md px-5 py-2 text-sm font-semibold"
-                >
-                  Annuler
+                  Enregistrer le produit
                 </button>
               </div>
             </form>
