@@ -1,98 +1,134 @@
-import { Suspense } from "react";
-import { createAdminClient } from "@/lib/supabase/admin";
+import Link from "next/link";
 import { PageHeader } from "@/components/ui";
-import { Icon } from "@/components/Icon";
-import { AdGrid } from "@/components/AdGrid";
-import { TopTrendFilters } from "./TopTrendFilters";
-import { SPY_COUNTRIES, type SpyAd, type SpyRegion } from "@/lib/spy";
+import { FeatureLock } from "@/components/FeatureLock";
+import { ShopCard, ShopProductCard } from "@/components/shops/ShopCards";
+import { currentAccess } from "@/lib/access";
+import { listProducts, listShops, type Zone } from "@/lib/shopQueries";
 
 export const dynamic = "force-dynamic";
 
-const REGION_OF = new Map<string, SpyRegion>(SPY_COUNTRIES.map((c) => [c.code, c.region]));
-
+/**
+ * Top Trend = produits et boutiques MIS EN AVANT par les pubs : classement par
+ * nombre de pubs actives qui y mènent (données Meta réelles, fenêtre 30 j).
+ * Réservé aux offres payantes.
+ */
 export default async function TopTrendPage({
   searchParams,
 }: {
-  searchParams: Promise<{ region?: string; days?: string; q?: string }>;
+  searchParams: Promise<{ tab?: string; zone?: string }>;
 }) {
-  const sp = await searchParams;
-  const region = sp.region === "africa" || sp.region === "europe" ? sp.region : "all";
-  const days = sp.days === "7" ? 7 : 30;
-  const q = (sp.q || "").toLowerCase().trim();
-
-  // Classement recalculé à partir des recherches déjà scrapées (pas de re-scraping).
-  const admin = createAdminClient();
-  const now = new Date();
-  const since = new Date(now.getTime() - days * 86_400_000).toISOString();
-  const { data: rows } = await admin
-    .from("spy_searches")
-    .select("results")
-    .gte("created_at", since)
-    .order("created_at", { ascending: false })
-    .limit(300);
-
-  const map = new Map<string, SpyAd>();
-  for (const row of rows ?? []) {
-    const list = (row.results as unknown as SpyAd[]) ?? [];
-    for (const ad of list) {
-      if (!ad?.ad_archive_id) continue;
-      if (region !== "all" && REGION_OF.get(ad.country ?? "") !== region) continue;
-      if (q) {
-        const hay = `${ad.page_name ?? ""} ${ad.ad_text ?? ""}`.toLowerCase();
-        if (!hay.includes(q)) continue;
-      }
-      const prev = map.get(ad.ad_archive_id);
-      if (!prev || ad.score > prev.score) map.set(ad.ad_archive_id, ad);
-    }
+  const { paid } = await currentAccess();
+  if (!paid) {
+    return (
+      <div className="space-y-4">
+        <PageHeader title="Top Trend" subtitle="Les produits et boutiques qui font le plus de pubs en ce moment." />
+        <FeatureLock
+          title="Top Trend est réservé aux abonnés"
+          minPlan="Starter"
+          description="Le classement des produits et des boutiques les plus poussés en pub (Afrique et Europe), mis à jour chaque jour."
+        />
+      </div>
+    );
   }
-  const top = [...map.values()].sort((a, b) => b.score - a.score).slice(0, 50);
 
-  // Les liens Meta (miniatures, vidéos) expirent en quelques jours : pour les
-  // pubs déjà archivées par le feed, on prend la miniature archivée et le flux
-  // vidéo transcodé.
-  const { data: archived } = await admin
-    .from("feed_ads")
-    .select("ad_archive_id, thumbnail_cdn_url, media_cdn_url")
-    .in("ad_archive_id", top.map((a) => a.ad_archive_id));
-  const arch = new Map((archived ?? []).map((r) => [r.ad_archive_id, r]));
-  const ads = top.map((ad) => {
-    const a = arch.get(ad.ad_archive_id);
-    if (!a) return ad;
-    return {
-      ...ad,
-      thumbnail_url: a.thumbnail_cdn_url ?? ad.thumbnail_url,
-      media_hls_url: a.media_cdn_url ?? ad.media_hls_url ?? null,
-      media_source_url: ad.media_source_url ?? ad.media_url,
-    };
-  });
+  const sp = await searchParams;
+  const tab = sp.tab === "boutiques" ? "boutiques" : "produits";
+  const zone: Zone = sp.zone === "africa" || sp.zone === "europe" ? sp.zone : "all";
+  const href = (patch: Record<string, string | null>) => {
+    const p = new URLSearchParams();
+    const next = { tab: tab === "produits" ? null : tab, zone: zone === "all" ? null : zone, ...patch };
+    for (const [k, v] of Object.entries(next)) if (v) p.set(k, v);
+    const qs = p.toString();
+    return `/top-trend${qs ? `?${qs}` : ""}`;
+  };
+
+  const products = tab === "produits" ? await listProducts({ zone, sort: "pubs", withAds: true, limit: 50 }) : null;
+  const shops = tab === "boutiques" ? await listShops({ zone, sort: "pubs", limit: 30 }) : null;
+  const empty = (products && products.items.length === 0) || (shops && shops.shops.length === 0);
 
   return (
     <div className="space-y-4">
       <PageHeader
         title="Top Trend"
-        subtitle="Classement des meilleures pubs repérées — à partir des recherches déjà faites."
+        subtitle="Les produits et boutiques qui font le plus de pubs actives en ce moment (pubs repérées sur 30 jours)."
       />
-      <Suspense fallback={null}>
-        <TopTrendFilters />
-      </Suspense>
 
-      {ads.length === 0 ? (
-        <div className="border-border bg-surface rounded-xl border border-dashed p-12 text-center">
-          <span className="bg-secondary text-accent mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full">
-            <Icon name="trending" size={24} />
-          </span>
-          <p className="font-medium">Pas encore de tendances</p>
-          <p className="text-muted-foreground mx-auto mt-1 max-w-md text-sm">
-            Le classement se remplit avec les recherches Spy et les runs du Winner
-            Agent. Lance quelques recherches pour l&apos;alimenter.
-          </p>
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="border-border flex gap-1 border-b">
+          {(
+            [
+              ["produits", "Produits"],
+              ["boutiques", "Boutiques"],
+            ] as const
+          ).map(([t, label]) => (
+            <Link
+              key={t}
+              href={href({ tab: t === "produits" ? null : t })}
+              aria-current={tab === t ? "page" : undefined}
+              className={`-mb-px border-b-2 px-3 pb-2.5 text-sm font-semibold ${
+                tab === t ? "border-accent text-fg" : "text-muted-foreground hover:text-fg border-transparent"
+              }`}
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
+        <div className="bg-input ml-auto flex gap-0.5 rounded-lg p-0.5">
+          {(
+            [
+              ["all", "Tous"],
+              ["africa", "Afrique"],
+              ["europe", "Europe"],
+            ] as const
+          ).map(([z, label]) => (
+            <Link
+              key={z}
+              href={href({ zone: z === "all" ? null : z })}
+              aria-current={zone === z ? "true" : undefined}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium ${
+                zone === z ? "bg-surface text-fg shadow-card font-semibold" : "text-fg-2 hover:text-fg"
+              }`}
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {empty ? (
+        <div className="border-border bg-surface rounded-xl border border-dashed p-10 text-center">
+          <p className="font-medium">Pas encore de classement pour cette zone.</p>
+          <p className="text-muted-foreground mt-1 text-sm">Il se remplit à chaque collecte de pubs (feed du matin et recherches Spy).</p>
         </div>
       ) : (
-        <>
-          <p className="text-muted-foreground text-sm">Top {ads.length} · {days} derniers jours</p>
-          <AdGrid ads={ads} ranked />
-        </>
+        <ol className="grid grid-cols-2 items-stretch gap-3 md:grid-cols-3 xl:grid-cols-5">
+          {products?.items.map((p, i) => (
+            <li key={p.id} className="relative">
+              <Rank n={i + 1} />
+              <ShopProductCard product={p} shop={p.shops} />
+            </li>
+          ))}
+          {shops?.shops.map((s, i) => (
+            <li key={s.id} className="relative">
+              <Rank n={i + 1} />
+              <ShopCard shop={s} thumbs={shops.thumbs.get(s.id)} />
+            </li>
+          ))}
+        </ol>
       )}
     </div>
+  );
+}
+
+function Rank({ n }: { n: number }) {
+  return (
+    <span
+      className={`absolute -left-1.5 -top-1.5 z-10 grid h-7 min-w-7 place-items-center rounded-full px-1.5 text-xs font-bold tabular-nums shadow-card ${
+        n <= 3 ? "bg-accent text-accent-on" : "bg-surface text-fg border-border border"
+      }`}
+    >
+      <span className="sr-only">Classement n° </span>
+      {n}
+    </span>
   );
 }

@@ -8,12 +8,13 @@ import { planConfig } from "@/lib/billing";
 const ITEMS = [
   { href: "/recherche", label: "Feed du jour", icon: "today" as const, group: "Trouver" },
   { href: "/spy", label: "Spy Facebook", icon: "eye" as const, group: "Trouver" },
-  { href: "/top-trend", label: "Top Trend", icon: "trending" as const, group: "Trouver" },
+  { href: "/boutiques", label: "Boutiques & produits", icon: "store" as const, group: "Trouver" },
+  { href: "/top-trend", label: "Top Trend", icon: "trending" as const, needs: "paid" as const, group: "Trouver" },
   { href: "/winners", label: "Winners du jour", icon: "trophy" as const, needs: "winner" as const, group: "Trouver" },
   { href: "/produits", label: "Mes produits", icon: "pipeline" as const, group: "Suivre" },
   { href: "/surveillance", label: "Surveillance", icon: "bell" as const, needs: "competitor" as const, group: "Suivre" },
   { href: "/testing", label: "Testing", icon: "flask" as const, group: "Suivre" },
-  { href: "/vitrine", label: "Vitrine winners", icon: "store" as const, needs: "vitrine" as const, group: "Suivre" },
+  { href: "/vitrine", label: "Vitrine winners", icon: "trophy" as const, needs: "vitrine" as const, group: "Suivre" },
   { href: "/validation", label: "Validation", icon: "inbox" as const, adminOnly: true, group: "Admin" },
   { href: "/equipe", label: "Équipe", icon: "users" as const, adminOnly: true, group: "Admin" },
 ];
@@ -22,6 +23,7 @@ const GROUPS = ["Trouver", "Suivre", "Admin"] as const;
 /** Une fonctionnalité est-elle verrouillée pour cette offre ? */
 function isLocked(needs: string | undefined, plan: string): boolean {
   if (!needs) return false;
+  if (needs === "paid") return plan === "free";
   const cfg = planConfig(plan);
   if (needs === "winner") return !cfg.winnerEnabled;
   if (needs === "competitor") return cfg.competitorSlots === 0;

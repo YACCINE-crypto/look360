@@ -10,6 +10,7 @@ import { AdGrid } from "@/components/AdGrid";
 import { AdActivityChart } from "./AdActivityChart";
 import { SuivreButton } from "./SuivreButton";
 import { AudiencePanels } from "./AudiencePanels";
+import { ShopSummary } from "./ShopSummary";
 import { ajouterAuxProduits } from "../../spy/actions";
 import { activityByMonth, countryLabel, formatReach, cleanField, type SpyAd } from "@/lib/spy";
 import { mergeEuAudiences } from "@/lib/euAudience";
@@ -320,6 +321,8 @@ export function AnalyseClient({ pageId, country, name }: { pageId: string; count
               </div>
 
               {!loading && <AudiencePanels audience={a.eu} totalReach={a.hasAudience ? a.audience : null} />}
+
+              {!loading && a.domaine && <ShopSummary domain={a.domaine} />}
 
               <div className="space-y-3">
                 <h2 className="font-semibold">Créatives actives ({ads.length})</h2>

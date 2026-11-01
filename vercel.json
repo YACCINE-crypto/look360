@@ -30,6 +30,10 @@
     {
       "path": "/api/cron/feed-refresh?mode=media&pass=2",
       "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/shops",
+      "schedule": "50 6 * * *"
     }
   ]
 }
