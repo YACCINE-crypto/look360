@@ -39,12 +39,15 @@ export function StageBadge({ p }: { p: Pick<ShopProduct, "ads_active" | "ads_cou
 export function ShopProductCard({
   product: p,
   shop,
+  base = "/boutiques",
 }: {
   product: ShopProduct;
   shop: Pick<Shop, "domain" | "currency" | "name" | "ad_countries">;
+  /** Section où ouvrir la fiche (Boutiques & produits ou Top Trend). */
+  base?: string;
 }) {
   const disc = discountPct(p.price, p.compare_at_price);
-  const href = `/boutiques/${encodeURIComponent(shop.domain)}/${encodeURIComponent(p.handle)}`;
+  const href = `${base}/${encodeURIComponent(shop.domain)}/${encodeURIComponent(p.handle)}`;
   return (
     <Link
       href={href}
@@ -100,11 +103,11 @@ export function ShopProductCard({
 }
 
 /** Carte boutique (agrégats du catalogue + pubs repérées). */
-export function ShopCard({ shop, thumbs = [] }: { shop: Shop; thumbs?: string[] }) {
+export function ShopCard({ shop, thumbs = [], base = "/boutiques" }: { shop: Shop; thumbs?: string[]; base?: string }) {
   const ok = shop.status === "ok";
   return (
     <Link
-      href={`/boutiques/${encodeURIComponent(shop.domain)}`}
+      href={`${base}/${encodeURIComponent(shop.domain)}`}
       className="bg-surface border-border shadow-card card-lift flex h-full flex-col overflow-hidden rounded-xl border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
     >
       <div className="bg-input grid aspect-[3/2] grid-cols-3 gap-px overflow-hidden">

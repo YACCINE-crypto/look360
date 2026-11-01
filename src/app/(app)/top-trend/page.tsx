@@ -90,7 +90,7 @@ export default async function TopTrendPage({ searchParams }: { searchParams: Pro
           {products.items.map((p, i) => (
             <li key={p.id} className="relative">
               <Rank n={i + 1} />
-              <ShopProductCard product={p} shop={p.shops} />
+              <ShopProductCard product={p} shop={p.shops} base="/top-trend" />
             </li>
           ))}
         </ol>
@@ -117,7 +117,7 @@ export default async function TopTrendPage({ searchParams }: { searchParams: Pro
           {shops.shops.map((s, i) => (
             <li key={s.id} className="relative">
               <Rank n={i + 1} />
-              <ShopCard shop={s} thumbs={shops.thumbs.get(s.id)} />
+              <ShopCard shop={s} thumbs={shops.thumbs.get(s.id)} base="/top-trend" />
             </li>
           ))}
         </ol>
