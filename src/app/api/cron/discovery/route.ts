@@ -1,5 +1,6 @@
 import { after, NextResponse } from "next/server";
 import { discoveryUsedThisWeek, runDiscovery } from "@/lib/discovery";
+import { systemAdsLeft } from "@/lib/apifyBudget";
 import { callShopCrawl } from "@/lib/shops";
 
 export const runtime = "nodejs";
@@ -12,7 +13,7 @@ const PER_PASS = 12;
 /**
  * Découverte HEBDOMADAIRE (cron du lundi) : recherche des mots-clés de
  * discovery_keywords, dans un budget par semaine DISCOVERY_WEEKLY_SEARCHES
- * (100 par défaut). Une fonction ne dure que 5 min : chaque passage traite
+ * (30 par défaut, formule « Économe »), sous le plafond mensuel du système. Une fonction ne dure que 5 min : chaque passage traite
  * PER_PASS recherches puis relance le passage suivant, jusqu'à épuisement du
  * budget, de la liste ou du crédit Apify. Ré-indexe les boutiques à la fin.
  * Vercel Cron envoie `Authorization: Bearer $CRON_SECRET`.
@@ -23,10 +24,11 @@ export async function GET(request: Request) {
   if (!secret || auth !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-  const weekly = Math.max(0, Math.min(600, Number(process.env.DISCOVERY_WEEKLY_SEARCHES ?? 100) || 0));
+  const weekly = Math.max(0, Math.min(600, Number(process.env.DISCOVERY_WEEKLY_SEARCHES ?? 30) || 0));
   const remaining = Math.max(0, weekly - (await discoveryUsedThisWeek()));
   const budget = Math.min(PER_PASS, remaining);
-  const report = budget > 0 ? await runDiscovery(budget, 220_000) : { planned: 0, reused: 0, searched: 0, ads: 0 };
+  const adsLeft = await systemAdsLeft();
+  const report = budget > 0 && adsLeft > 0 ? await runDiscovery(budget, 220_000, adsLeft) : { planned: 0, reused: 0, searched: 0, ads: 0 };
   const index = await callShopCrawl({ mode: "index" }, 60_000);
 
   // Passage suivant si budget restant, travail restant et pas d'arrêt Apify.
@@ -46,5 +48,5 @@ export async function GET(request: Request) {
         .catch((e) => console.error("[discovery] relance", e)),
     );
   }
-  return NextResponse.json({ ok: true, weekly, remaining, report, index, pass, next: more });
+  return NextResponse.json({ ok: true, weekly, remaining, adsLeft, report, index, pass, next: more });
 }

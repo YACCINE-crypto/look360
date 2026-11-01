@@ -1,5 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { systemAdsLeft } from "@/lib/apifyBudget";
 import { searchSpyWithCache } from "@/lib/spyCache";
 import { storeFromUrl, mediaStorageConfigured } from "@/lib/mediaStorage";
 import {
@@ -36,7 +37,8 @@ export const FEED_NICHES: { niche: string; kw: string }[] = [
 // Marchés principaux (francophones + FR pour le volume/reach UE).
 export const FEED_MARKETS = ["CI", "SN", "GA", "FR"];
 
-const FEED_SEARCH_CAP = 24; // nb max de scrapes Apify par run (coût maîtrisé)
+const FEED_SEARCH_CAP = 6; // nb max de scrapes Apify par run (formule « Économe »)
+const FEED_SEARCH_LIMIT = 30; // pubs demandées par recherche
 const FEED_SCORE_MIN = 55; // ne garde que les signaux solides
 const FEED_KEEP = 60; // top N conservés dans le feed
 const FEED_TTL_DAYS = 4; // purge au-delà
@@ -138,7 +140,9 @@ export async function refreshFeed(
 ): Promise<{ found: number; searches: number; stored: number; purged: number; media: MediaPass }> {
   const cap = opts.cap ?? FEED_SEARCH_CAP;
   const start = Date.now();
-  const pairs = feedPairs(cap);
+  // Plafond mensuel du système : on ne lance pas plus de recherches que le budget restant.
+  const adsLeft = await systemAdsLeft();
+  const pairs = feedPairs(Math.min(cap, Math.floor(adsLeft / FEED_SEARCH_LIMIT)));
   const found = new Map<string, { ad: SpyAd; niche: string }>();
   let searches = 0;
   let stored = 0;
@@ -150,7 +154,7 @@ export async function refreshFeed(
     const results = await Promise.allSettled(
       batch.map(({ market, n }) =>
         searchSpyWithCache(
-          { q: n.kw, country: market, statut: "active", ancienneteMin: 20, tri: "score", limit: 40 },
+          { q: n.kw, country: market, statut: "active", ancienneteMin: 20, tri: "score", limit: FEED_SEARCH_LIMIT },
           null, // userId null → aucune facturation, aucun plafond perso
         ).then((r) => ({ market, niche: n.niche, ads: r.ads })),
       ),

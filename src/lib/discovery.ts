@@ -25,6 +25,7 @@ export const ZONE_COUNTRIES: Record<string, string[]> = {
 const REFRESH_DAYS = 7;
 const REUSE_DAYS = 7;
 const CONCURRENCY = 3;
+const LIMIT = 30; // pubs par recherche
 
 type Due = { id: number; keyword: string; zone: string; runs: number };
 
@@ -37,7 +38,7 @@ export type DiscoveryReport = {
 };
 
 /** Lance un passage de découverte (cron). `budget` = nb max d'appels Apify. */
-export async function runDiscovery(budget: number, deadlineMs: number): Promise<DiscoveryReport> {
+export async function runDiscovery(budget: number, deadlineMs: number, adsLeft = Infinity): Promise<DiscoveryReport> {
   const admin = createAdminClient();
   const t0 = Date.now();
   const dueBefore = new Date(Date.now() - REFRESH_DAYS * 86_400_000).toISOString();
@@ -79,10 +80,16 @@ export async function runDiscovery(budget: number, deadlineMs: number): Promise<
       return;
     }
     if (report.searched >= budget) return;
+    // Plafond mensuel du système (en pubs récupérées).
+    if (adsLeft < LIMIT) {
+      stop = "Plafond mensuel du système atteint";
+      return;
+    }
+    adsLeft -= LIMIT;
     report.searched++;
     // 2) Pays en rotation dans la zone.
     const country = countries[d.runs % countries.length];
-    const filters: SpyFilters = { q: d.keyword, country, statut: "active", tri: "score", limit: 30 };
+    const filters: SpyFilters = { q: d.keyword, country, statut: "active", tri: "score", limit: LIMIT };
     try {
       const r = await searchSpyWithCache(filters, null);
       report.ads += r.ads.length;
