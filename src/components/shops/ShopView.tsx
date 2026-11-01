@@ -16,7 +16,7 @@ const nf = new Intl.NumberFormat("fr-FR");
 const fmtDate = (d: string | null) =>
   d ? new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : "—";
 
-/** Fiche boutique, ouverte depuis Boutiques & produits ou depuis Top Trend (`base`). */
+/** Fiche boutique, ouverte depuis Produits gagnants / Boutiques ou depuis Top Trend (`base`). */
 export async function ShopView({
   domain: raw,
   all,

@@ -22,7 +22,7 @@ const SHOP_MIN_ACTIVE = 3;
 /**
  * Top Trend = sélection courte du MEILLEUR du moment, en un coup d'œil :
  * meilleures pubs, produits les plus poussés, boutiques les plus actives.
- * Les listes complètes restent dans Spy et Boutiques & produits.
+ * Les listes complètes restent dans Spy, Produits gagnants et Boutiques.
  * Réservé aux offres payantes.
  */
 export default async function TopTrendPage({ searchParams }: { searchParams: Promise<{ zone?: string; niche?: string }> }) {
@@ -112,7 +112,7 @@ export default async function TopTrendPage({ searchParams }: { searchParams: Pro
         icon="trending"
         title="Produits les plus poussés"
         rule={`Au moins ${PRODUCT_MIN_ACTIVE} pubs actives qui mènent à la page produit`}
-        more={{ href: `/boutiques?sort=pubs${qs}`, label: "Tous les produits" }}
+        more={{ href: `/produits-gagnants?sort=pubs${qs}`, label: "Tous les produits" }}
         empty={products.items.length === 0}
       >
         <ol className="grid grid-cols-2 items-stretch gap-3 md:grid-cols-4">
@@ -139,7 +139,7 @@ export default async function TopTrendPage({ searchParams }: { searchParams: Pro
         icon="store"
         title="Boutiques les plus actives"
         rule={`Au moins ${SHOP_MIN_ACTIVE} pubs actives vers la boutique`}
-        more={{ href: `/boutiques?tab=boutiques${qs}`, label: "Toutes les boutiques" }}
+        more={{ href: `/boutiques?sort=pubs${qs}`, label: "Toutes les boutiques" }}
         empty={shops.shops.length === 0}
       >
         <ol className="grid grid-cols-2 items-stretch gap-3 md:grid-cols-3">

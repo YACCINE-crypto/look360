@@ -43,7 +43,7 @@ export function ShopProductCard({
 }: {
   product: ShopProduct;
   shop: Pick<Shop, "domain" | "currency" | "name" | "ad_countries">;
-  /** Section où ouvrir la fiche (Boutiques & produits ou Top Trend). */
+  /** Section où ouvrir la fiche (Produits gagnants, Boutiques ou Top Trend). */
   base?: string;
 }) {
   const disc = discountPct(p.price, p.compare_at_price);
@@ -138,27 +138,34 @@ export function ShopCard({ shop, thumbs = [], base = "/boutiques" }: { shop: Sho
           )}
         </div>
         <div className="text-muted-foreground mt-1.5 flex flex-wrap gap-1.5 text-xs">
-          {shop.niche && <span className="bg-input rounded-full px-2 py-0.5">{shop.niche}</span>}
+          {shop.niche && <span className="bg-input max-w-full truncate rounded-full px-2 py-0.5">{shop.niche}</span>}
           {shop.catalog_type && (
             <span className="bg-input rounded-full px-2 py-0.5">
               {shop.catalog_type === "mono" ? "Mono-produit" : "Multi-produits"}
             </span>
           )}
         </div>
-        <dl className="bg-bg mt-auto grid grid-cols-[1fr_1.7fr_1fr] overflow-hidden rounded-md pt-0 text-xs">
-          <div className="px-2 py-2">
-            <dt className="text-muted-foreground truncate">Produits</dt>
+        {/* Prix sur sa propre ligne : les montants en FCFA ne cassent plus la grille */}
+        <p className="text-muted-foreground mt-auto pt-2 text-xs">
+          {shop.price_min != null ? (
+            <>
+              Dès <b className="text-fg text-sm font-semibold tabular-nums">{formatPrice(shop.price_min, shop.currency)}</b>
+              {shop.price_max != null && shop.price_max !== shop.price_min && (
+                <span className="tabular-nums"> · jusqu&apos;à {formatPrice(shop.price_max, shop.currency)}</span>
+              )}
+            </>
+          ) : (
+            "Prix indisponible"
+          )}
+        </p>
+        <dl className="bg-bg mt-2 grid grid-cols-2 overflow-hidden rounded-md text-xs">
+          <div className="px-2.5 py-2">
+            <dt className="text-muted-foreground">Produits</dt>
             <dd className="text-fg text-base font-semibold tabular-nums">{shop.product_count != null ? nf.format(shop.product_count) : "—"}</dd>
           </div>
-          <div className="border-border border-l px-2 py-2">
-            <dt className="text-muted-foreground truncate">Prix</dt>
-            <dd className="text-fg text-sm font-semibold tabular-nums whitespace-nowrap" title={shop.price_max != null ? `jusqu'à ${formatPrice(shop.price_max, shop.currency)}` : undefined}>
-              {shop.price_min != null ? formatPrice(shop.price_min, shop.currency) : "—"}
-            </dd>
-          </div>
-          <div className="border-border border-l px-2 py-2">
-            <dt className="text-muted-foreground truncate">Pubs</dt>
-            <dd className="text-accent text-base font-semibold tabular-nums">{nf.format(shop.ads_count)}</dd>
+          <div className="border-border border-l px-2.5 py-2">
+            <dt className="text-muted-foreground">Pubs actives</dt>
+            <dd className="text-accent text-base font-semibold tabular-nums">{nf.format(shop.ads_active)}</dd>
           </div>
         </dl>
       </div>
