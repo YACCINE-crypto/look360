@@ -37,7 +37,7 @@
     },
     {
       "path": "/api/cron/discovery",
-      "schedule": "40 5 * * *"
+      "schedule": "40 2 * * 1"
     }
   ]
 }
