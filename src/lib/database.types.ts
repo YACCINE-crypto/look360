@@ -343,6 +343,36 @@ export type Database = {
         }
         Relationships: []
       }
+      competitor_ads: {
+        Row: {
+          page_id: string
+          ad_archive_id: string
+          payload: Json
+          start_date: string | null
+          first_seen: string
+          last_seen: string
+          baseline: boolean
+        }
+        Insert: {
+          page_id: string
+          ad_archive_id: string
+          payload: Json
+          start_date?: string | null
+          first_seen?: string
+          last_seen?: string
+          baseline?: boolean
+        }
+        Update: {
+          page_id?: string
+          ad_archive_id?: string
+          payload?: Json
+          start_date?: string | null
+          first_seen?: string
+          last_seen?: string
+          baseline?: boolean
+        }
+        Relationships: []
+      }
       competitors_watch: {
         Row: {
           country: string | null
