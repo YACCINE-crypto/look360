@@ -16,7 +16,7 @@ export default async function ShopPage({
       domain={domain}
       all={sp.all === "1"}
       base="/boutiques"
-      backHref="/boutiques?tab=boutiques"
+      backHref="/boutiques"
       backLabel="Retour aux boutiques"
     />
   );

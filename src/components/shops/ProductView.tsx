@@ -20,7 +20,7 @@ function daysSince(d: string | null): number | null {
 const fmtDate = (d: string | null) =>
   d ? new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : "—";
 
-/** Fiche produit, ouverte depuis Boutiques & produits ou depuis Top Trend (`base`). */
+/** Fiche produit, ouverte depuis Produits gagnants / Boutiques ou depuis Top Trend (`base`). */
 export async function ProductView({ domain: rawD, handle: rawH, base }: { domain: string; handle: string; base: string }) {
   const domain = decodeURIComponent(rawD).toLowerCase();
   const handle = decodeURIComponent(rawH).toLowerCase();

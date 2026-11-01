@@ -8,7 +8,8 @@ import { planConfig } from "@/lib/billing";
 const ITEMS = [
   { href: "/recherche", label: "Feed du jour", icon: "today" as const, group: "Trouver" },
   { href: "/spy", label: "Spy Facebook", icon: "eye" as const, group: "Trouver" },
-  { href: "/boutiques", label: "Boutiques & produits", icon: "store" as const, group: "Trouver" },
+  { href: "/produits-gagnants", label: "Produits gagnants", icon: "tag" as const, group: "Trouver" },
+  { href: "/boutiques", label: "Boutiques", icon: "store" as const, group: "Trouver" },
   { href: "/top-trend", label: "Top Trend", icon: "trending" as const, needs: "paid" as const, group: "Trouver" },
   { href: "/winners", label: "Winners du jour", icon: "trophy" as const, needs: "winner" as const, group: "Trouver" },
   { href: "/produits", label: "Mes produits", icon: "pipeline" as const, group: "Suivre" },

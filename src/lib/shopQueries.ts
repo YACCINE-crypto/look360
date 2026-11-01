@@ -135,3 +135,32 @@ export async function listNiches(): Promise<string[]> {
   for (const r of data ?? []) for (const n of (r.niches as string[]) ?? []) count.set(n, (count.get(n) ?? 0) + 1);
   return [...count.entries()].sort((a, b) => b[1] - a[1]).map(([n]) => n);
 }
+
+/** Chiffres d'en-tête des pages Produits gagnants / Boutiques (comptages réels). */
+export async function catalogStats(): Promise<{
+  productsWithAds: number;
+  catalog: number;
+  promosWithAds: number;
+  shops: number;
+  codShops: number;
+  africaShops: number;
+}> {
+  const supabase = await createClient();
+  const head = { count: "exact" as const, head: true };
+  const [a, b, c, d, e, f] = await Promise.all([
+    supabase.from("shop_products").select("id", head).gt("ads_count", 0),
+    supabase.from("shop_products").select("id", head),
+    supabase.from("shop_products").select("id", head).gt("ads_count", 0).not("compare_at_price", "is", null),
+    supabase.from("shops").select("id", head).eq("status", "ok"),
+    supabase.from("shops").select("id", head).eq("status", "ok").not("cod_apps", "eq", "{}"),
+    supabase.from("shops").select("id", head).eq("status", "ok").overlaps("ad_countries", ZONE_CODES.africa),
+  ]);
+  return {
+    productsWithAds: a.count ?? 0,
+    catalog: b.count ?? 0,
+    promosWithAds: c.count ?? 0,
+    shops: d.count ?? 0,
+    codShops: e.count ?? 0,
+    africaShops: f.count ?? 0,
+  };
+}

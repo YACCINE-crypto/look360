@@ -2,7 +2,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { getSubscription } from "@/lib/credits";
 
-/** Nombre d'éléments visibles sans abonnement (Feed, Boutiques & produits). */
+/** Nombre d'éléments visibles sans abonnement (Feed, Produits gagnants, Boutiques). */
 export const FREE_PREVIEW = 5;
 
 /** Utilisateur courant + offre effective (payante ou non). */
