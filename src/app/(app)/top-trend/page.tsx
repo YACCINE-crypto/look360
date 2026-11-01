@@ -1,79 +1,63 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/ui";
+import { Icon } from "@/components/Icon";
 import { FeatureLock } from "@/components/FeatureLock";
+import { AdGrid } from "@/components/AdGrid";
 import { ShopCard, ShopProductCard } from "@/components/shops/ShopCards";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { currentAccess } from "@/lib/access";
 import { listProducts, listShops, type Zone } from "@/lib/shopQueries";
+import { isEUCountry, type SpyAd } from "@/lib/spy";
 
 export const dynamic = "force-dynamic";
 
+// Seuils « meilleurs » : seuls les signaux forts entrent dans Top Trend.
+const TOP_ADS = 8;
+const TOP_PRODUCTS = 8;
+const TOP_SHOPS = 6;
+const AD_SCORE_MIN = 70;
+const PRODUCT_MIN_ACTIVE = 2;
+const SHOP_MIN_ACTIVE = 3;
+
 /**
- * Top Trend = produits et boutiques MIS EN AVANT par les pubs : classement par
- * nombre de pubs actives qui y mènent (données Meta réelles, fenêtre 30 j).
+ * Top Trend = sélection courte du MEILLEUR du moment, en un coup d'œil :
+ * meilleures pubs, produits les plus poussés, boutiques les plus actives.
+ * Les listes complètes restent dans Spy et Boutiques & produits.
  * Réservé aux offres payantes.
  */
-export default async function TopTrendPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ tab?: string; zone?: string }>;
-}) {
+export default async function TopTrendPage({ searchParams }: { searchParams: Promise<{ zone?: string }> }) {
   const { paid } = await currentAccess();
   if (!paid) {
     return (
       <div className="space-y-4">
-        <PageHeader title="Top Trend" subtitle="Les produits et boutiques qui font le plus de pubs en ce moment." />
+        <PageHeader title="Top Trend" subtitle="Le meilleur du moment : pubs, produits et boutiques." />
         <FeatureLock
           title="Top Trend est réservé aux abonnés"
           minPlan="Starter"
-          description="Le classement des produits et des boutiques les plus poussés en pub (Afrique et Europe), mis à jour chaque jour."
+          description="Chaque jour, la sélection des meilleures pubs, des produits les plus poussés et des boutiques les plus actives (Afrique et Europe)."
         />
       </div>
     );
   }
 
   const sp = await searchParams;
-  const tab = sp.tab === "boutiques" ? "boutiques" : "produits";
   const zone: Zone = sp.zone === "africa" || sp.zone === "europe" ? sp.zone : "all";
-  const href = (patch: Record<string, string | null>) => {
-    const p = new URLSearchParams();
-    const next = { tab: tab === "produits" ? null : tab, zone: zone === "all" ? null : zone, ...patch };
-    for (const [k, v] of Object.entries(next)) if (v) p.set(k, v);
-    const qs = p.toString();
-    return `/top-trend${qs ? `?${qs}` : ""}`;
-  };
 
-  const products = tab === "produits" ? await listProducts({ zone, sort: "pubs", withAds: true, limit: 50 }) : null;
-  const shops = tab === "boutiques" ? await listShops({ zone, sort: "pubs", limit: 30 }) : null;
-  const empty = (products && products.items.length === 0) || (shops && shops.shops.length === 0);
+  const [ads, products, shops] = await Promise.all([
+    topAds(zone),
+    listProducts({ zone, sort: "pubs", withAds: true, minActive: PRODUCT_MIN_ACTIVE, limit: TOP_PRODUCTS }),
+    listShops({ zone, sort: "pubs", minActive: SHOP_MIN_ACTIVE, limit: TOP_SHOPS }),
+  ]);
+  const qs = zone === "all" ? "" : `&zone=${zone}`;
 
   return (
-    <div className="space-y-4">
-      <PageHeader
-        title="Top Trend"
-        subtitle="Les produits et boutiques qui font le plus de pubs actives en ce moment (pubs repérées sur 30 jours)."
-      />
-
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="border-border flex gap-1 border-b">
-          {(
-            [
-              ["produits", "Produits"],
-              ["boutiques", "Boutiques"],
-            ] as const
-          ).map(([t, label]) => (
-            <Link
-              key={t}
-              href={href({ tab: t === "produits" ? null : t })}
-              aria-current={tab === t ? "page" : undefined}
-              className={`-mb-px border-b-2 px-3 pb-2.5 text-sm font-semibold ${
-                tab === t ? "border-accent text-fg" : "text-muted-foreground hover:text-fg border-transparent"
-              }`}
-            >
-              {label}
-            </Link>
-          ))}
-        </div>
-        <div className="bg-input ml-auto flex gap-0.5 rounded-lg p-0.5">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <PageHeader
+          title="Top Trend"
+          subtitle="Le meilleur du moment, en un coup d'œil : uniquement les signaux les plus forts des 30 derniers jours."
+        />
+        <div className="bg-input flex shrink-0 gap-0.5 self-start rounded-lg p-0.5 sm:self-auto">
           {(
             [
               ["all", "Tous"],
@@ -83,7 +67,7 @@ export default async function TopTrendPage({
           ).map(([z, label]) => (
             <Link
               key={z}
-              href={href({ zone: z === "all" ? null : z })}
+              href={z === "all" ? "/top-trend" : `/top-trend?zone=${z}`}
               aria-current={zone === z ? "true" : undefined}
               className={`rounded-md px-3 py-1.5 text-sm font-medium ${
                 zone === z ? "bg-surface text-fg shadow-card font-semibold" : "text-fg-2 hover:text-fg"
@@ -95,28 +79,131 @@ export default async function TopTrendPage({
         </div>
       </div>
 
-      {empty ? (
-        <div className="border-border bg-surface rounded-xl border border-dashed p-10 text-center">
-          <p className="font-medium">Pas encore de classement pour cette zone.</p>
-          <p className="text-muted-foreground mt-1 text-sm">Il se remplit à chaque collecte de pubs (feed du matin et recherches Spy).</p>
-        </div>
-      ) : (
-        <ol className="grid grid-cols-2 items-stretch gap-3 md:grid-cols-3 xl:grid-cols-5">
-          {products?.items.map((p, i) => (
+      <Section
+        icon="trending"
+        title="Produits les plus poussés"
+        rule={`Au moins ${PRODUCT_MIN_ACTIVE} pubs actives qui mènent à la page produit`}
+        more={{ href: `/boutiques?sort=pubs${qs}`, label: "Tous les produits" }}
+        empty={products.items.length === 0}
+      >
+        <ol className="grid grid-cols-2 items-stretch gap-3 md:grid-cols-4">
+          {products.items.map((p, i) => (
             <li key={p.id} className="relative">
               <Rank n={i + 1} />
               <ShopProductCard product={p} shop={p.shops} />
             </li>
           ))}
-          {shops?.shops.map((s, i) => (
+        </ol>
+      </Section>
+
+      <Section
+        icon="play"
+        title="Meilleures pubs"
+        rule={`Score ${AD_SCORE_MIN}+ · toujours actives · une seule pub par annonceur`}
+        more={{ href: "/spy", label: "Chercher dans le Spy" }}
+        empty={ads.length === 0}
+      >
+        <AdGrid ads={ads} ranked />
+      </Section>
+
+      <Section
+        icon="store"
+        title="Boutiques les plus actives"
+        rule={`Au moins ${SHOP_MIN_ACTIVE} pubs actives vers la boutique`}
+        more={{ href: `/boutiques?tab=boutiques${qs}`, label: "Toutes les boutiques" }}
+        empty={shops.shops.length === 0}
+      >
+        <ol className="grid grid-cols-2 items-stretch gap-3 md:grid-cols-3">
+          {shops.shops.map((s, i) => (
             <li key={s.id} className="relative">
               <Rank n={i + 1} />
               <ShopCard shop={s} thumbs={shops.thumbs.get(s.id)} />
             </li>
           ))}
         </ol>
-      )}
+      </Section>
     </div>
+  );
+}
+
+/** Meilleures pubs des 30 derniers jours (recherches + feed), une par annonceur. */
+async function topAds(zone: Zone): Promise<SpyAd[]> {
+  const admin = createAdminClient();
+  const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
+  const [{ data: rows }, { data: feed }] = await Promise.all([
+    admin.from("spy_searches").select("results").gte("created_at", since).order("created_at", { ascending: false }).limit(300),
+    admin.from("feed_ads").select("payload, thumbnail_cdn_url, media_cdn_url"),
+  ]);
+  const archived = new Map<string, { thumb: string | null; media: string | null }>();
+  const all: SpyAd[] = [];
+  for (const f of feed ?? []) {
+    const ad = f.payload as unknown as SpyAd;
+    if (!ad?.ad_archive_id) continue;
+    archived.set(ad.ad_archive_id, { thumb: f.thumbnail_cdn_url, media: f.media_cdn_url });
+    all.push(ad);
+  }
+  for (const r of rows ?? []) for (const ad of (r.results as unknown as SpyAd[]) ?? []) if (ad?.ad_archive_id) all.push(ad);
+
+  const inZone = (a: SpyAd) => {
+    if (zone === "all") return true;
+    const eu = a.targets_eu || isEUCountry(a.country);
+    return zone === "europe" ? eu : !eu;
+  };
+  // Une pub par annonceur (la meilleure), pour une sélection variée.
+  const best = new Map<string, SpyAd>();
+  for (const a of all) {
+    if (!a.is_active || a.score < AD_SCORE_MIN || !inZone(a)) continue;
+    const key = a.page_id ?? a.page_name ?? a.ad_archive_id;
+    const prev = best.get(key);
+    if (!prev || a.score > prev.score || (a.score === prev.score && (a.reach ?? 0) > (prev.reach ?? 0))) best.set(key, a);
+  }
+  return [...best.values()]
+    .sort((a, b) => b.score - a.score || (b.reach ?? 0) - (a.reach ?? 0) || (b.jours_actifs ?? 0) - (a.jours_actifs ?? 0))
+    .slice(0, TOP_ADS)
+    .map((ad) => {
+      const a = archived.get(ad.ad_archive_id);
+      return a
+        ? { ...ad, thumbnail_url: a.thumb ?? ad.thumbnail_url, media_hls_url: a.media ?? ad.media_hls_url ?? null, media_source_url: ad.media_source_url ?? ad.media_url }
+        : ad;
+    });
+}
+
+function Section({
+  icon,
+  title,
+  rule,
+  more,
+  empty,
+  children,
+}: {
+  icon: "trending" | "play" | "store";
+  title: string;
+  rule: string;
+  more: { href: string; label: string };
+  empty: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-3">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h2 className="flex items-center gap-2 text-lg font-bold">
+            <Icon name={icon} size={18} className="text-accent" /> {title}
+          </h2>
+          <p className="text-muted-foreground text-xs">{rule}</p>
+        </div>
+        <Link href={more.href} className="text-accent inline-flex items-center gap-1 text-sm font-semibold hover:underline">
+          {more.label} <Icon name="chevronRight" size={14} />
+        </Link>
+      </div>
+      {empty ? (
+        <p className="border-border bg-surface text-muted-foreground rounded-xl border border-dashed p-6 text-center text-sm">
+          Rien d&apos;assez fort pour cette zone en ce moment. La sélection se met à jour à chaque collecte.
+        </p>
+      ) : (
+        children
+      )}
+    </section>
   );
 }
 
