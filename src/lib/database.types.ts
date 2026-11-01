@@ -14,6 +14,218 @@ export type Database = {
   }
   public: {
     Tables: {
+      shops: {
+        Row: {
+          id: string
+          domain: string
+          platform: string
+          status: string
+          name: string | null
+          country: string | null
+          currency: string | null
+          theme: string | null
+          product_count: number | null
+          price_min: number | null
+          price_max: number | null
+          catalog_type: string | null
+          niche: string | null
+          cod_apps: string[]
+          pixels: string[]
+          new_products_30d: number | null
+          discounted_count: number | null
+          ads_count: number
+          ads_active: number
+          ad_countries: string[]
+          eu_reach: number | null
+          first_ad_date: string | null
+          first_seen: string
+          last_crawled: string | null
+          next_crawl_at: string
+          crawl_attempts: number
+          last_error: string | null
+        }
+        Insert: {
+          id?: string
+          domain?: string
+          platform?: string
+          status?: string
+          name?: string | null
+          country?: string | null
+          currency?: string | null
+          theme?: string | null
+          product_count?: number | null
+          price_min?: number | null
+          price_max?: number | null
+          catalog_type?: string | null
+          niche?: string | null
+          cod_apps?: string[]
+          pixels?: string[]
+          new_products_30d?: number | null
+          discounted_count?: number | null
+          ads_count?: number
+          ads_active?: number
+          ad_countries?: string[]
+          eu_reach?: number | null
+          first_ad_date?: string | null
+          first_seen?: string
+          last_crawled?: string | null
+          next_crawl_at?: string
+          crawl_attempts?: number
+          last_error?: string | null
+        }
+        Update: {
+          id?: string
+          domain?: string
+          platform?: string
+          status?: string
+          name?: string | null
+          country?: string | null
+          currency?: string | null
+          theme?: string | null
+          product_count?: number | null
+          price_min?: number | null
+          price_max?: number | null
+          catalog_type?: string | null
+          niche?: string | null
+          cod_apps?: string[]
+          pixels?: string[]
+          new_products_30d?: number | null
+          discounted_count?: number | null
+          ads_count?: number
+          ads_active?: number
+          ad_countries?: string[]
+          eu_reach?: number | null
+          first_ad_date?: string | null
+          first_seen?: string
+          last_crawled?: string | null
+          next_crawl_at?: string
+          crawl_attempts?: number
+          last_error?: string | null
+        }
+        Relationships: []
+      }
+      shop_products: {
+        Row: {
+          id: string
+          shop_id: string
+          shopify_id: number | null
+          handle: string
+          title: string
+          product_type: string | null
+          vendor: string | null
+          tags: string[]
+          price: number | null
+          compare_at_price: number | null
+          image_url: string | null
+          images: string[]
+          variants_count: number | null
+          available: boolean | null
+          body_excerpt: string | null
+          position: number | null
+          created_at_shop: string | null
+          published_at: string | null
+          updated_at: string
+          ads_count: number
+          ads_active: number
+          first_ad_date: string | null
+          eu_reach: number | null
+        }
+        Insert: {
+          id?: string
+          shop_id?: string
+          shopify_id?: number | null
+          handle?: string
+          title?: string
+          product_type?: string | null
+          vendor?: string | null
+          tags?: string[]
+          price?: number | null
+          compare_at_price?: number | null
+          image_url?: string | null
+          images?: string[]
+          variants_count?: number | null
+          available?: boolean | null
+          body_excerpt?: string | null
+          position?: number | null
+          created_at_shop?: string | null
+          published_at?: string | null
+          updated_at?: string
+          ads_count?: number
+          ads_active?: number
+          first_ad_date?: string | null
+          eu_reach?: number | null
+        }
+        Update: {
+          id?: string
+          shop_id?: string
+          shopify_id?: number | null
+          handle?: string
+          title?: string
+          product_type?: string | null
+          vendor?: string | null
+          tags?: string[]
+          price?: number | null
+          compare_at_price?: number | null
+          image_url?: string | null
+          images?: string[]
+          variants_count?: number | null
+          available?: boolean | null
+          body_excerpt?: string | null
+          position?: number | null
+          created_at_shop?: string | null
+          published_at?: string | null
+          updated_at?: string
+          ads_count?: number
+          ads_active?: number
+          first_ad_date?: string | null
+          eu_reach?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_products_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_ad_links: {
+        Row: {
+          ad_archive_id: string
+          domain: string
+          handle: string | null
+          payload: Json
+          is_active: boolean
+          start_date: string | null
+          country: string | null
+          reach: number | null
+          seen_at: string
+        }
+        Insert: {
+          ad_archive_id?: string
+          domain?: string
+          handle?: string | null
+          payload?: Json
+          is_active?: boolean
+          start_date?: string | null
+          country?: string | null
+          reach?: number | null
+          seen_at?: string
+        }
+        Update: {
+          ad_archive_id?: string
+          domain?: string
+          handle?: string | null
+          payload?: Json
+          is_active?: boolean
+          start_date?: string | null
+          country?: string | null
+          reach?: number | null
+          seen_at?: string
+        }
+        Relationships: []
+      }
       feed_ads: {
         Row: {
           id: string

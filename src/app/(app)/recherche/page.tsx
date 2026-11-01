@@ -4,16 +4,23 @@ import { PageHeader } from "@/components/ui";
 import { FeedClient } from "./FeedClient";
 import { EmptyState } from "@/components/EmptyState";
 import { Sparkles } from "lucide-react";
+import { UnlockMore } from "@/components/shops/ShopCards";
+import { currentAccess, FREE_PREVIEW } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Recherche = Feed du jour : pubs gagnantes repérées chaque matin, communes à
- * tous, gratuites. Les produits enregistrés sont sur « Mes produits ».
+ * tous (offre gratuite : 5 pubs). Les produits enregistrés sont sur « Mes produits ».
  */
 export default async function RecherchePage() {
   const supabase = await createClient();
-  const feed = await getFeed(supabase, { limit: 60 }); // lecture RLS authenticated
+  const [feed, { paid }] = await Promise.all([
+    getFeed(supabase, { limit: 60 }), // lecture RLS authenticated
+    currentAccess(),
+  ]);
+  // Offre gratuite : aperçu des 5 meilleures pubs du jour.
+  const visible = paid ? feed : feed.slice(0, FREE_PREVIEW);
 
   return (
     <div className="space-y-4">
@@ -27,7 +34,10 @@ export default async function RecherchePage() {
       </PageHeader>
 
       {feed.length > 0 ? (
-        <FeedClient ads={feed} />
+        <>
+          <FeedClient ads={visible} />
+          {!paid && feed.length > FREE_PREVIEW && <UnlockMore what="pubs du jour" total={feed.length} />}
+        </>
       ) : (
         <EmptyState
           icon={Sparkles}
