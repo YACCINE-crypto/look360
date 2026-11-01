@@ -1,4 +1,4 @@
-import { isEUCountry } from "@/lib/spy";
+import { isEUCountry, SPY_COUNTRIES } from "@/lib/spy";
 
 // ============================================================================
 // Catalogue boutiques (Shopify public) — appels au collecteur (Edge Function
@@ -32,6 +32,7 @@ export type Shop = {
   last_crawled: string | null;
   next_crawl_at: string;
   last_error: string | null;
+  niches: string[];
 };
 
 export type ShopProduct = {
@@ -53,18 +54,27 @@ export type ShopProduct = {
   ads_active: number;
   first_ad_date: string | null;
   eu_reach: number | null;
+  niche: string | null;
 };
 
 export const SHOP_COLS =
-  "id, domain, platform, status, name, country, currency, theme, product_count, price_min, price_max, catalog_type, niche, cod_apps, pixels, new_products_30d, discounted_count, ads_count, ads_active, ad_countries, eu_reach, first_ad_date, last_crawled, next_crawl_at, last_error";
+  "id, domain, platform, status, name, country, currency, theme, product_count, price_min, price_max, catalog_type, niche, cod_apps, pixels, new_products_30d, discounted_count, ads_count, ads_active, ad_countries, eu_reach, first_ad_date, last_crawled, next_crawl_at, last_error, niches";
 export const PRODUCT_COLS =
-  "id, shop_id, handle, title, product_type, price, compare_at_price, image_url, images, variants_count, available, body_excerpt, created_at_shop, published_at, ads_count, ads_active, first_ad_date, eu_reach";
+  "id, shop_id, handle, title, product_type, price, compare_at_price, image_url, images, variants_count, available, body_excerpt, created_at_shop, published_at, ads_count, ads_active, first_ad_date, eu_reach, niche";
 
 /** Zone d'une boutique d'après les pays où ses pubs sont diffusées. */
 export function shopZone(adCountries: string[]): "europe" | "africa" | "unknown" {
   if (!adCountries?.length) return "unknown";
   return adCountries.some((c) => isEUCountry(c)) ? "europe" : "africa";
 }
+
+/** Pays d'Amérique (Nord, Centre, Sud, Caraïbes). */
+export const AMERICA_CODES = [
+  "US", "CA", "MX", "BR", "AR", "CO", "CL", "PE", "EC", "VE", "BO", "PY", "UY", "GT", "HN", "SV", "NI",
+  "CR", "PA", "CU", "DO", "HT", "JM", "PR", "TT", "GP", "MQ", "GF",
+];
+/** Pays d'Afrique (liste du Spy). */
+export const AFRICA_CODES = SPY_COUNTRIES.filter((c) => c.region === "africa").map((c) => c.code);
 
 /** Pays européens (UE/EEE) pour filtrer par zone côté base. */
 export const EU_CODES = [

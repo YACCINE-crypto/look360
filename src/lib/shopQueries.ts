@@ -1,15 +1,15 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import { EU_CODES, PRODUCT_COLS, SHOP_COLS, type Shop, type ShopProduct } from "@/lib/shops";
+import { AFRICA_CODES, AMERICA_CODES, EU_CODES, PRODUCT_COLS, SHOP_COLS, type Shop, type ShopProduct } from "@/lib/shops";
 
-export type Zone = "all" | "africa" | "europe";
+export type Zone = "all" | "africa" | "europe" | "america";
+export const ZONE_CODES: Record<Exclude<Zone, "all">, string[]> = { africa: AFRICA_CODES, europe: EU_CODES, america: AMERICA_CODES };
 export type ProductSort = "pubs" | "recent" | "promo";
 export type ShopSort = "pubs" | "produits" | "cod";
 export type ProductWithShop = ShopProduct & {
   shops: Pick<Shop, "domain" | "name" | "currency" | "ad_countries" | "status">;
 };
 
-const EU = `{${EU_CODES.join(",")}}`;
 const like = (q: string) => `%${q.replace(/[%_,()]/g, " ").trim()}%`;
 
 /** Produits du catalogue public, joints à leur boutique. */
@@ -22,17 +22,18 @@ export async function listProducts(o: {
   offset?: number;
   /** Minimum de pubs actives (sélection « meilleurs »). */
   minActive?: number;
+  niche?: string;
 }): Promise<{ items: ProductWithShop[]; total: number }> {
   const supabase = await createClient();
   let query = supabase
     .from("shop_products")
     .select(`${PRODUCT_COLS}, shops!inner(domain, name, currency, ad_countries, status)`, { count: "exact" })
     .eq("shops.status", "ok");
-  if (o.zone === "europe") query = query.overlaps("shops.ad_countries", EU_CODES);
-  if (o.zone === "africa") query = query.not("shops.ad_countries", "ov", EU);
+  if (o.zone !== "all") query = query.overlaps("shops.ad_countries", ZONE_CODES[o.zone]);
   if (o.q) query = query.ilike("title", like(o.q));
   if (o.withAds) query = query.gt("ads_count", 0);
   if (o.minActive) query = query.gte("ads_active", o.minActive);
+  if (o.niche) query = query.contains("shops.niches", [o.niche]);
   if (o.sort === "promo") query = query.not("compare_at_price", "is", null);
   query =
     o.sort === "recent"
@@ -51,14 +52,15 @@ export async function listShops(o: {
   limit: number;
   offset?: number;
   minActive?: number;
+  niche?: string;
 }): Promise<{ shops: Shop[]; total: number; thumbs: Map<string, string[]> }> {
   const supabase = await createClient();
   let query = supabase.from("shops").select(SHOP_COLS, { count: "exact" }).eq("status", "ok");
-  if (o.zone === "europe") query = query.overlaps("ad_countries", EU_CODES);
-  if (o.zone === "africa") query = query.not("ad_countries", "ov", EU);
+  if (o.zone !== "all") query = query.overlaps("ad_countries", ZONE_CODES[o.zone]);
   if (o.q) query = query.or(`domain.ilike.${like(o.q)},name.ilike.${like(o.q)}`);
   if (o.sort === "cod") query = query.not("cod_apps", "eq", "{}");
   if (o.minActive) query = query.gte("ads_active", o.minActive);
+  if (o.niche) query = query.contains("niches", [o.niche]);
   query =
     o.sort === "produits"
       ? query.order("product_count", { ascending: false, nullsFirst: false })
@@ -123,4 +125,13 @@ export async function shopAds(domain: string, handle: string | null, limit: numb
     .order("start_date", { ascending: true, nullsFirst: false })
     .limit(limit);
   return { ads: (data ?? []).map((r) => r.payload as unknown as import("@/lib/spy").SpyAd), total: count ?? 0 };
+}
+
+/** Niches présentes dans le catalogue (pour les filtres), les plus fréquentes d'abord. */
+export async function listNiches(): Promise<string[]> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("shops").select("niches").eq("status", "ok").not("niches", "eq", "{}").limit(2000);
+  const count = new Map<string, number>();
+  for (const r of data ?? []) for (const n of (r.niches as string[]) ?? []) count.set(n, (count.get(n) ?? 0) + 1);
+  return [...count.entries()].sort((a, b) => b[1] - a[1]).map(([n]) => n);
 }

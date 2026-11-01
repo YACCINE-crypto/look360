@@ -6,8 +6,8 @@ import { AdGrid } from "@/components/AdGrid";
 import { ShopCard, ShopProductCard } from "@/components/shops/ShopCards";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { currentAccess } from "@/lib/access";
-import { listProducts, listShops, type Zone } from "@/lib/shopQueries";
-import { isEUCountry, type SpyAd } from "@/lib/spy";
+import { listNiches, listProducts, listShops, ZONE_CODES, type Zone } from "@/lib/shopQueries";
+import { type SpyAd } from "@/lib/spy";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +25,7 @@ const SHOP_MIN_ACTIVE = 3;
  * Les listes complètes restent dans Spy et Boutiques & produits.
  * Réservé aux offres payantes.
  */
-export default async function TopTrendPage({ searchParams }: { searchParams: Promise<{ zone?: string }> }) {
+export default async function TopTrendPage({ searchParams }: { searchParams: Promise<{ zone?: string; niche?: string }> }) {
   const { paid } = await currentAccess();
   if (!paid) {
     return (
@@ -41,14 +41,25 @@ export default async function TopTrendPage({ searchParams }: { searchParams: Pro
   }
 
   const sp = await searchParams;
-  const zone: Zone = sp.zone === "africa" || sp.zone === "europe" ? sp.zone : "all";
+  const zone: Zone = sp.zone === "africa" || sp.zone === "europe" || sp.zone === "america" ? sp.zone : "all";
+  const niches = await listNiches();
+  const niche = sp.niche && niches.includes(sp.niche) ? sp.niche : undefined;
 
   const [ads, products, shops] = await Promise.all([
-    topAds(zone),
-    listProducts({ zone, sort: "pubs", withAds: true, minActive: PRODUCT_MIN_ACTIVE, limit: TOP_PRODUCTS }),
-    listShops({ zone, sort: "pubs", minActive: SHOP_MIN_ACTIVE, limit: TOP_SHOPS }),
+    topAds(zone, niche),
+    listProducts({ zone, niche, sort: "pubs", withAds: true, minActive: PRODUCT_MIN_ACTIVE, limit: TOP_PRODUCTS }),
+    listShops({ zone, niche, sort: "pubs", minActive: SHOP_MIN_ACTIVE, limit: TOP_SHOPS }),
   ]);
-  const qs = zone === "all" ? "" : `&zone=${zone}`;
+  const link = (patch: { zone?: Zone; niche?: string | null }) => {
+    const z = patch.zone ?? zone;
+    const n = patch.niche === undefined ? niche : patch.niche;
+    const p = new URLSearchParams();
+    if (z !== "all") p.set("zone", z);
+    if (n) p.set("niche", n);
+    const q = p.toString();
+    return `/top-trend${q ? `?${q}` : ""}`;
+  };
+  const qs = `${zone === "all" ? "" : `&zone=${zone}`}${niche ? `&niche=${encodeURIComponent(niche)}` : ""}`;
 
   return (
     <div className="space-y-6">
@@ -63,11 +74,12 @@ export default async function TopTrendPage({ searchParams }: { searchParams: Pro
               ["all", "Tous"],
               ["africa", "Afrique"],
               ["europe", "Europe"],
+              ["america", "Amérique"],
             ] as const
           ).map(([z, label]) => (
             <Link
               key={z}
-              href={z === "all" ? "/top-trend" : `/top-trend?zone=${z}`}
+              href={link({ zone: z })}
               aria-current={zone === z ? "true" : undefined}
               className={`rounded-md px-3 py-1.5 text-sm font-medium ${
                 zone === z ? "bg-surface text-fg shadow-card font-semibold" : "text-fg-2 hover:text-fg"
@@ -78,6 +90,23 @@ export default async function TopTrendPage({ searchParams }: { searchParams: Pro
           ))}
         </div>
       </div>
+
+      {niches.length > 0 && (
+        <nav aria-label="Niches" className="-mx-1 -mt-2 flex gap-2 overflow-x-auto px-1 pb-1">
+          {[null, ...niches].map((n) => (
+            <Link
+              key={n ?? "all"}
+              href={link({ niche: n })}
+              aria-current={(n ?? undefined) === niche ? "true" : undefined}
+              className={`h-8 shrink-0 rounded-full border px-3 text-sm font-medium leading-[30px] ${
+                (n ?? undefined) === niche ? "border-accent bg-secondary text-accent" : "border-border bg-surface text-fg-2 hover:bg-input"
+              }`}
+            >
+              {n ?? "Toutes les niches"}
+            </Link>
+          ))}
+        </nav>
+      )}
 
       <Section
         icon="trending"
@@ -127,28 +156,33 @@ export default async function TopTrendPage({ searchParams }: { searchParams: Pro
 }
 
 /** Meilleures pubs des 30 derniers jours (recherches + feed), une par annonceur. */
-async function topAds(zone: Zone): Promise<SpyAd[]> {
+async function topAds(zone: Zone, niche?: string): Promise<SpyAd[]> {
   const admin = createAdminClient();
   const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
-  const [{ data: rows }, { data: feed }] = await Promise.all([
-    admin.from("spy_searches").select("results").gte("created_at", since).order("created_at", { ascending: false }).limit(300),
-    admin.from("feed_ads").select("payload, thumbnail_cdn_url, media_cdn_url"),
+  const [{ data: rows }, { data: feed }, { data: kws }] = await Promise.all([
+    admin.from("spy_searches").select("results, filters").gte("created_at", since).order("created_at", { ascending: false }).limit(400),
+    admin.from("feed_ads").select("payload, niche, thumbnail_cdn_url, media_cdn_url"),
+    niche ? admin.from("discovery_keywords").select("keyword").eq("niche", niche) : Promise.resolve({ data: [] as { keyword: string }[] }),
   ]);
+  const nicheWords = new Set((kws ?? []).map((k) => k.keyword.toLowerCase()));
+  const FEED_NICHE: Record<string, string> = { "Auto & moto": "Automobile", "Bien-être": "Santé", "Montre & tech": "High-tech" };
   const archived = new Map<string, { thumb: string | null; media: string | null }>();
   const all: SpyAd[] = [];
   for (const f of feed ?? []) {
     const ad = f.payload as unknown as SpyAd;
     if (!ad?.ad_archive_id) continue;
     archived.set(ad.ad_archive_id, { thumb: f.thumbnail_cdn_url, media: f.media_cdn_url });
+    if (niche && (FEED_NICHE[f.niche ?? ""] ?? f.niche) !== niche) continue;
     all.push(ad);
   }
-  for (const r of rows ?? []) for (const ad of (r.results as unknown as SpyAd[]) ?? []) if (ad?.ad_archive_id) all.push(ad);
+  for (const r of rows ?? []) {
+    const q = String((r.filters as { q?: string } | null)?.q ?? "").toLowerCase().trim();
+    if (niche && !nicheWords.has(q)) continue;
+    for (const ad of (r.results as unknown as SpyAd[]) ?? []) if (ad?.ad_archive_id) all.push(ad);
+  }
 
-  const inZone = (a: SpyAd) => {
-    if (zone === "all") return true;
-    const eu = a.targets_eu || isEUCountry(a.country);
-    return zone === "europe" ? eu : !eu;
-  };
+  const codes = zone === "all" ? null : new Set(ZONE_CODES[zone]);
+  const inZone = (a: SpyAd) => !codes || codes.has(a.country ?? "");
   // Une pub par annonceur (la meilleure), pour une sélection variée.
   const best = new Map<string, SpyAd>();
   for (const a of all) {
