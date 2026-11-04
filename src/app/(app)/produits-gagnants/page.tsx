@@ -2,9 +2,9 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ShopProductCard, UnlockMore } from "@/components/shops/ShopCards";
 import { CatalogFilters } from "@/components/shops/CatalogFilters";
-import { CatalogHeader } from "@/components/shops/CatalogHeader";
+import { PageHeader } from "@/components/ui";
 import { currentAccess, FREE_PREVIEW } from "@/lib/access";
-import { catalogStats, listNiches, listProducts, type ProductSort, type Zone } from "@/lib/shopQueries";
+import { listNiches, listProducts, type ProductSort, type Zone } from "@/lib/shopQueries";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +22,7 @@ export default async function ProduitsGagnantsPage({
   const sp = await searchParams;
   const zone: Zone = sp.zone === "africa" || sp.zone === "europe" || sp.zone === "america" ? sp.zone : "all";
   const page = Math.max(1, Number(sp.page) || 1);
-  const [{ paid }, niches, stats] = await Promise.all([currentAccess(), listNiches(), catalogStats()]);
+  const [{ paid }, niches] = await Promise.all([currentAccess(), listNiches()]);
   const niche = sp.niche && niches.includes(sp.niche) ? sp.niche : undefined;
   const limit = paid ? PAGE * page : FREE_PREVIEW;
   const sort: ProductSort = sp.sort === "recent" || sp.sort === "promo" ? sp.sort : "pubs";
@@ -32,15 +32,7 @@ export default async function ProduitsGagnantsPage({
 
   return (
     <div className="space-y-4">
-      <CatalogHeader
-        title="Produits gagnants"
-        subtitle="Les produits vers lesquels mènent les pubs repérées, avec leur prix réel et leurs pubs actives. Catalogues mis à jour tous les 7 jours."
-        stats={[
-          { label: "Produits avec pubs", value: stats.productsWithAds },
-          { label: "En promotion", value: stats.promosWithAds },
-          { label: "Produits au catalogue", value: stats.catalog },
-        ]}
-      />
+      <PageHeader title="Produits gagnants" subtitle="Les produits vers lesquels mènent les pubs repérées, avec leur prix réel et leurs pubs actives. Catalogues mis à jour tous les 7 jours." />
       <Suspense>
         <CatalogFilters basePath="/produits-gagnants" kind="produits" niches={niches} />
       </Suspense>
