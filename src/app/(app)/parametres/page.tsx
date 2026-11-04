@@ -177,7 +177,7 @@ export default async function ParametresPage() {
         <ControlRow
           icon={Bell}
           label="Alertes push"
-          sub="Concurrents suivis · échéance d'offre"
+          sub="Concurrents suivis · échéance d'offre (sur cet appareil)"
         >
           <NotifBell />
         </ControlRow>

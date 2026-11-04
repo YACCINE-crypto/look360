@@ -178,7 +178,7 @@ export function CountryMultiSelect({
               onChange={(e) => setFilter(e.target.value)}
               placeholder="Rechercher un pays…"
               aria-label="Rechercher un pays"
-              className="w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
+              className="w-full bg-transparent text-sm sm:text-base outline-none focus-visible:shadow-none"
             />
           </div>
 
@@ -189,9 +189,9 @@ export function CountryMultiSelect({
                 key={r}
                 type="button"
                 onClick={() => selectRegion(r)}
-                className="bg-input hover:bg-muted text-fg rounded-full px-2.5 py-1 text-xs font-medium"
+                className={`bg-input hover:bg-muted text-fg rounded-full px-2.5 py-1 font-medium ${pill ? "text-sm" : "text-xs"}`}
               >
-                Tout · {SPY_REGION_LABELS[r]}
+                {pill ? "+ " : "Tout · "}{SPY_REGION_LABELS[r]}
               </button>
             ))}
           </div>
@@ -205,7 +205,7 @@ export function CountryMultiSelect({
                   key={code}
                   type="button"
                   onClick={() => onChange(selected.filter((c) => c !== code))}
-                  className="bg-secondary text-accent hover:bg-accent/15 inline-flex h-7 items-center gap-1 rounded-full px-2.5 text-xs font-medium"
+                  className="bg-secondary text-accent hover:bg-accent/15 inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-sm font-medium"
                   aria-label={`Retirer ${countryLabel(code)}`}
                 >
                   {countryLabel(code)} <Icon name="x" size={11} />
@@ -231,12 +231,12 @@ export function CountryMultiSelect({
                         key={c.code}
                         type="button"
                         onClick={() => toggle(c.code)}
-                        className={`flex min-h-[38px] w-full items-center gap-2 rounded-md px-2 text-left text-sm transition-colors ${
+                        className={`flex w-full items-center gap-2.5 rounded-md px-2 text-left transition-colors ${pill ? "min-h-9 text-base" : "min-h-[38px] text-sm"} ${
                           checked ? "bg-secondary/60" : "hover:bg-input"
                         }`}
                       >
                         <span
-                          className={`grid h-4 w-4 shrink-0 place-items-center rounded border transition-colors ${
+                          className={`grid h-5 w-5 shrink-0 place-items-center rounded border transition-colors ${
                             checked
                               ? "bg-accent border-accent text-accent-on"
                               : "border-border"
