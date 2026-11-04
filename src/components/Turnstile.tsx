@@ -16,7 +16,7 @@ const SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explic
  * au formulaire ; la vérification se fait côté serveur (lib/rateLimit).
  * N'affiche rien tant que NEXT_PUBLIC_TURNSTILE_SITE_KEY n'est pas configurée.
  */
-export function Turnstile() {
+export function Turnstile({ theme = "light" }: { theme?: "light" | "dark" }) {
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
   const ref = useRef<HTMLDivElement>(null);
 
@@ -26,7 +26,7 @@ export function Turnstile() {
     let cancelled = false;
     const mount = () => {
       if (cancelled || !ref.current || !window.turnstile) return;
-      id = window.turnstile.render(ref.current, { sitekey: siteKey, theme: "light", language: "fr" });
+      id = window.turnstile.render(ref.current, { sitekey: siteKey, theme, language: "fr" });
     };
     if (window.turnstile) mount();
     else {
@@ -43,7 +43,7 @@ export function Turnstile() {
       cancelled = true;
       if (id && window.turnstile) window.turnstile.remove(id);
     };
-  }, [siteKey]);
+  }, [siteKey, theme]);
 
   if (!siteKey) return null;
   return <div ref={ref} className="min-h-16" />;
