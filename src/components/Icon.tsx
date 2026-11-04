@@ -35,7 +35,9 @@ export type IconName =
   | "settings"
   | "x"
   | "more"
-  | "chart";
+  | "chart"
+  | "mail"
+  | "user";
 
 const PATHS: Record<IconName, React.ReactNode> = {
   search: (
@@ -152,6 +154,18 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19M6.61 6.61A18.5 18.5 0 0 0 2 12s3.5 8 10 8a9.12 9.12 0 0 0 5.39-1.61" />
       <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
       <path d="m2 2 20 20" />
+    </>
+  ),
+  mail: (
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3 7 9 6 9-6" />
+    </>
+  ),
+  user: (
+    <>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21a8 8 0 0 1 16 0" />
     </>
   ),
   lock: (

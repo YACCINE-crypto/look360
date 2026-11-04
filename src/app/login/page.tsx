@@ -2,18 +2,12 @@
 
 import Link from "next/link";
 import { Suspense, useActionState, useState } from "react";
-import { Turnstile } from "@/components/Turnstile";
 import { useSearchParams } from "next/navigation";
-import { Icon } from "@/components/Icon";
+import { Turnstile } from "@/components/Turnstile";
 import { PasswordInput } from "@/components/PasswordInput";
+import { AuthInput, AuthPasswordWrap, AuthShell } from "@/components/auth/AuthShell";
 import { login } from "./actions";
 import { signup } from "@/app/signup/actions";
-
-const fieldCls =
-  "border-border bg-input focus:border-accent w-full min-h-[46px] rounded-lg border px-3 py-2 text-sm outline-none transition-colors";
-const labelCls = "text-sm font-medium";
-const pill =
-  "bg-accent text-accent-on inline-flex min-h-[48px] w-full items-center justify-center rounded-full px-4 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60";
 
 export default function LoginPage() {
   return (
@@ -23,12 +17,10 @@ export default function LoginPage() {
   );
 }
 
+/** Connexion et inscription (même page, bascule en bas), habillage « Nuit ». */
 function AuthCard() {
   const params = useSearchParams();
-  const [tab, setTab] = useState<"login" | "signup">(
-    params.get("tab") === "signup" ? "signup" : "login",
-  );
-
+  const [tab, setTab] = useState<"login" | "signup">(params.get("tab") === "signup" ? "signup" : "login");
   const [loginError, loginAction, loginPending] = useActionState(login, null);
   const [signupError, signupAction, signupPending] = useActionState(signup, null);
 
@@ -36,152 +28,126 @@ function AuthCard() {
   const authError = params.get("error") === "auth";
   const sent = params.get("sent") === "1";
 
-  // Écran « vérifie ta boîte mail » après inscription (confirmation email).
+  const go = (t: "login" | "signup") => {
+    setTab(t);
+    try {
+      window.history.replaceState(null, "", t === "signup" ? "/login?tab=signup" : "/login");
+    } catch {
+      /* ignore */
+    }
+  };
+
+  // Après inscription (confirmation e-mail activée) : « vérifie ta boîte mail ».
   if (sent) {
     return (
-      <main className="bg-bg flex min-h-screen items-center justify-center px-4 py-12">
-        <div className="w-full max-w-sm">
-          <div className="mb-6 flex flex-col items-center text-center">
-            <h1 className="mb-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/look360-logo.svg" alt="Look360" className="h-12 w-auto" />
-            </h1>
-          </div>
-          <div className="border-border bg-surface space-y-3 rounded-2xl border p-6 text-center shadow-lg">
-            <p className="text-lg font-semibold">Vérifie ta boîte mail 📩</p>
-            <p className="text-muted-foreground text-sm">
-              On t&apos;a envoyé un lien de confirmation. Clique dessus pour
-              activer ton compte Gratuit, puis connecte-toi.
-            </p>
-            <Link
-              href="/login"
-              className="text-accent inline-block text-sm font-semibold hover:underline"
-            >
-              Aller à la connexion
-            </Link>
-          </div>
+      <AuthShell>
+        <p className="auth-eyebrow">Presque fini</p>
+        <h1 className="auth-title">Vérifie ta boîte mail</h1>
+        <p className="auth-sub">
+          On t&apos;a envoyé un lien de confirmation. Clique dessus pour activer ton compte Gratuit, puis connecte-toi.
+        </p>
+        <div className="auth-form">
+          <Link href="/login" className="auth-btn">
+            Aller à la connexion
+          </Link>
         </div>
-      </main>
+      </AuthShell>
     );
   }
 
   return (
-    <main className="bg-bg flex min-h-screen items-center justify-center px-4 py-12">
-      <div className="w-full max-w-sm">
-        {/* Logo + sous-titre */}
-        <div className="mb-6 flex flex-col items-center text-center">
-          <h1 className="mb-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/look360-logo.svg" alt="Look360" className="h-12 w-auto" />
-          </h1>
-          <p className="text-muted-foreground text-sm">
-            Recherche &amp; testing produit COD
+    <AuthShell>
+      {tab === "login" ? (
+        <>
+          <p className="auth-eyebrow">Bon retour</p>
+          <h1 className="auth-title">Connecte-toi</h1>
+          <p className="auth-sub">Retrouve tes recherches, tes tests et tes concurrents suivis.</p>
+
+          {reset && <p className="auth-msg ok">Mot de passe mis à jour. Connecte-toi.</p>}
+          {authError && <p className="auth-msg err">Lien invalide ou expiré. Réessaie de te connecter ou de réinitialiser.</p>}
+
+          <form action={loginAction} className="auth-form">
+            <div className="auth-field">
+              <label htmlFor="login-email" className="auth-label">
+                Adresse e-mail
+              </label>
+              <AuthInput icon="mail" id="login-email" name="email" type="email" autoComplete="email" required placeholder="toi@exemple.com" />
+            </div>
+            <div className="auth-field">
+              <div className="auth-label">
+                <label htmlFor="login-password">Mot de passe</label>
+                <Link href="/forgot-password">Mot de passe oublié ?</Link>
+              </div>
+              <AuthPasswordWrap>
+                <PasswordInput id="login-password" name="password" autoComplete="current-password" placeholder="Ton mot de passe" />
+              </AuthPasswordWrap>
+            </div>
+
+            {loginError && <p className="auth-msg err" role="alert">{loginError}</p>}
+
+            <button type="submit" disabled={loginPending} className="auth-btn">
+              {loginPending ? "Connexion…" : "Se connecter"}
+            </button>
+          </form>
+
+          <p className="auth-switch">
+            Pas encore de compte ?{" "}
+            <button type="button" onClick={() => go("signup")}>
+              Créer un compte
+            </button>
           </p>
-        </div>
+        </>
+      ) : (
+        <>
+          <p className="auth-eyebrow">C&apos;est parti</p>
+          <h1 className="auth-title">Crée ton compte</h1>
+          <p className="auth-sub">Gratuit, sans carte bancaire. On t&apos;envoie un lien pour confirmer ton adresse e-mail.</p>
 
-        <div className="border-border bg-surface rounded-2xl border p-6 shadow-lg">
-          {/* Onglets */}
-          <div role="tablist" className="border-border mb-5 grid grid-cols-2 border-b">
-            <TabButton active={tab === "login"} onClick={() => setTab("login")}>
-              Connexion
-            </TabButton>
-            <TabButton active={tab === "signup"} onClick={() => setTab("signup")}>
-              Inscription
-            </TabButton>
-          </div>
-
-          {reset && (
-            <div className="bg-success-bg text-success-fg mb-4 rounded-lg p-3 text-sm">
-              Mot de passe mis à jour. Connecte-toi.
+          <form action={signupAction} className="auth-form">
+            <div className="auth-field">
+              <label htmlFor="signup-nom" className="auth-label">
+                Nom
+              </label>
+              <AuthInput icon="user" id="signup-nom" name="nom" type="text" autoComplete="name" placeholder="Ton nom" />
             </div>
-          )}
-          {authError && (
-            <div className="bg-danger-bg text-danger-fg mb-4 rounded-lg p-3 text-sm">
-              Lien invalide ou expiré. Réessaie de te connecter ou de réinitialiser.
+            <div className="auth-field">
+              <label htmlFor="signup-email" className="auth-label">
+                Adresse e-mail
+              </label>
+              <AuthInput icon="mail" id="signup-email" name="email" type="email" autoComplete="email" required placeholder="toi@exemple.com" />
             </div>
-          )}
+            <div className="auth-field">
+              <label htmlFor="signup-password" className="auth-label">
+                Mot de passe
+              </label>
+              <AuthPasswordWrap>
+                <PasswordInput
+                  id="signup-password"
+                  name="password"
+                  autoComplete="new-password"
+                  minLength={8}
+                  placeholder="8 caractères minimum"
+                />
+              </AuthPasswordWrap>
+            </div>
 
-          {tab === "login" ? (
-            <form action={loginAction} className="space-y-4">
-              <div className="space-y-1.5">
-                <label htmlFor="login-email" className={labelCls}>Adresse email</label>
-                <input id="login-email" name="email" type="email" autoComplete="email" required placeholder="toi@exemple.com" className={fieldCls} />
-              </div>
+            <Turnstile theme="dark" />
 
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="login-password" className={labelCls}>Mot de passe</label>
-                  <Link href="/forgot-password" className="text-accent text-xs font-medium hover:underline">
-                    Mot de passe oublié ?
-                  </Link>
-                </div>
-                <PasswordInput id="login-password" name="password" autoComplete="current-password" />
-              </div>
+            {signupError && <p className="auth-msg err" role="alert">{signupError}</p>}
 
-              {loginError && <p className="text-danger-fg text-sm">{loginError}</p>}
+            <button type="submit" disabled={signupPending} className="auth-btn">
+              {signupPending ? "Création…" : "Créer mon compte"}
+            </button>
+          </form>
 
-              <button type="submit" disabled={loginPending} className={pill}>
-                {loginPending ? "Connexion…" : "Se connecter"}
-              </button>
-            </form>
-          ) : (
-            <form action={signupAction} className="space-y-4">
-              <div className="space-y-1.5">
-                <label htmlFor="signup-nom" className={labelCls}>Nom</label>
-                <input id="signup-nom" name="nom" type="text" autoComplete="name" placeholder="Ton nom" className={fieldCls} />
-              </div>
-              <div className="space-y-1.5">
-                <label htmlFor="signup-email" className={labelCls}>Adresse email</label>
-                <input id="signup-email" name="email" type="email" autoComplete="email" required placeholder="toi@exemple.com" className={fieldCls} />
-              </div>
-              <div className="space-y-1.5">
-                <label htmlFor="signup-password" className={labelCls}>Mot de passe</label>
-                <PasswordInput id="signup-password" name="password" autoComplete="new-password" minLength={8} />
-                <p className="text-muted-foreground text-xs">8 caractères minimum.</p>
-              </div>
-
-              <Turnstile />
-
-              {signupError && <p className="text-danger-fg text-sm">{signupError}</p>}
-
-              <button type="submit" disabled={signupPending} className={pill}>
-                {signupPending ? "Création…" : "Créer un compte"}
-              </button>
-            </form>
-          )}
-        </div>
-
-        <p className="text-muted-foreground mt-4 flex items-center justify-center gap-1.5 text-center text-xs">
-          <Icon name="check" size={13} className="text-success-fg" />
-          Isolation des comptes garantie — tes données restent privées.
-        </p>
-      </div>
-    </main>
-  );
-}
-
-function TabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      onClick={onClick}
-      aria-selected={active}
-      className={`-mb-px border-b-2 pb-2.5 pt-1 text-sm font-semibold transition-colors ${
-        active
-          ? "border-accent text-accent"
-          : "text-muted-foreground hover:text-fg border-transparent"
-      }`}
-    >
-      {children}
-    </button>
+          <p className="auth-switch">
+            Tu as déjà un compte ?{" "}
+            <button type="button" onClick={() => go("login")}>
+              Se connecter
+            </button>
+          </p>
+        </>
+      )}
+    </AuthShell>
   );
 }
