@@ -34,3 +34,23 @@ export async function POST(request: Request) {
   }
   return NextResponse.json({ ok: true });
 }
+
+/** Désabonnement de cet appareil (interrupteur « Alertes push » des paramètres). */
+export async function DELETE(request: Request) {
+  const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub as string | undefined;
+  if (!userId) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  let body: { endpoint?: string } = {};
+  try {
+    body = await request.json();
+  } catch {
+    /* corps vide */
+  }
+  if (!body.endpoint) return NextResponse.json({ error: "bad_request" }, { status: 400 });
+
+  const { error } = await supabase.from("push_subscriptions").delete().eq("user_id", userId).eq("endpoint", body.endpoint);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
+}

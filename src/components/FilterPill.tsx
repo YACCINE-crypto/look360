@@ -17,6 +17,7 @@ export function FilterPill({
   disabled = false,
   title,
   align = "left",
+  wide = false,
   children,
 }: {
   label: string;
@@ -29,6 +30,8 @@ export function FilterPill({
   disabled?: boolean;
   title?: string;
   align?: "left" | "right";
+  /** Panneau large (contenu riche) ; sinon ajusté au contenu. */
+  wide?: boolean;
   children: (close: () => void) => React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -95,7 +98,9 @@ export function FilterPill({
           ref={panel}
           role="dialog"
           aria-label={label}
-          className={`border-border bg-surface shadow-raised absolute top-full z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl border p-3 ${
+          className={`border-border bg-surface shadow-raised absolute top-full z-50 mt-2 max-w-[calc(100vw-2rem)] rounded-xl border p-2.5 ${
+            wide ? "w-80" : "w-max min-w-56"
+          } ${
             flip ? "right-0" : "left-0"
           }`}
         >
@@ -139,9 +144,9 @@ export function FilterToggle({
 /** En-tête de panneau : titre + aide courte. */
 export function PanelHead({ title, hint }: { title: string; hint?: string }) {
   return (
-    <div className="mb-2.5">
-      <p className="text-fg text-sm font-bold">{title}</p>
-      {hint && <p className="text-muted-foreground text-xs">{hint}</p>}
+    <div className="mb-2 px-1">
+      <p className="text-fg text-base font-bold">{title}</p>
+      {hint && <p className="text-muted-foreground text-sm">{hint}</p>}
     </div>
   );
 }
@@ -159,7 +164,7 @@ export function OptionList({
   onPick: (v: string) => void;
 }) {
   return (
-    <div className="space-y-1">
+    <div className="space-y-0.5">
       {options.map((o) => {
         const sel = o.value === value;
         return (
@@ -167,20 +172,20 @@ export function OptionList({
             key={o.value}
             type="button"
             onClick={() => onPick(o.value)}
-            className={`flex w-full items-start gap-2.5 rounded-lg border px-2.5 py-2 text-left transition-colors ${
+            className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors ${
               sel ? "border-accent bg-secondary" : "hover:bg-input border-transparent"
             }`}
           >
             {o.icon && (
-              <span className={`mt-0.5 shrink-0 ${sel ? "text-accent" : "text-muted-foreground"}`}>
-                <Icon name={o.icon} size={16} />
+              <span className={`shrink-0 ${sel ? "text-accent" : "text-fg-2"}`}>
+                <Icon name={o.icon} size={18} />
               </span>
             )}
             <span className="min-w-0 flex-1">
-              <span className={`block text-sm font-semibold ${sel ? "text-accent" : "text-fg"}`}>{o.label}</span>
-              {o.hint && <span className="text-muted-foreground block text-xs">{o.hint}</span>}
+              <span className={`block text-base font-semibold ${sel ? "text-accent" : "text-fg"}`}>{o.label}</span>
+              {o.hint && <span className="text-fg-2 block text-sm">{o.hint}</span>}
             </span>
-            {sel && <Icon name="check" size={16} className="text-accent mt-0.5 shrink-0" />}
+            {sel && <Icon name="check" size={18} className="text-accent shrink-0" />}
           </button>
         );
       })}

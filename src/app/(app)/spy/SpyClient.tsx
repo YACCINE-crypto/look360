@@ -446,6 +446,7 @@ export function SpyClient({
           <FilterPill
             label="Durée"
             icon="clock"
+            wide
             active={durationOn(duration)}
             value={durationLabel(duration)}
           >
@@ -500,7 +501,7 @@ export function SpyClient({
             )}
           </FilterPill>
 
-          <FilterPill label="Plus de filtres" icon="settings" count={moreCount} active={moreCount > 0}>
+          <FilterPill label="Plus de filtres" icon="settings" count={moreCount} active={moreCount > 0} wide>
             {() => (
               <div className="space-y-3">
                 <Segment label="Plateforme" options={PLATFORM_OPTS} value={platform} onChange={setPlatform} />
@@ -508,14 +509,14 @@ export function SpyClient({
                 {euDispo ? (
                   <Segment label="Reach UE minimum" options={REACH_OPTS} value={reachMin} onChange={setReachMin} />
                 ) : (
-                  <p className="text-muted-foreground text-xs">Reach : disponible seulement pour les pays de l&apos;UE.</p>
+                  <p className="text-fg-2 text-sm">Reach : disponible seulement pour les pays de l&apos;UE.</p>
                 )}
-                <label className="border-border flex cursor-pointer items-center gap-2 border-t pt-3 text-sm">
+                <label className="border-border flex cursor-pointer items-center gap-2.5 border-t pt-3 text-base font-medium">
                   <input
                     type="checkbox"
                     checked={statut === "all"}
                     onChange={(e) => setStatut(e.target.checked ? "all" : "active")}
-                    className="accent-primary h-4 w-4"
+                    className="accent-primary h-5 w-5"
                   />
                   Inclure les pubs inactives
                 </label>
@@ -722,7 +723,7 @@ export function SpyClient({
 function Segment({ label, options, value, onChange }: { label: string; options: PillOption[]; value: string; onChange: (v: string) => void }) {
   return (
     <div>
-      <p className="text-fg mb-1.5 text-xs font-semibold">{label}</p>
+      <p className="text-fg mb-1.5 text-sm font-semibold">{label}</p>
       <div className="flex flex-wrap gap-1.5">
         {options.map((o) => (
           <button
@@ -730,7 +731,7 @@ function Segment({ label, options, value, onChange }: { label: string; options: 
             type="button"
             aria-pressed={o.value === value}
             onClick={() => onChange(o.value)}
-            className={`h-8 rounded-full border px-3 text-xs font-medium transition-colors ${
+            className={`h-9 rounded-full border px-3 text-sm font-medium transition-colors ${
               o.value === value ? "border-accent bg-secondary text-accent" : "border-border text-fg-2 hover:bg-input"
             }`}
           >
@@ -750,7 +751,7 @@ function DurationPanel({ value, onApply }: { value: Duration; onApply: (d: Durat
   return (
     <div>
       <PanelHead title="Durée de diffusion" hint="Depuis combien de jours la pub tourne." />
-      <p className="text-warn-fg mb-1.5 flex items-center gap-1 text-xs font-bold uppercase tracking-wide">
+      <p className="text-warn-fg mb-1.5 flex items-center gap-1 px-1 text-xs font-bold uppercase tracking-wide">
         <Icon name="sparkles" size={12} /> Sélection rapide
       </p>
       <div className="space-y-1">
@@ -762,27 +763,27 @@ function DurationPanel({ value, onApply }: { value: Duration; onApply: (d: Durat
               type="button"
               onClick={() => setDraft(sel ? NO_DURATION : p.d)}
               aria-pressed={sel}
-              className={`flex w-full items-start gap-2.5 rounded-lg border px-2.5 py-2 text-left transition-colors ${
+              className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors ${
                 sel ? "border-accent bg-secondary" : "border-border hover:bg-input"
               }`}
             >
-              <span className={`mt-0.5 shrink-0 ${sel ? "text-accent" : "text-muted-foreground"}`}>
-                <Icon name={p.icon} size={16} />
+              <span className={`shrink-0 ${sel ? "text-accent" : "text-fg-2"}`}>
+                <Icon name={p.icon} size={18} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className={`flex items-baseline gap-1.5 text-sm font-semibold ${sel ? "text-accent" : "text-fg"}`}>
+                <span className={`flex items-baseline gap-1.5 text-base font-semibold ${sel ? "text-accent" : "text-fg"}`}>
                   {p.label}
-                  <span className="text-muted-foreground text-xs font-medium tabular-nums">
+                  <span className="text-fg-2 text-sm font-medium tabular-nums">
                     {p.d.max == null ? `${p.d.min}+ jours` : `${p.d.min} → ${p.d.max} jours`}
                   </span>
                 </span>
-                <span className="text-muted-foreground block text-xs">{p.hint}</span>
+                <span className="text-fg-2 block text-sm">{p.hint}</span>
               </span>
             </button>
           );
         })}
       </div>
-      <p className="text-muted-foreground mb-1.5 mt-3 text-xs font-semibold">Plage personnalisée (jours)</p>
+      <p className="text-fg mb-1.5 mt-3 px-1 text-sm font-semibold">Plage personnalisée (jours)</p>
       <div className="flex items-center gap-2">
         <input
           type="number"
@@ -792,7 +793,7 @@ function DurationPanel({ value, onApply }: { value: Duration; onApply: (d: Durat
           value={draft.min || ""}
           placeholder="0"
           onChange={(e) => setDraft((d) => ({ ...d, min: num(e.target.value) ?? 0 }))}
-          className="border-border bg-input focus:border-accent h-9 w-full rounded-md border px-2.5 text-sm tabular-nums outline-none"
+          className="border-border bg-input focus:border-accent h-10 w-full rounded-md border px-3 text-base tabular-nums outline-none"
         />
         <span className="text-muted-foreground">—</span>
         <input
@@ -803,7 +804,7 @@ function DurationPanel({ value, onApply }: { value: Duration; onApply: (d: Durat
           value={draft.max ?? ""}
           placeholder="∞"
           onChange={(e) => setDraft((d) => ({ ...d, max: num(e.target.value) }))}
-          className="border-border bg-input focus:border-accent h-9 w-full rounded-md border px-2.5 text-sm tabular-nums outline-none"
+          className="border-border bg-input focus:border-accent h-10 w-full rounded-md border px-3 text-base tabular-nums outline-none"
         />
       </div>
       {invalid && <p className="text-danger-fg mt-1 text-xs">Le maximum doit être supérieur au minimum.</p>}
