@@ -72,7 +72,8 @@ async function claim(
 
 Deno.serve(async (req) => {
   const cronSecret = Deno.env.get("CRON_SECRET");
-  if (cronSecret && req.headers.get("x-cron-secret") !== cronSecret) {
+  // Fermé si le secret manque (audit 2026-11-04).
+  if (!cronSecret || req.headers.get("x-cron-secret") !== cronSecret) {
     return json({ error: "forbidden" }, 403);
   }
 

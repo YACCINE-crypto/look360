@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { allow } from "@/lib/rateLimit";
 import { accountSuspended } from "@/lib/accountGuard";
 import { getCachedSearch, dailyCapReached, persistSearch } from "@/lib/spyCache";
 import { startSpyRun, getRunStatus, isTerminal, fetchDatasetItems } from "@/lib/apify";
@@ -59,6 +60,9 @@ export async function POST(request: Request) {
   const userId = (data?.claims?.sub as string | undefined) ?? null;
   if (!userId) return json({ error: "unauthorized" }, 401);
   if (await accountSuspended(userId)) return json({ error: "compte suspendu" }, 403);
+  if (!(await allow([{ key: `apify:user:${userId}`, windowSec: 60, max: 10 }]))) {
+    return json({ error: "Trop de recherches d'affilée. Patiente une minute." }, 429);
+  }
 
   const filters = analyseFilters(pageId, country);
 

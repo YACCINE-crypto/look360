@@ -241,18 +241,30 @@ async function crawlShop(domain: string): Promise<string> {
   return `ok:${rows.length}`;
 }
 
-/** Appel autorisé seulement depuis le serveur Look360 (pas avec la seule clé anon publique). */
-function serverCaller(req: Request): boolean {
-  const svc = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+/**
+ * Appel autorisé seulement depuis le serveur Look360 (pas avec la seule clé anon
+ * publique). x-look360-key = clé de service du site (format JWT historique ou
+ * nouvelle clé secrète) : on la valide auprès de la base, sur une table fermée à
+ * anon/authenticated (rate_limits) — seule une vraie clé de service peut la lire.
+ */
+const validKeys = new Set<string>();
+async function serverCaller(req: Request): Promise<boolean> {
   const cron = Deno.env.get("CRON_SECRET");
-  const k = req.headers.get("x-look360-key");
   const c = req.headers.get("x-cron-secret");
-  return Boolean((svc && k && k === svc) || (cron && c && c === cron));
+  if (cron && c && c === cron) return true;
+  const k = req.headers.get("x-look360-key");
+  if (!k || k.length < 20) return false;
+  if (k === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || validKeys.has(k)) return true;
+  const probe = createClient(Deno.env.get("SUPABASE_URL")!, k, { auth: { persistSession: false } });
+  const { error } = await probe.from("rate_limits").select("key", { head: true, count: "exact" }).limit(1);
+  if (error) return false;
+  validKeys.add(k);
+  return true;
 }
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response("POST", { status: 405 });
-  if (!serverCaller(req)) return Response.json({ error: "forbidden" }, { status: 403 });
+  if (!(await serverCaller(req))) return Response.json({ error: "forbidden" }, { status: 403 });
   let body: Record<string, unknown> = {};
   try {
     body = await req.json();

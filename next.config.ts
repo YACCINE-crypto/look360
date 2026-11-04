@@ -1,8 +1,18 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs/config";
 
+// En-têtes de sécurité (audit 2026-11-04, contrôle 18). HSTS est déjà posé par Vercel.
+const securityHeaders = [
+  { key: "X-Frame-Options", value: "DENY" }, // pas d'intégration en iframe (clickjacking)
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
+];
+
 const nextConfig: NextConfig = {
-  /* config options here */
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders }];
+  },
 };
 
 // Sentry : l'enrobage est inoffensif tant que les variables ne sont pas

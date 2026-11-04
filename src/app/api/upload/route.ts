@@ -11,7 +11,20 @@ export const maxDuration = 60;
 // Vercel limite le corps d'une requête à 4,5 Mo : les photos sont réduites
 // côté navigateur (lib/uploadMedia) avant l'envoi.
 const MAX_BYTES = 4.5 * 1024 * 1024;
-const ALLOWED = /^(image\/|video\/)/;
+// Types acceptés (le SVG est exclu : il peut contenir du script).
+const ALLOWED = /^(image\/(jpeg|png|webp|gif|heic|heif)|video\/(mp4|quicktime|webm))$/;
+
+/** Vérifie les premiers octets : le type déclaré par le navigateur est falsifiable. */
+function magicOk(b: Buffer, type: string): boolean {
+  const hex = b.subarray(0, 12).toString("hex");
+  const ascii = b.subarray(0, 12).toString("latin1");
+  if (type === "image/jpeg") return hex.startsWith("ffd8ff");
+  if (type === "image/png") return hex.startsWith("89504e47");
+  if (type === "image/gif") return ascii.startsWith("GIF8");
+  if (type === "image/webp") return ascii.startsWith("RIFF") && ascii.slice(8, 12) === "WEBP";
+  if (type === "video/webm") return hex.startsWith("1a45dfa3");
+  return ascii.slice(4, 8) === "ftyp"; // mp4 / quicktime / heic (iPhone)
+}
 
 /**
  * Upload d'un média produit (image ou vidéo) → stockage CDN (b-cdn.net).
@@ -52,6 +65,10 @@ export async function POST(request: Request) {
 
   try {
     const buf = Buffer.from(await file.arrayBuffer());
+    if (!magicOk(buf, file.type)) {
+      await releaseMedia(userId, 1);
+      return NextResponse.json({ error: "fichier invalide (contenu ne correspondant pas au type)" }, { status: 415 });
+    }
     const { cdnUrl } = await storeBuffer(buf, file.type, `produits/${userId}`);
     return NextResponse.json({ url: cdnUrl });
   } catch (e) {

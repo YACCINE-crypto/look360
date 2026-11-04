@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { allow } from "@/lib/rateLimit";
 import { accountSuspended } from "@/lib/accountGuard";
 import { getCachedSearch, dailyCapReached, persistSearch } from "@/lib/spyCache";
 import {
@@ -83,6 +84,12 @@ export async function POST(request: Request) {
   if (await accountSuspended(userId)) {
     return new Response(JSON.stringify({ error: "compte suspendu" }), {
       status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  if (!(await allow([{ key: `apify:user:${userId}`, windowSec: 60, max: 10 }]))) {
+    return new Response(JSON.stringify({ error: "Trop de recherches d'affilée. Patiente une minute." }), {
+      status: 429,
       headers: { "Content-Type": "application/json" },
     });
   }

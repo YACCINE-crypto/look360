@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { allow } from "@/lib/rateLimit";
 import { createClient } from "@/lib/supabase/server";
 import { accountSuspended } from "@/lib/accountGuard";
 import { searchSpyWithCache, searchSpyManyCountries } from "@/lib/spyCache";
@@ -77,6 +78,10 @@ async function handle(filters: SpyFilters, countries: string[]) {
   }
   if (await accountSuspended(userId)) {
     return NextResponse.json({ error: "compte suspendu" }, { status: 403 });
+  }
+  // Rafale (audit 2026-11-04) : 10 recherches / minute / compte, tous points d'entrée Apify.
+  if (!(await allow([{ key: `apify:user:${userId}`, windowSec: 60, max: 10 }]))) {
+    return NextResponse.json({ error: "Trop de recherches d'affilée. Patiente une minute." }, { status: 429 });
   }
   if (!filters.q && countries.length === 0 && !filters.pageId) {
     return NextResponse.json({ error: "mot-clé ou pays requis" }, { status: 400 });
