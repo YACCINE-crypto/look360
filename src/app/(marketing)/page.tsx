@@ -1,62 +1,61 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Hero } from "@/components/landing/Hero";
-import { TrustStrip } from "@/components/landing/TrustStrip";
-import { CtaInline } from "@/components/landing/CtaInline";
-import { StickyCta } from "@/components/landing/StickyCta";
-import { EtapesSection } from "@/components/landing/EtapesSection";
-import { FonctionsSection } from "@/components/landing/FonctionsSection";
-import { ComparatifSection } from "@/components/landing/ComparatifSection";
-import { TestingSection } from "@/components/landing/TestingSection";
-import { PreuveSection } from "@/components/landing/PreuveSection";
-import { OffresSection } from "@/components/landing/OffresSection";
-import { FaqSection } from "@/components/landing/FaqSection";
-import { CtaFinal } from "@/components/landing/CtaFinal";
+import { getLandingData } from "@/lib/landingData";
+import { NuitNav } from "@/components/landing/nuit/NuitNav";
+import { NuitMotion } from "@/components/landing/nuit/NuitMotion";
+import {
+  Chiffres,
+  Comparatif,
+  Etapes,
+  Faq,
+  Fonctions,
+  Footer,
+  Hero,
+  Marquee,
+  Tarifs,
+  Testing,
+} from "@/components/landing/nuit/Sections";
+import "./nuit.css";
 
 export const dynamic = "force-dynamic";
 
+export const metadata: Metadata = {
+  title: "Look360 · Trouve, teste et valide tes produits gagnants",
+  description:
+    "Look360 repère les pubs qui marchent en Afrique et en Europe, te montre le vendeur derrière et calcule si le produit est rentable en COD avant que tu achètes ton stock.",
+};
+
 /**
- * Landing publique Look360. Les sections sont construites étape par étape
- * (Phase 4) — cette version pose les FONDATIONS (STEP 0) : ancres, reveal au
- * scroll, nav + footer via le layout marketing. Les blocs marqués
- * « [STEP n] » seront remplis aux étapes suivantes.
+ * Landing publique « Nuit ». Référence visuelle :
+ * design-system/references/look360-maquette-reference.html.
+ * Données réelles (produits, chiffres) recalculées au plus une fois par 24 h.
  */
 export default async function LandingPage() {
-  // Un visiteur déjà connecté n'a rien à faire sur la vitrine marketing :
-  // on l'envoie directement dans l'app.
+  // Un visiteur déjà connecté va directement dans l'app.
   const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  if (data?.claims?.sub) redirect("/recherche");
+  const { data: auth } = await supabase.auth.getClaims();
+  if (auth?.claims?.sub) redirect("/recherche");
+
+  const data = await getLandingData();
 
   return (
-    <div>
-      {/* HERO — STEP 1 */}
-      <Hero />
-      <TrustStrip />
-
-      {/* PROBLÈME/SOLUTION + 3 ÉTAPES — STEP 2 */}
-      <EtapesSection />
-
-      {/* GRILLE DE FONCTIONS + COMPARATIF — STEP 3 */}
-      <FonctionsSection />
-      <ComparatifSection />
-      <CtaInline />
-
-      {/* SECTION TESTING SIGNATURE — STEP 4 */}
-      <TestingSection />
-
-      {/* PREUVE SOCIALE / VITRINE PUBLIQUE — STEP 5 */}
-      <PreuveSection />
-
-      {/* BLOC OFFRES — STEP 6 */}
-      <OffresSection />
-
-      {/* FAQ + CTA FINAL — STEP 7 */}
-      <FaqSection />
-      <CtaFinal />
-
-      {/* Barre CTA collante — mobile uniquement */}
-      <StickyCta />
+    <div className="nuit">
+      <canvas className="rain" aria-hidden />
+      <NuitNav />
+      <main className="layer">
+        <Hero data={data} />
+        <Marquee products={data.products} />
+        <Etapes products={data.products} />
+        <Comparatif />
+        <Testing />
+        <Chiffres stats={data.stats} />
+        <Fonctions products={data.products} />
+        <Tarifs />
+        <Faq />
+      </main>
+      <Footer />
+      <NuitMotion />
     </div>
   );
 }

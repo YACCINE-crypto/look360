@@ -106,6 +106,21 @@
   --sidebar-active-fg: #ffffff;
   --sidebar-hover-bg: color-mix(in srgb, #ffffff 8%, transparent);
 
+  /* Landing publique « Nuit » (fond navy profond + accent Look360 lumineux).
+     Utilisés par src/app/(marketing)/nuit.css uniquement. */
+  --night: #08111f;
+  --night-2: var(--sidebar-bg);
+  --night-3: #16294a;
+  --night-line: var(--sidebar-border);
+  --night-fg: #f1f5fb;
+  --night-fg-2: #b6c3da;
+  --night-muted: var(--sidebar-muted);
+  --night-accent: #3b82f6;          /* accent éclairci, lisible sur navy */
+  --night-accent-sky: #7fb0ff;      /* libellés / chiffres secondaires */
+  --night-accent-head: #5b9bff;     /* 2e ligne des titres */
+  --night-glow: color-mix(in srgb, var(--night-accent) 45%, transparent);
+  --whatsapp: #25d366;
+
   /* Ombre de carte douce (élévation par défaut du contenu clair) */
   --elev-card: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 4px 12px -4px rgb(15 23 42 / 0.06);
   --elev-lift: 0 12px 28px -10px rgb(15 23 42 / 0.16), 0 4px 10px -6px rgb(15 23 42 / 0.10);
