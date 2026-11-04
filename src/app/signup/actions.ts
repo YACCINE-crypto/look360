@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getOrigin } from "@/lib/url";
+import { allow, clientIp, norm, turnstileOk } from "@/lib/rateLimit";
 
 /**
  * Inscription email + mot de passe. Le trigger DB crée un profil `owner`
@@ -19,6 +20,18 @@ export async function signup(
 
   if (!email) return "Email requis.";
   if (password.length < 8) return "Mot de passe : 8 caractères minimum.";
+
+  // Anti création en masse : 5 inscriptions / heure par IP (cybercafés),
+  // 3 / heure par email, + Turnstile quand il est configuré.
+  const ip = await clientIp();
+  if (!(await turnstileOk(formData.get("cf-turnstile-response"), ip))) {
+    return "Vérification anti-robot échouée. Recharge la page et réessaie.";
+  }
+  const ok = await allow([
+    { key: `signup:ip:${ip}`, windowSec: 3600, max: 5 },
+    { key: `signup:email:${norm(email)}`, windowSec: 3600, max: 3 },
+  ]);
+  if (!ok) return "Trop de tentatives. Patiente quelques minutes avant de réessayer.";
 
   const supabase = await createClient();
   const origin = await getOrigin();

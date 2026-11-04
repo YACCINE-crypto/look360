@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { allow, clientIp, norm } from "@/lib/rateLimit";
 
 /**
  * Connexion email + mot de passe.
@@ -17,6 +18,14 @@ export async function login(
   if (!email || !password) {
     return "Email et mot de passe requis.";
   }
+
+  // Anti force brute : 5 essais / 15 min par compte, 20 / 15 min par IP.
+  const ip = await clientIp();
+  const ok = await allow([
+    { key: `login:email:${norm(email)}`, windowSec: 900, max: 5 },
+    { key: `login:ip:${ip}`, windowSec: 900, max: 20 },
+  ]);
+  if (!ok) return "Trop de tentatives. Patiente quelques minutes avant de réessayer.";
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });

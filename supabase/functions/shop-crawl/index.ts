@@ -3,7 +3,8 @@
 // pour les boutiques repérées dans les pubs (table shops).
 //
 // POST { mode: "crawl", limit? }   → boutiques à rafraîchir (next_crawl_at passé)
-// POST { mode: "domain", domain }  → une boutique (si périmée ou jamais vue)
+// POST { mode: "domain", domain }  → une boutique (si périmée ou jamais vue : ajoutée)
+// Accès : serveur Look360 uniquement (en-tête x-look360-key ou x-cron-secret).
 // POST { mode: "index" }           → ré-indexe pubs → boutiques (refresh_shop_index)
 //
 // Politesse : une boutique tous les 7 jours max, pause entre requêtes, 4 pages
@@ -240,8 +241,18 @@ async function crawlShop(domain: string): Promise<string> {
   return `ok:${rows.length}`;
 }
 
+/** Appel autorisé seulement depuis le serveur Look360 (pas avec la seule clé anon publique). */
+function serverCaller(req: Request): boolean {
+  const svc = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const cron = Deno.env.get("CRON_SECRET");
+  const k = req.headers.get("x-look360-key");
+  const c = req.headers.get("x-cron-secret");
+  return Boolean((svc && k && k === svc) || (cron && c && c === cron));
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") return new Response("POST", { status: 405 });
+  if (!serverCaller(req)) return Response.json({ error: "forbidden" }, { status: 403 });
   let body: Record<string, unknown> = {};
   try {
     body = await req.json();
@@ -262,8 +273,16 @@ Deno.serve(async (req) => {
       const domain = String(body.domain ?? "").toLowerCase().replace(/^www\./, "").trim();
       if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain)) return Response.json({ error: "domaine invalide" }, { status: 400 });
       const { data: s } = await admin.from("shops").select("next_crawl_at").eq("domain", domain).maybeSingle();
-      if (!s) return Response.json({ ok: false, reason: "inconnue" });
-      if (Date.parse(s.next_crawl_at) > Date.now()) return Response.json({ ok: true, fresh: true });
+      if (!s) {
+        // Boutique jamais vue (ex. filtre « Paiement à la livraison » du Spy) :
+        // on l'ajoute puis on la lit. Domaines non marchands exclus.
+        const { data: excluded } = await admin.rpc("is_non_shop_domain", { d: domain });
+        if (excluded === true) return Response.json({ ok: false, reason: "non_boutique" });
+        const { error } = await admin.from("shops").insert({ domain });
+        if (error && !error.message.includes("duplicate")) throw error;
+      } else if (Date.parse(s.next_crawl_at) > Date.now()) {
+        return Response.json({ ok: true, fresh: true });
+      }
       return Response.json({ ok: true, result: await crawlShop(domain) });
     }
 
