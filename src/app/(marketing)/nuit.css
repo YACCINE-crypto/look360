@@ -98,16 +98,20 @@ html:has(.nuit), html:has(.nuit) body { background: var(--night); }
   background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 35%, transparent), transparent 70%);
   z-index: -1; pointer-events: none;
 }
-.nuit .live {
-  display: inline-flex; align-items: center; gap: 10px; max-width: 100%;
-  padding: 6px 14px 6px 6px; border: 1px solid var(--night-line); border-radius: 999px;
-  background: var(--panel); font-size: 13px; color: var(--night-fg-2);
-  animation: nuit-down .7s both;
+.nuit .live { display: flex; flex-direction: column; align-items: center; gap: 12px; animation: nuit-down .7s both; }
+.nuit .live .stack { display: flex; justify-content: center; }
+.nuit .live .stack img {
+  width: 52px; height: 52px; border-radius: 12px; object-fit: cover; background: var(--night-3);
+  border: 2px solid var(--night-fg); margin-left: -14px; box-shadow: 0 8px 20px -8px rgb(0 0 0 / .6);
+  transition: transform .25s;
 }
-.nuit .live .stack { display: flex; flex: none; }
-.nuit .live .stack img { width: 26px; height: 26px; border-radius: 7px; object-fit: cover; border: 2px solid var(--night); margin-left: -8px; background: var(--night-fg); }
 .nuit .live .stack img:first-child { margin-left: 0; }
-.nuit .live b { color: var(--night-fg); font-variant-numeric: tabular-nums; }
+.nuit .live .stack img:nth-child(odd) { transform: rotate(-4deg); }
+.nuit .live .stack img:nth-child(even) { transform: rotate(4deg) translateY(-2px); }
+.nuit .live .stack:hover img { transform: none; }
+.nuit .live-line { display: flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; font-size: clamp(13px, 3.6vw, 15px); color: var(--night-fg-2); }
+/* Largeur fixe (chiffres à chasse fixe) : le comptage ne fait plus bouger la ligne. */
+.nuit .live-line b { display: inline-block; text-align: right; color: var(--success); font-weight: 800; font-variant-numeric: tabular-nums; }
 .nuit .dot { position: relative; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
 .nuit .dot::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--success); animation: nuit-ping 1.6s cubic-bezier(0,0,.2,1) infinite; }
 @keyframes nuit-ping { 75%, 100% { transform: scale(2.6); opacity: 0; } }

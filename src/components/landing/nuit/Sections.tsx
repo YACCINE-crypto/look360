@@ -33,22 +33,24 @@ function Check() {
 export function Hero({ data }: { data: LandingData }) {
   return (
     <header className="wrap hero">
-      <span className="live">
+      {/* Bandeau « en direct » (modèle ShopClone) : vignettes au-dessus, compteur sur une
+          ligne à largeur fixe → rien ne bouge pendant le comptage. */}
+      <div className="live">
         {data.products.length > 0 && (
           <span className="stack" aria-hidden>
-            {data.products.slice(0, 4).map((p) => (
-              <img key={p.id} src={p.image} alt="" width={26} height={26} />
+            {data.products.slice(0, 5).map((p) => (
+              <img key={p.id} src={p.image} alt="" width={52} height={52} />
             ))}
           </span>
         )}
-        <span className="dot" aria-hidden />
-        <span>
-          <b data-count-now data-count={data.stats.ads30d}>
+        <p className="live-line">
+          <span className="dot" aria-hidden />
+          <b data-count-now data-count={data.stats.ads30d} style={{ minWidth: `${nf(data.stats.ads30d).length}ch` }}>
             {nf(data.stats.ads30d)}
           </b>{" "}
           pubs analysées ces 30 derniers jours
-        </span>
-      </span>
+        </p>
+      </div>
       <h1>
         <span className="l1">Trouver un produit gagnant</span>
         <span className="l2">ne suffit pas.</span>
