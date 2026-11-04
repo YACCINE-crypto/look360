@@ -386,8 +386,10 @@ html:has(.nuit), html:has(.nuit) body { background: var(--night); }
 .nuit .wa-fab:hover { transform: scale(1.08); }
 
 /* Révélations au scroll : l'état de repos reste lisible (pas d'opacité 0). */
-.nuit .rv { transform: translateY(26px); transition: transform .8s cubic-bezier(.2,.8,.2,1); }
-.nuit .rv.in { transform: none; }
+.nuit .rv { transform: translateY(26px); transition: transform .8s cubic-bezier(.2,.8,.2,1), opacity .8s cubic-bezier(.2,.8,.2,1); }
+/* Fondu à l'apparition (comme la maquette), activé par le script seulement. */
+.nuit.motion .rv { opacity: 0; }
+.nuit .rv.in, .nuit.motion .rv.in { opacity: 1; transform: none; }
 
 /* ---------- Mobile ---------- */
 @media (max-width: 960px) {
@@ -426,7 +428,7 @@ html:has(.nuit), html:has(.nuit) body { background: var(--night); }
 
 @media (prefers-reduced-motion: reduce) {
   .nuit *, .nuit *::before, .nuit *::after { animation: none !important; transition: none !important; }
-  .nuit .rv { transform: none; }
+  .nuit .rv, .nuit.motion .rv { transform: none; opacity: 1; }
 }
 
 /* Compléments */

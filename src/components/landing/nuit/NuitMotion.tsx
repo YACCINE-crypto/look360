@@ -57,6 +57,8 @@ export function NuitMotion() {
     };
 
     // --- Révélations + déclencheurs au scroll ---
+    // Le fondu n'est activé qu'ici : sans JavaScript, tout reste visible.
+    if (!reduce) root.classList.add("motion");
     const io = new IntersectionObserver(
       (entries) =>
         entries.forEach((e) => {
@@ -67,7 +69,7 @@ export function NuitMotion() {
           if (el.hasAttribute("data-step2")) clickLoop();
           io.unobserve(el);
         }),
-      { threshold: 0.25 },
+      { threshold: 0.12, rootMargin: "0px 0px -6% 0px" },
     );
     root.querySelectorAll(".rv, [data-in]").forEach((el) => io.observe(el));
     root.querySelectorAll<HTMLElement>("[data-count-now]").forEach(countUp);
@@ -108,17 +110,18 @@ export function NuitMotion() {
       frame.style.setProperty("--sc", "1");
     }
 
-    // --- Pluie de données (desktop uniquement) ---
+    // --- Pluie de données (mobile : densité réduite et 30 i/s pour la batterie) ---
     const cv = root.querySelector<HTMLCanvasElement>("canvas.rain");
     const ctx = cv?.getContext("2d");
-    if (cv && ctx && !reduce && innerWidth > 768) {
+    if (cv && ctx && !reduce) {
+      const mobile = innerWidth <= 768;
       const color = getComputedStyle(root).getPropertyValue("--night-accent-sky").trim() || "currentColor";
       let drops: { x: number; y: number; l: number; v: number; o: number }[] = [];
-      const dpr = Math.min(2, devicePixelRatio || 1);
+      const dpr = mobile ? 1 : Math.min(2, devicePixelRatio || 1);
       const size = () => {
         cv.width = innerWidth * dpr;
         cv.height = innerHeight * dpr;
-        drops = Array.from({ length: Math.round(innerWidth / 16) }, () => ({
+        drops = Array.from({ length: Math.round(innerWidth / (mobile ? 22 : 16)) }, () => ({
           x: Math.random() * cv.width,
           y: Math.random() * cv.height,
           l: 8 + Math.random() * 22,
@@ -132,9 +135,13 @@ export function NuitMotion() {
       let visible = true;
       const onVis = () => (visible = document.visibilityState === "visible");
       document.addEventListener("visibilitychange", onVis);
-      const loop = () => {
+      let last = 0;
+      const step = mobile ? 2 : 1; // 30 i/s sur mobile → pas doublé, même vitesse perçue
+      const loop = (t = 0) => {
         raf = requestAnimationFrame(loop);
         if (!visible) return;
+        if (mobile && t - last < 33) return;
+        last = t;
         ctx.clearRect(0, 0, cv.width, cv.height);
         ctx.strokeStyle = color;
         ctx.lineWidth = dpr;
@@ -144,7 +151,7 @@ export function NuitMotion() {
           ctx.moveTo(d.x, d.y);
           ctx.lineTo(d.x, d.y + d.l * dpr);
           ctx.stroke();
-          d.y += d.v * dpr;
+          d.y += d.v * dpr * step;
           if (d.y > cv.height) {
             d.y = -30;
             d.x = Math.random() * cv.width;
@@ -160,6 +167,7 @@ export function NuitMotion() {
     }
 
     return () => {
+      root.classList.remove("motion");
       timers.forEach(clearTimeout);
       intervals.forEach(clearInterval);
       cleanups.forEach((f) => f());
