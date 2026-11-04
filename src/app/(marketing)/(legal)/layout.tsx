@@ -2,7 +2,7 @@ import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 
 /**
- * Coquille des pages publiques (landing + pages légales) :
+ * Coquille des pages légales (CGU, confidentialité, remboursement) :
  * nav sticky en haut, pied de page en bas. La coquille de l'app connectée
  * reste séparée (groupe (app)).
  */

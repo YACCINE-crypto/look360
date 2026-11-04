@@ -29,5 +29,9 @@ technique incontournable ci‑dessous.
 - **Migration progressive** : les écrans historiques utilisent encore des alias de
   compatibilité (`bg-primary`, `text-foreground`…) qui pointent vers les mêmes tokens ;
   on les migre un écran à la fois vers les noms canoniques (Pipeline déjà migré).
-- **La landing (`src/app/(marketing)/**`) N'EST PAS migrée** (choix produit) : elle
-  garde les alias de compat et son échelle typo actuelle. Ne pas la refondre.
+- **La landing publique (`src/app/(marketing)/page.tsx`) suit la direction « Nuit »** :
+  référence = `design-system/references/look360-maquette-reference.html`, styles dans
+  `src/app/(marketing)/nuit.css` (scopés `.nuit`), tokens `--night-*` de
+  `/design-system/tokens.css`, composants dans `src/components/landing/nuit/`.
+  Données réelles via `src/lib/landingData.ts` (cache 24 h), prix via `src/lib/billing.ts`.
+  Les pages légales (`(marketing)/(legal)/**`) gardent l'ancien habillage clair.
