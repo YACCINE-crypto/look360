@@ -346,13 +346,13 @@ export function SpyClient({
       >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="flex flex-col gap-1.5 sm:col-span-2">
-            <span className={labelCls}>Mot-clé (produit / niche)</span>
+            <span className={labelCls}>Mot-clé <span className="text-muted-foreground font-normal">(facultatif)</span></span>
             <div className="border-border bg-input focus-within:border-accent focus-within:shadow-focus flex min-h-[44px] items-center gap-2 rounded-md border px-3 transition-colors">
               <Icon name="search" size={16} className="text-muted-foreground" />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="ex. montre, ceinture, masseur…"
+                placeholder="ex. montre, ceinture… ou laisse vide pour toutes les pubs"
                 className="w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
               />
             </div>
@@ -496,7 +496,7 @@ export function SpyClient({
           <EmptyState
             icon={Search}
             title="Lance une recherche"
-            description="Choisis un mot-clé et un ou plusieurs pays. Les pubs qui tournent depuis longtemps (et à fort reach en UE) sont les meilleurs signaux."
+            description="Choisis un ou plusieurs pays et tes filtres — le mot-clé est facultatif : sans mot-clé, tu vois toutes les pubs actives du pays qui passent tes filtres. Les pubs qui tournent depuis longtemps (et à fort reach en UE) sont les meilleurs signaux."
           />
         ))}
 
