@@ -22,10 +22,14 @@ const REGIONS: SpyRegion[] = ["africa", "europe", "other"];
 export function CountryMultiSelect({
   selected,
   onChange,
+  variant = "field",
 }: {
   selected: string[];
   onChange: (codes: string[]) => void;
+  /** « pill » = pastille compacte pour une barre de filtres (sans chips dessous). */
+  variant?: "field" | "pill";
 }) {
+  const pill = variant === "pill";
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState("");
   const [note, setNote] = useState<string | null>(null);
@@ -86,6 +90,26 @@ export function CountryMultiSelect({
 
   return (
     <div ref={ref} className="relative">
+      {pill ? (
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          className={`inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+            selected.length ? "border-accent bg-secondary text-accent" : "border-border bg-surface text-fg-2 hover:bg-input hover:text-fg"
+          }`}
+        >
+          <span>Pays</span>
+          {selected.length === 1 && <span className="font-semibold">· {countryLabel(selected[0])}</span>}
+          {selected.length > 1 && (
+            <span className="bg-accent text-accent-on grid h-5 min-w-5 place-items-center rounded-full px-1 text-xs font-bold tabular-nums">
+              {selected.length}
+            </span>
+          )}
+          <Icon name="chevronDown" size={14} className={`transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
+      ) : (
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -106,9 +130,10 @@ export function CountryMultiSelect({
           className={`text-muted-foreground shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
+      )}
 
       {/* Chips sélectionnés (toujours visibles, retirables) */}
-      {selected.length > 0 && (
+      {!pill && selected.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1.5">
           {selected.map((code) => (
             <span
@@ -139,7 +164,11 @@ export function CountryMultiSelect({
       )}
 
       {open && (
-        <div className="border-border bg-surface absolute z-50 mt-1 w-full min-w-[16rem] rounded-xl border p-2 shadow-xl">
+        <div
+          className={`border-border bg-surface absolute z-50 rounded-xl border p-2 shadow-xl ${
+            pill ? "left-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)]" : "mt-1 w-full min-w-[16rem]"
+          }`}
+        >
           {/* Filtre texte */}
           <div className="border-border bg-input focus-within:border-accent mb-2 flex min-h-[38px] items-center gap-2 rounded-md border px-2.5">
             <Icon name="search" size={14} className="text-muted-foreground" />
@@ -168,6 +197,22 @@ export function CountryMultiSelect({
           </div>
 
           {note && <p className="text-warn-fg mb-2 px-1 text-xs">{note}</p>}
+
+          {pill && selected.length > 0 && (
+            <div className="border-border mb-2 flex flex-wrap gap-1.5 border-b pb-2">
+              {selected.map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => onChange(selected.filter((c) => c !== code))}
+                  className="bg-secondary text-accent hover:bg-accent/15 inline-flex h-7 items-center gap-1 rounded-full px-2.5 text-xs font-medium"
+                  aria-label={`Retirer ${countryLabel(code)}`}
+                >
+                  {countryLabel(code)} <Icon name="x" size={11} />
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Liste par région */}
           <div className="max-h-64 overflow-auto">
