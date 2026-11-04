@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/ui";
 import { Icon } from "@/components/Icon";
-import { Select, type SelectOption } from "@/components/Select";
+import { FilterPill, FilterToggle, OptionList, PanelHead, type PillOption } from "@/components/FilterPill";
 import { CountryMultiSelect } from "@/components/CountryMultiSelect";
 import { CreativeMedia } from "@/components/CreativeMedia";
 import { VideoLightbox, type PlayRequest } from "@/components/VideoLightbox";
@@ -27,38 +27,51 @@ import { estimateSpend, formatSpendRange, SPEND_METHOD } from "@/lib/spendEstima
 
 const nf = (n: number) => new Intl.NumberFormat("fr-FR").format(n);
 
-const labelCls = "text-xs font-medium text-muted-foreground";
-
-const PLATFORM_OPTS: SelectOption[] = [
+const PLATFORM_OPTS: PillOption[] = [
   { value: "", label: "Toutes" },
   { value: "facebook", label: "Facebook" },
   { value: "instagram", label: "Instagram" },
 ];
-const ANCIENNETE_OPTS: SelectOption[] = [
-  { value: "0", label: "Toutes" },
-  { value: "15", label: "+ de 15 j" },
-  { value: "30", label: "+ de 30 j" },
-  { value: "60", label: "+ de 60 j" },
-  { value: "90", label: "+ de 90 j" },
+const MEDIA_OPTS: PillOption[] = [
+  { value: "all", label: "Tout" },
+  { value: "video", label: "Vidéo", icon: "play" },
+  { value: "image", label: "Image", icon: "image" },
 ];
-const REACH_OPTS: SelectOption[] = [
+const REACH_OPTS: PillOption[] = [
   { value: "0", label: "Tous" },
   { value: "50000", label: "+ 50 000" },
   { value: "100000", label: "+ 100 000" },
   { value: "500000", label: "+ 500 000" },
   { value: "1000000", label: "+ 1 000 000" },
 ];
-const VARIANTS_OPTS: SelectOption[] = [
+const VARIANTS_OPTS: PillOption[] = [
   { value: "0", label: "Toutes" },
-  { value: "2", label: "≥ 2" },
-  { value: "3", label: "≥ 3" },
-  { value: "5", label: "≥ 5" },
+  { value: "2", label: "2 et plus", hint: "Le vendeur décline déjà sa pub" },
+  { value: "3", label: "3 et plus" },
+  { value: "5", label: "5 et plus", hint: "Produit travaillé en profondeur" },
 ];
-const MEDIA_OPTS: SelectOption[] = [
-  { value: "all", label: "Tout" },
-  { value: "video", label: "Vidéo" },
-  { value: "image", label: "Image" },
+const ADVERTISER_OPTS: PillOption[] = [
+  { value: "0", label: "Tous les annonceurs" },
+  { value: "5", label: "5+ pubs actives", hint: "Le vendeur teste plusieurs pubs", icon: "flask" },
+  { value: "10", label: "10+ pubs actives", hint: "Il met du budget : il scale", icon: "trending" },
+  { value: "20", label: "20+ pubs actives", hint: "Gros annonceur, produit rodé", icon: "crown" },
 ];
+
+/** Durée de diffusion : sélection rapide (jours depuis le lancement). */
+type Duration = { min: number; max: number | null };
+const DURATION_PRESETS: { key: string; label: string; hint: string; icon: "flask" | "check" | "trophy"; d: Duration }[] = [
+  { key: "debutant", label: "Débutant", hint: "Nouvelles pubs en phase de test", icon: "flask", d: { min: 0, max: 7 } },
+  { key: "valide", label: "Validé", hint: "Pubs qui ont prouvé leur rentabilité", icon: "check", d: { min: 7, max: 30 } },
+  { key: "evergreen", label: "Evergreen", hint: "Gagnantes actives depuis longtemps", icon: "trophy", d: { min: 30, max: null } },
+];
+const NO_DURATION: Duration = { min: 0, max: null };
+const durationOn = (d: Duration) => d.min > 0 || d.max != null;
+function durationLabel(d: Duration): string {
+  const p = DURATION_PRESETS.find((x) => x.d.min === d.min && x.d.max === d.max);
+  if (p) return p.label;
+  if (d.max == null) return `${d.min}+ j`;
+  return `${d.min}–${d.max} j`;
+}
 
 const DEFAULT_LIMIT = 36;
 
@@ -109,7 +122,11 @@ export function SpyClient({
   const [platform, setPlatform] = useState("");
   const [statut, setStatut] = useState("active");
   const [mediaType, setMediaType] = useState("all");
-  const [ancienneteMin, setAncienneteMin] = useState("0");
+  const [duration, setDuration] = useState<Duration>(NO_DURATION);
+  const [advMin, setAdvMin] = useState("0");
+  const [cod, setCod] = useState(false);
+  /** Domaines déjà vérifiés → COD ou non (filtre « Paiement à la livraison »). */
+  const [codMap, setCodMap] = useState<Record<string, boolean>>({});
   const [reachMin, setReachMin] = useState("0");
   const [variantsMin, setVariantsMin] = useState("0");
   const [tri, setTri] = useState("score");
@@ -138,7 +155,9 @@ export function SpyClient({
         setPlatform(String(v.platform ?? ""));
         setStatut(String(v.statut ?? "active"));
         setMediaType(String(v.mediaType ?? "all"));
-        setAncienneteMin(String(v.ancienneteMin ?? "0"));
+        if (v.duration && typeof v.duration === "object") setDuration(v.duration as Duration);
+        setAdvMin(String(v.advMin ?? "0"));
+        setCod(Boolean(v.cod));
         setReachMin(String(v.reachMin ?? "0"));
         setVariantsMin(String(v.variantsMin ?? "0"));
         setTri(String(v.tri ?? "score"));
@@ -164,17 +183,73 @@ export function SpyClient({
     try {
       sessionStorage.setItem(
         SPY_STORE,
-        JSON.stringify({ q, countries, platform, statut, mediaType, ancienneteMin, reachMin, variantsMin, tri, limit, ads, cached }),
+        JSON.stringify({ q, countries, platform, statut, mediaType, duration, advMin, cod, reachMin, variantsMin, tri, limit, ads, cached }),
       );
     } catch {
       /* quota de stockage */
     }
-  }, [status, ads, q, countries, platform, statut, mediaType, ancienneteMin, reachMin, variantsMin, tri, limit, cached]);
+  }, [status, ads, q, countries, platform, statut, mediaType, duration, advMin, cod, reachMin, variantsMin, tri, limit, cached]);
+
+  // Paiement à la livraison : vérifie les boutiques des pubs (catalogue Look360).
+  const shopDomains = useMemo(
+    () => [...new Set(ads.filter((a) => a.landing_kind === "shop" && a.landing_domain).map((a) => a.landing_domain as string))],
+    [ads],
+  );
+  const [codLoading, setCodLoading] = useState(false);
+  useEffect(() => {
+    if (!cod) return;
+    const todo = shopDomains.filter((d) => !(d in codMap));
+    if (todo.length === 0) return;
+    let alive = true;
+    const id = requestAnimationFrame(() => setCodLoading(true));
+    fetch("/api/shops/cod", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ domains: todo }) })
+      .then((r) => (r.ok ? r.json() : { cod: [] }))
+      .then((d: { cod?: string[] }) => {
+        if (!alive) return;
+        const yes = new Set(d.cod ?? []);
+        setCodMap((m) => ({ ...m, ...Object.fromEntries(todo.map((x) => [x, yes.has(x)])) }));
+      })
+      .catch(() => undefined)
+      .finally(() => alive && setCodLoading(false));
+    return () => {
+      alive = false;
+      cancelAnimationFrame(id);
+    };
+  }, [cod, shopDomains, codMap]);
+
+  // Filtres d'affinage : appliqués instantanément aux résultats (sans nouvelle recherche).
+  const advN = Number(advMin) || 0;
+  const visible = useMemo(
+    () =>
+      ads.filter((a) => {
+        const j = a.jours_actifs ?? 0;
+        if (j < duration.min) return false;
+        if (duration.max != null && j > duration.max) return false;
+        if (advN && (a.page_active_ads_count ?? 0) < advN) return false;
+        if (cod && !(a.landing_domain && codMap[a.landing_domain])) return false;
+        return true;
+      }),
+    [ads, duration, advN, cod, codMap],
+  );
+  const hidden = ads.length - visible.length;
+  const refineOn = durationOn(duration) || advN > 0 || cod;
+  const anyFilter = refineOn || platform !== "" || mediaType !== "all" || reachMin !== "0" || variantsMin !== "0" || statut === "all";
+  function resetFilters() {
+    setDuration(NO_DURATION);
+    setAdvMin("0");
+    setCod(false);
+    setPlatform("");
+    setMediaType("all");
+    setReachMin("0");
+    setVariantsMin("0");
+    setStatut("active");
+  }
 
   const euDispo = countries.some(isEUCountry);
+  const moreCount = [platform !== "", variantsMin !== "0", euDispo && reachMin !== "0", statut === "all"].filter(Boolean).length;
   const markets = Math.max(1, countries.length);
 
-  const triOpts: SelectOption[] = useMemo(
+  const triOpts: PillOption[] = useMemo(
     () => [
       { value: "score", label: "Score gagnant" },
       ...(euDispo ? [{ value: "reach", label: "Reach" }] : []),
@@ -190,7 +265,8 @@ export function SpyClient({
       platform,
       statut,
       mediaType,
-      ancienneteMin: Number(ancienneteMin) || 0,
+      // Durée appliquée côté écran (affinage instantané, cache partagé).
+      ancienneteMin: 0,
       reachMin: euDispo ? Number(reachMin) || 0 : 0,
       variantsMin: Number(variantsMin) || 0,
       tri,
@@ -340,104 +416,150 @@ export function SpyClient({
         subtitle="Trouve des pubs qui tournent déjà — signaux réels de la bibliothèque Meta."
       />
 
-      <form
-        onSubmit={submit}
-        className="border-border bg-surface space-y-3 rounded-xl border p-4 shadow-card"
-      >
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="flex flex-col gap-1.5 sm:col-span-2">
-            <span className={labelCls}>Mot-clé <span className="text-muted-foreground font-normal">(facultatif)</span></span>
-            <div className="border-border bg-input focus-within:border-accent focus-within:shadow-focus flex min-h-[44px] items-center gap-2 rounded-md border px-3 transition-colors">
-              <Icon name="search" size={16} className="text-muted-foreground" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="ex. montre, ceinture… ou laisse vide pour toutes les pubs"
-                className="w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
-              />
-            </div>
-          </label>
-          <div className="flex flex-col gap-1.5 sm:col-span-2">
-            <span className={labelCls}>Pays cibles (plusieurs possibles)</span>
-            <CountryMultiSelect selected={countries} onChange={setCountries} />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
-          <label className="flex flex-col gap-1.5">
-            <span className={labelCls}>Plateforme</span>
-            <Select value={platform} onChange={setPlatform} options={PLATFORM_OPTS} ariaLabel="Plateforme" />
-          </label>
-          <label className="flex flex-col gap-1.5">
-            <span className={labelCls}>Ancienneté min.</span>
-            <Select value={ancienneteMin} onChange={setAncienneteMin} options={ANCIENNETE_OPTS} ariaLabel="Ancienneté minimum" />
-          </label>
-          <label className="flex flex-col gap-1.5">
-            <span className={labelCls}>
-              Reach min. {!euDispo && <span className="text-warn-fg">(UE only)</span>}
-            </span>
-            <Select
-              value={reachMin}
-              onChange={setReachMin}
-              options={REACH_OPTS}
-              disabled={!euDispo}
-              ariaLabel="Reach minimum"
-            />
-          </label>
-          <label className="flex flex-col gap-1.5">
-            <span className={labelCls}>Variantes min.</span>
-            <Select value={variantsMin} onChange={setVariantsMin} options={VARIANTS_OPTS} ariaLabel="Variantes minimum" />
-          </label>
-          <label className="flex flex-col gap-1.5">
-            <span className={labelCls}>Créative</span>
-            <Select value={mediaType} onChange={setMediaType} options={MEDIA_OPTS} ariaLabel="Type de créative" />
-          </label>
-          <label className="flex flex-col gap-1.5">
-            <span className={labelCls}>Tri</span>
-            <Select value={tri} onChange={setTri} options={triOpts} ariaLabel="Tri" />
-          </label>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm">
+      <form onSubmit={submit} className="border-border bg-surface space-y-3 rounded-xl border p-3 shadow-card sm:p-4">
+        {/* Recherche */}
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <label className="border-border bg-input focus-within:border-accent focus-within:shadow-focus flex min-h-11 flex-1 items-center gap-2 rounded-lg border px-3 transition-colors">
+            <Icon name="search" size={16} className="text-muted-foreground shrink-0" />
+            <span className="sr-only">Mot-clé (facultatif)</span>
             <input
-              type="checkbox"
-              checked={statut === "all"}
-              onChange={(e) => setStatut(e.target.checked ? "all" : "active")}
-              className="accent-primary h-5 w-5"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Mot-clé facultatif : gaine, montre… (vide = toutes les pubs)"
+              className="w-full bg-transparent text-sm outline-none focus-visible:shadow-none"
             />
-            Inclure les pubs inactives
           </label>
-          <span
-            className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-              maxMarkets > 0 && markets > maxMarkets
-                ? "bg-warn-bg text-warn-fg"
-                : "bg-input text-muted-foreground"
-            }`}
-            title={`Ton offre permet jusqu'à ${maxMarkets} marché${maxMarkets > 1 ? "s" : ""} par recherche`}
-          >
-            {markets} marché{markets > 1 ? "s" : ""} / {maxMarkets} max
-          </span>
-          {searchesLimit > 0 && (
-            <span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums">
-              {nf(used)}/{nf(searchesLimit)} ce mois
-            </span>
-          )}
           <button
             type="submit"
             disabled={status === "loading"}
-            className="bg-accent text-accent-on ml-auto inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-5 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60"
+            className="bg-accent text-accent-on hover:bg-accent-hover inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg px-5 text-sm font-semibold transition-colors disabled:opacity-60"
           >
             <Icon name="search" size={16} />
             {status === "loading" ? "Recherche…" : "Rechercher"}
           </button>
         </div>
-        {!euDispo && (
-          <p className="text-muted-foreground text-xs">
-            Reach non disponible pour ces pays — on s&apos;appuie sur l&apos;ancienneté,
-            les variantes et l&apos;activité.
-          </p>
-        )}
+
+        {/* Filtres en pastilles */}
+        <div className="flex flex-wrap items-center gap-2">
+          <CountryMultiSelect selected={countries} onChange={setCountries} variant="pill" />
+
+          <FilterPill
+            label="Durée"
+            icon="clock"
+            active={durationOn(duration)}
+            value={durationLabel(duration)}
+          >
+            {(close) => (
+              <DurationPanel
+                value={duration}
+                onApply={(d) => {
+                  setDuration(d);
+                  close();
+                }}
+              />
+            )}
+          </FilterPill>
+
+          <FilterPill label="Annonceur actif" icon="users" active={advN > 0} value={`${advN}+ pubs`}>
+            {(close) => (
+              <>
+                <PanelHead title="Annonceur actif" hint="Nombre de pubs actives de l'annonceur en ce moment." />
+                <OptionList
+                  options={ADVERTISER_OPTS}
+                  value={advMin}
+                  onPick={(v) => {
+                    setAdvMin(v);
+                    close();
+                  }}
+                />
+              </>
+            )}
+          </FilterPill>
+
+          <FilterToggle
+            label="Paiement à la livraison"
+            icon="store"
+            on={cod}
+            onChange={setCod}
+            title="Boutiques où Look360 a détecté une app de paiement à la livraison (COD)"
+          />
+
+          <FilterPill label="Format" active={mediaType !== "all"} value={MEDIA_OPTS.find((o) => o.value === mediaType)?.label}>
+            {(close) => (
+              <>
+                <PanelHead title="Format de la créative" />
+                <OptionList
+                  options={MEDIA_OPTS}
+                  value={mediaType}
+                  onPick={(v) => {
+                    setMediaType(v);
+                    close();
+                  }}
+                />
+              </>
+            )}
+          </FilterPill>
+
+          <FilterPill label="Plus de filtres" icon="settings" count={moreCount} active={moreCount > 0}>
+            {() => (
+              <div className="space-y-3">
+                <Segment label="Plateforme" options={PLATFORM_OPTS} value={platform} onChange={setPlatform} />
+                <Segment label="Variantes minimum" options={VARIANTS_OPTS} value={variantsMin} onChange={setVariantsMin} />
+                {euDispo ? (
+                  <Segment label="Reach UE minimum" options={REACH_OPTS} value={reachMin} onChange={setReachMin} />
+                ) : (
+                  <p className="text-muted-foreground text-xs">Reach : disponible seulement pour les pays de l&apos;UE.</p>
+                )}
+                <label className="border-border flex cursor-pointer items-center gap-2 border-t pt-3 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={statut === "all"}
+                    onChange={(e) => setStatut(e.target.checked ? "all" : "active")}
+                    className="accent-primary h-4 w-4"
+                  />
+                  Inclure les pubs inactives
+                </label>
+              </div>
+            )}
+          </FilterPill>
+
+          {anyFilter && (
+            <button type="button" onClick={resetFilters} className="text-accent h-9 px-1 text-sm font-semibold hover:underline">
+              Effacer tout
+            </button>
+          )}
+
+          <div className="ml-auto">
+            <FilterPill label="Trier" align="right" active value={triOpts.find((o) => o.value === tri)?.label}>
+              {(close) => (
+                <>
+                  <PanelHead title="Trier les résultats" />
+                  <OptionList
+                    options={triOpts}
+                    value={tri}
+                    onPick={(v) => {
+                      setTri(v);
+                      setAds((a) => sortAds(a, v));
+                      close();
+                    }}
+                  />
+                </>
+              )}
+            </FilterPill>
+          </div>
+        </div>
+
+        <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+          <span className={maxMarkets > 0 && markets > maxMarkets ? "text-warn-fg font-semibold" : ""}>
+            {markets} marché{markets > 1 ? "s" : ""} / {maxMarkets} max par recherche
+          </span>
+          {searchesLimit > 0 && (
+            <span className="tabular-nums">
+              · {nf(used)}/{nf(searchesLimit)} recherches ce mois
+            </span>
+          )}
+          {!euDispo && <span>· Reach disponible seulement pour les pays de l&apos;UE</span>}
+        </div>
       </form>
 
       {/* Bandeau de progression (streaming) */}
@@ -512,17 +634,45 @@ export function SpyClient({
       {ads.length > 0 && (
         <>
           {status === "done" && (
-            <p className="text-muted-foreground flex items-center gap-2 text-sm">
-              {ads.length} pub(s) trouvée(s)
+            <p className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
+              <span>
+                <b className="text-fg tabular-nums">{nf(visible.length)}</b> pub{visible.length > 1 ? "s" : ""}
+                {hidden > 0 && <> · {nf(hidden)} masquée{hidden > 1 ? "s" : ""} par tes filtres</>}
+              </span>
               {cached && (
                 <span className="bg-input text-muted-foreground rounded-full px-2 py-0.5 text-xs font-medium">
                   ⚡ en cache
                 </span>
               )}
+              {cod && codLoading && <span className="text-xs">Vérification des boutiques…</span>}
             </p>
           )}
+          {cod && status === "done" && (
+            <p className="bg-secondary text-fg-2 rounded-lg px-3 py-2 text-xs">
+              Paiement à la livraison : seules les boutiques déjà lues par Look360 sont reconnues. Les nouvelles boutiques de
+              cette recherche sont analysées en arrière-plan et apparaîtront à ta prochaine recherche.
+            </p>
+          )}
+          {visible.length === 0 && status === "done" && (
+            <div className="border-border bg-surface rounded-xl border border-dashed p-8 text-center">
+              <p className="text-muted-foreground text-sm">Aucune pub ne passe tes filtres d&apos;affinage.</p>
+              {refineOn && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDuration(NO_DURATION);
+                    setAdvMin("0");
+                    setCod(false);
+                  }}
+                  className="text-accent mt-2 text-sm font-semibold hover:underline"
+                >
+                  Retirer durée, annonceur et livraison
+                </button>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-1 items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {ads.map((ad) => (
+            {visible.map((ad) => (
               <SpyCard key={ad.ad_archive_id} ad={ad} onAnalyze={analyze} onPlay={setPlaying} />
             ))}
           </div>
@@ -564,6 +714,112 @@ export function SpyClient({
           onClose={() => setPlaying(null)}
         />
       )}
+    </div>
+  );
+}
+
+/** Choix compact en boutons (panneau « Plus de filtres »). */
+function Segment({ label, options, value, onChange }: { label: string; options: PillOption[]; value: string; onChange: (v: string) => void }) {
+  return (
+    <div>
+      <p className="text-fg mb-1.5 text-xs font-semibold">{label}</p>
+      <div className="flex flex-wrap gap-1.5">
+        {options.map((o) => (
+          <button
+            key={o.value}
+            type="button"
+            aria-pressed={o.value === value}
+            onClick={() => onChange(o.value)}
+            className={`h-8 rounded-full border px-3 text-xs font-medium transition-colors ${
+              o.value === value ? "border-accent bg-secondary text-accent" : "border-border text-fg-2 hover:bg-input"
+            }`}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Panneau « Durée de diffusion » : sélection rapide + plage libre, appliqué au clic. */
+function DurationPanel({ value, onApply }: { value: Duration; onApply: (d: Duration) => void }) {
+  const [draft, setDraft] = useState<Duration>(value);
+  const num = (v: string) => (v.trim() === "" ? null : Math.max(0, Math.floor(Number(v) || 0)));
+  const invalid = draft.max != null && draft.max < draft.min;
+  return (
+    <div>
+      <PanelHead title="Durée de diffusion" hint="Depuis combien de jours la pub tourne." />
+      <p className="text-warn-fg mb-1.5 flex items-center gap-1 text-xs font-bold uppercase tracking-wide">
+        <Icon name="sparkles" size={12} /> Sélection rapide
+      </p>
+      <div className="space-y-1">
+        {DURATION_PRESETS.map((p) => {
+          const sel = draft.min === p.d.min && draft.max === p.d.max;
+          return (
+            <button
+              key={p.key}
+              type="button"
+              onClick={() => setDraft(sel ? NO_DURATION : p.d)}
+              aria-pressed={sel}
+              className={`flex w-full items-start gap-2.5 rounded-lg border px-2.5 py-2 text-left transition-colors ${
+                sel ? "border-accent bg-secondary" : "border-border hover:bg-input"
+              }`}
+            >
+              <span className={`mt-0.5 shrink-0 ${sel ? "text-accent" : "text-muted-foreground"}`}>
+                <Icon name={p.icon} size={16} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className={`flex items-baseline gap-1.5 text-sm font-semibold ${sel ? "text-accent" : "text-fg"}`}>
+                  {p.label}
+                  <span className="text-muted-foreground text-xs font-medium tabular-nums">
+                    {p.d.max == null ? `${p.d.min}+ jours` : `${p.d.min} → ${p.d.max} jours`}
+                  </span>
+                </span>
+                <span className="text-muted-foreground block text-xs">{p.hint}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-muted-foreground mb-1.5 mt-3 text-xs font-semibold">Plage personnalisée (jours)</p>
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          min={0}
+          inputMode="numeric"
+          aria-label="Jours minimum"
+          value={draft.min || ""}
+          placeholder="0"
+          onChange={(e) => setDraft((d) => ({ ...d, min: num(e.target.value) ?? 0 }))}
+          className="border-border bg-input focus:border-accent h-9 w-full rounded-md border px-2.5 text-sm tabular-nums outline-none"
+        />
+        <span className="text-muted-foreground">—</span>
+        <input
+          type="number"
+          min={0}
+          inputMode="numeric"
+          aria-label="Jours maximum"
+          value={draft.max ?? ""}
+          placeholder="∞"
+          onChange={(e) => setDraft((d) => ({ ...d, max: num(e.target.value) }))}
+          className="border-border bg-input focus:border-accent h-9 w-full rounded-md border px-2.5 text-sm tabular-nums outline-none"
+        />
+      </div>
+      {invalid && <p className="text-danger-fg mt-1 text-xs">Le maximum doit être supérieur au minimum.</p>}
+      <div className="border-border mt-3 flex items-center justify-between border-t pt-3">
+        <button type="button" onClick={() => onApply(NO_DURATION)} className="text-fg-2 hover:text-fg text-sm font-medium">
+          Réinitialiser
+        </button>
+        <button
+          type="button"
+          disabled={invalid}
+          onClick={() => onApply(draft)}
+          className="bg-accent text-accent-on hover:bg-accent-hover inline-flex h-9 items-center gap-1.5 rounded-md px-4 text-sm font-semibold transition-colors disabled:opacity-50"
+        >
+          <Icon name="check" size={14} /> Appliquer
+        </button>
+      </div>
     </div>
   );
 }
