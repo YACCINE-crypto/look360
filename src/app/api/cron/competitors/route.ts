@@ -4,6 +4,7 @@ import { getWebPush, type PushPayload, type StoredSubscription } from "@/lib/web
 import { runSpySearch } from "@/lib/apify";
 import { planConfig } from "@/lib/billing";
 import type { Json } from "@/lib/database.types";
+import { archiveThumbs, seedFromSpyCache } from "@/lib/competitorAds";
 
 type WatchRow = { id: string; user_id: string; created_at: string } & Record<string, unknown>;
 
@@ -134,6 +135,9 @@ export async function GET(request: Request) {
       }
       checked++;
 
+      // Copie CDN des miniatures (les liens Meta expirent en quelques jours).
+      await archiveThumbs(supabase, c.page_id, { fresh: ads as never, max: 40, deadline: start + 52_000 });
+
       // On ne notifie que s'il y avait déjà une baseline (évite de notifier
       // toutes les pubs existantes lors de la 1re vérification).
       if (nouvelles.length > 0 && known.size > 0) {
@@ -171,6 +175,18 @@ export async function GET(request: Request) {
     } catch {
       // Échec Apify pour ce concurrent : on marque quand même la date et on continue.
       await supabase.from("competitors_watch").update({ last_checked_at: nowIso }).eq("id", c.id);
+      // Historique vide → on le remplit depuis les recherches Spy en cache (sans Apify),
+      // puis on sauve les miniatures encore valides.
+      try {
+        const { count } = await supabase
+          .from("competitor_ads")
+          .select("ad_archive_id", { count: "exact", head: true })
+          .eq("page_id", c.page_id);
+        if (!count) await seedFromSpyCache(supabase, c.page_id);
+        await archiveThumbs(supabase, c.page_id, { max: 40, deadline: start + 52_000 });
+      } catch {
+        /* sans gravité : nouvel essai au prochain passage */
+      }
     }
   }
 

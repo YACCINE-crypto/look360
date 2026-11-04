@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader, Card } from "@/components/ui";
 import { Icon } from "@/components/Icon";
+import { AdThumb } from "@/components/AdThumb";
 import { CountryFlag } from "@/components/dataviz";
 import { EmptyState } from "@/components/EmptyState";
 import { AdGrid } from "@/components/AdGrid";
@@ -185,7 +186,12 @@ export default async function SurveillancePage() {
       {/* 1. Nouvelles pubs */}
       <Section title="Nouvelles pubs" hint="Lancées par tes concurrents ces 7 derniers jours" icon="sparkles">
         {fresh.length > 0 ? (
-          <AdGrid ads={fresh.slice(0, 8).map((a) => a.payload)} />
+          <AdGrid
+            ads={fresh.slice(0, 8).map((a) => {
+              const cdn = (a.payload as SpyAd & { thumbnail_cdn_url?: string | null }).thumbnail_cdn_url;
+              return cdn ? { ...a.payload, thumbnail_url: cdn } : a.payload;
+            })}
+          />
         ) : (
           <Empty text="Aucune nouvelle pub détectée cette semaine." />
         )}
@@ -244,7 +250,11 @@ export default async function SurveillancePage() {
                         </span>
                       )}
                     </p>
-                    <p className="text-muted-foreground text-xs">Vérifié {ago(c.last_checked_at, now)}</p>
+                    <p className="text-muted-foreground text-xs">
+                      {latest.get(c.page_id)
+                        ? `Pubs relevées ${ago(new Date(latest.get(c.page_id) as number).toISOString(), now)}`
+                        : "En attente de la première collecte"}
+                    </p>
                   </div>
                   {st.fresh > 0 && (
                     <span className="bg-accent text-accent-on shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold">
@@ -363,10 +373,11 @@ function AdList({
             className="hover:bg-input flex items-center gap-3 px-3 py-2.5"
           >
             <span className="bg-input h-12 w-12 shrink-0 overflow-hidden rounded-md">
-              {a.payload.thumbnail_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={a.payload.thumbnail_url} alt="" loading="lazy" className="h-full w-full object-cover" />
-              )}
+              <AdThumb
+                cdn={(a.payload as SpyAd & { thumbnail_cdn_url?: string | null }).thumbnail_cdn_url}
+                src={a.payload.thumbnail_url}
+                video={a.payload.media_type === "video"}
+              />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-semibold">{cleanField(a.payload.page_name) ?? "Page"}</span>
