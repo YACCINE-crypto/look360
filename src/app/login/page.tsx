@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Suspense, useActionState, useState } from "react";
+import { Turnstile } from "@/components/Turnstile";
 import { useSearchParams } from "next/navigation";
 import { Icon } from "@/components/Icon";
 import { PasswordInput } from "@/components/PasswordInput";
@@ -138,6 +139,8 @@ function AuthCard() {
                 <PasswordInput id="signup-password" name="password" autoComplete="new-password" minLength={8} />
                 <p className="text-muted-foreground text-xs">8 caractères minimum.</p>
               </div>
+
+              <Turnstile />
 
               {signupError && <p className="text-danger-fg text-sm">{signupError}</p>}
 

@@ -132,7 +132,7 @@ export function isStale(s: Pick<Shop, "next_crawl_at">): boolean {
   return Date.parse(s.next_crawl_at) <= Date.now();
 }
 
-/** Appel au collecteur (Edge Function). La clé publique suffit : il ne fait que des lectures publiques. */
+/** Appel au collecteur (Edge Function), réservé au serveur (clé de service ou CRON_SECRET). */
 export async function callShopCrawl(body: Record<string, unknown>, timeoutMs = 120_000): Promise<unknown> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -142,7 +142,13 @@ export async function callShopCrawl(body: Record<string, unknown>, timeoutMs = 1
   try {
     const r = await fetch(`${url}/functions/v1/shop-crawl`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+        // Preuve d'appel serveur (audit 2026-11-04) : la clé anon seule ne suffit plus.
+        ...(process.env.SUPABASE_SERVICE_ROLE_KEY ? { "x-look360-key": process.env.SUPABASE_SERVICE_ROLE_KEY } : {}),
+        ...(process.env.CRON_SECRET ? { "x-cron-secret": process.env.CRON_SECRET } : {}),
+      },
       body: JSON.stringify(body),
       signal: ctrl.signal,
       cache: "no-store",

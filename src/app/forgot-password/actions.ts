@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getOrigin } from "@/lib/url";
+import { allow, clientIp, norm } from "@/lib/rateLimit";
 
 /**
  * Envoie un email de réinitialisation. Le lien passe par /auth/confirm (qui
@@ -15,6 +16,15 @@ export async function forgotPassword(
 ): Promise<string | null> {
   const email = String(formData.get("email") ?? "").trim();
   if (!email) return "Email requis.";
+
+  // Anti envoi en boucle : 3 / heure par email, 10 / heure par IP. Si la limite
+  // est atteinte, on affiche quand même « envoyé » (aucune information révélée).
+  const ip = await clientIp();
+  const ok = await allow([
+    { key: `forgot:email:${norm(email)}`, windowSec: 3600, max: 3 },
+    { key: `forgot:ip:${ip}`, windowSec: 3600, max: 10 },
+  ]);
+  if (!ok) redirect("/forgot-password?sent=1");
 
   const supabase = await createClient();
   const origin = await getOrigin();
