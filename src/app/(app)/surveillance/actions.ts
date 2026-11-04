@@ -1,6 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { archiveThumbs, seedFromSpyCache } from "@/lib/competitorAds";
 import { createClient } from "@/lib/supabase/server";
 import { getSubscription } from "@/lib/credits";
 import { planConfig } from "@/lib/billing";
@@ -45,6 +48,15 @@ export async function suivreConcurrent(input: {
     if (error.message.includes("quota_competitors")) return { ok: false, reason: "limit", slots };
     return { ok: false, reason: "db" };
   }
+
+  // Historique immédiat depuis les recherches Spy en cache (sans attendre le
+  // prochain passage du collecteur), puis copie CDN des miniatures valides.
+  const pageId = input.page_id;
+  after(async () => {
+    const admin = createAdminClient();
+    await seedFromSpyCache(admin, pageId).catch(() => 0);
+    await archiveThumbs(admin, pageId, { max: 20, deadline: Date.now() + 40_000 }).catch(() => 0);
+  });
 
   revalidatePath("/surveillance");
   return { ok: true };
