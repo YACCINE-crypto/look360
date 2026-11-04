@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getLandingData } from "@/lib/landingData";
@@ -19,6 +19,9 @@ import {
 import "./nuit.css";
 
 export const dynamic = "force-dynamic";
+
+// Barre du navigateur mobile assortie au fond navy (--night) de la landing.
+export const viewport: Viewport = { themeColor: "#08111f" };
 
 export const metadata: Metadata = {
   title: "Look360 · Trouve, teste et valide tes produits gagnants",

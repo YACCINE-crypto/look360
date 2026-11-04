@@ -18,6 +18,17 @@
   color: var(--night-fg);
   font-family: var(--font-body);
   color-scheme: dark;
+  /* Empêche la marge haute de la nav de « sortir » du bloc (bande claire en haut). */
+  display: flow-root;
+}
+/* Le fond de la page (rebond iOS, zone d'encoche) reste navy sur la landing. */
+html:has(.nuit), html:has(.nuit) body { background: var(--night); }
+/* Bande opaque au-dessus de la nav flottante : le contenu qui défile ne passe
+   plus visible entre le haut de l'écran et la nav. */
+.nuit::before {
+  content: ""; position: fixed; inset: 0 0 auto; z-index: 29; pointer-events: none;
+  height: calc(env(safe-area-inset-top, 0px) + 14px);
+  background: var(--night);
 }
 .nuit ::selection { background: var(--night-accent); color: var(--night-fg); }
 .nuit a { color: inherit; text-decoration: none; }
@@ -45,25 +56,17 @@
   display: flex; align-items: center; gap: 18px; height: 62px;
   padding: 0 10px 0 14px;
   border: 1px solid var(--night-line); border-radius: 16px;
-  background: color-mix(in srgb, var(--night) 72%, transparent);
+  background: color-mix(in srgb, var(--night) 90%, transparent);
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
 }
 .nuit .nav-logo img { height: 34px; width: auto; display: block; }
 .nuit .nav-links { display: flex; gap: 22px; margin-left: 14px; color: var(--night-fg-2); font-size: 14px; font-weight: 500; }
 .nuit .nav-links a:hover { color: var(--night-fg); }
 .nuit .nav-r { margin-left: auto; display: flex; gap: 10px; align-items: center; }
-.nuit .burger { display: none; width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--night-line); color: var(--night-fg); background: transparent; place-items: center; }
-.nuit .menu {
-  margin-top: 8px; padding: 10px; display: grid; gap: 4px;
-  border: 1px solid var(--night-line); border-radius: 16px;
-  background: color-mix(in srgb, var(--night) 94%, transparent);
-  backdrop-filter: blur(14px);
-}
-.nuit .menu a { padding: 12px 12px; border-radius: 10px; font-weight: 600; color: var(--night-fg-2); }
-.nuit .menu a:hover { background: var(--night-2); color: var(--night-fg); }
 
 /* ---------- Boutons ---------- */
 .nuit .btn {
+  white-space: nowrap;
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   height: 44px; padding: 0 18px; border-radius: 12px;
   font-weight: 700; font-size: 14px;
@@ -76,15 +79,16 @@
 
 /* Bouton néon : bordure lumineuse qui fait le tour (border beam) */
 @property --beam-a { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
-.nuit .beam { position: relative; isolation: isolate; border: 0; height: 58px; padding: 0 30px; font-size: 16px; border-radius: 16px; background: var(--night-2); }
+.nuit .beam { position: relative; isolation: isolate; border: 0; height: 58px; padding: 0 30px; font-size: 16px; border-radius: 16px; background: var(--accent); color: var(--accent-on); box-shadow: 0 10px 30px -8px var(--night-glow); }
 .nuit .beam::before {
   content: ""; position: absolute; inset: -1.5px; z-index: -2; border-radius: 17px;
   background: conic-gradient(from var(--beam-a), transparent 0 70%, var(--night-accent) 82%, var(--night-accent-sky) 88%, transparent 94%);
   animation: nuit-beam 3.2s linear infinite;
 }
-.nuit .beam::after { content: ""; position: absolute; inset: 1px; z-index: -1; border-radius: 15px; background: linear-gradient(180deg, var(--night-3), var(--night-2)); }
-.nuit .beam .halo { position: absolute; inset: -14px; z-index: -3; border-radius: 26px; background: radial-gradient(closest-side, var(--night-glow), transparent); opacity: .55; filter: blur(8px); }
-.nuit .beam:hover { background: var(--night-2); transform: translateY(-1px); }
+.nuit .beam::after { content: ""; position: absolute; inset: 1.5px; z-index: -1; border-radius: 15px; background: linear-gradient(180deg, var(--night-accent), var(--accent)); }
+.nuit .beam .halo { position: absolute; inset: -14px; z-index: -3; border-radius: 26px; background: radial-gradient(closest-side, var(--night-glow), transparent); opacity: .8; filter: blur(10px); }
+.nuit .beam:hover { background: var(--accent); transform: translateY(-1px); }
+.nuit .beam:hover::after { background: linear-gradient(180deg, var(--night-accent), var(--accent-hover)); }
 @keyframes nuit-beam { to { --beam-a: 360deg; } }
 
 /* ---------- Hero ---------- */
@@ -383,8 +387,7 @@
 
 /* ---------- Mobile ---------- */
 @media (max-width: 960px) {
-  .nuit .nav-links, .nuit .nav-r .btn:not(.btn-primary) { display: none; }
-  .nuit .burger { display: grid; }
+  .nuit .nav-links { display: none; }
   .nuit .step, .nuit .step.flip, .nuit .split { grid-template-columns: minmax(0, 1fr); }
   .nuit .step.flip .txt { order: 0; }
   .nuit .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -395,7 +398,12 @@
 @media (max-width: 640px) {
   .nuit .hero { padding-top: 52px; }
   .nuit .sub { font-size: 16px; }
-  .nuit .nav-r .btn-primary .lg { display: none; }
+  /* Même barre que sur ordinateur : logo, Connexion, Commencer gratuitement. */
+  .nuit .nav-in { gap: 8px; padding: 0 8px 0 10px; height: 56px; }
+  .nuit .nav-logo img { height: 30px; }
+  .nuit .nav-r { gap: 6px; }
+  .nuit .nav-r .btn { height: 40px; padding: 0 12px; font-size: 13px; border-radius: 10px; }
+  .nuit .nav-r .btn:not(.btn-primary) { border-color: transparent; padding: 0 8px; }
   .nuit .grid6 { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 12px; }
   .nuit .grid6 .ad:nth-child(n+6) { display: none; }
   .nuit .badge-score { right: 12px; bottom: 12px; }
@@ -409,7 +417,8 @@
   .nuit .gauge .v { font-size: 46px; }
   .nuit .win { min-height: 0; }
 }
-@media (min-width: 641px) { .nuit .nav-r .btn-primary .sm { display: none; } }
+.nuit .nav-r .btn-primary .sm { display: none; }
+@media (max-width: 439px) { .nuit .nav-r .btn-primary .lg { display: none; } .nuit .nav-r .btn-primary .sm { display: inline; } }
 
 @media (prefers-reduced-motion: reduce) {
   .nuit *, .nuit *::before, .nuit *::after { animation: none !important; transition: none !important; }
