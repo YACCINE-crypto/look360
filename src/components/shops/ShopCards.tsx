@@ -174,24 +174,60 @@ export function ShopCard({ shop, thumbs = [], base = "/boutiques" }: { shop: Sho
 }
 
 /** Encart « débloquer » affiché après l'aperçu gratuit. */
-export function UnlockMore({ what, total }: { what: string; total?: number }) {
+/**
+ * Bandeau « contenu verrouillé ». La limite est appliquée côté serveur (seuls
+ * `shown` éléments sont envoyés) ; ce bandeau affiche le nombre réel restant.
+ */
+export function UnlockMore({
+  what,
+  total,
+  shown = 5,
+  minPlan = "Starter",
+}: {
+  what: string;
+  total?: number;
+  shown?: number;
+  minPlan?: string;
+}) {
+  const locked = total != null ? Math.max(0, total - shown) : 0;
   return (
-    <div className="border-border bg-surface flex flex-col items-center gap-3 rounded-xl border border-dashed p-6 text-center sm:flex-row sm:text-left">
-      <span className="bg-secondary text-accent grid h-11 w-11 shrink-0 place-items-center rounded-full">
-        <Icon name="lock" size={20} />
-      </span>
-      <div className="flex-1">
-        <p className="font-semibold">
-          {total && total > 5 ? `${nf.format(total - 5)} ${what} de plus avec un abonnement` : `Débloque tous les ${what}`}
-        </p>
-        <p className="text-muted-foreground text-sm">L&apos;offre gratuite affiche un aperçu de 5 éléments.</p>
-      </div>
-      <Link
-        href="/offres"
-        className="bg-accent text-accent-on hover:bg-accent-hover inline-flex min-h-10 shrink-0 items-center rounded-md px-4 text-sm font-semibold transition-colors"
+    <div className="relative overflow-hidden rounded-xl">
+      {/* Cartes fantômes floutées : purement décoratives, AUCUNE donnée réelle
+          (le serveur n'envoie pas les éléments verrouillés). */}
+      {locked > 0 && (
+        <div aria-hidden className="pointer-events-none grid grid-cols-2 gap-3 opacity-60 blur-[3px] md:grid-cols-4">
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className="border-border bg-surface rounded-xl border p-2">
+              <div className="bg-input aspect-square rounded-lg" />
+              <div className="bg-input mt-2 h-3 w-3/4 rounded" />
+              <div className="bg-input mt-1.5 h-3 w-1/2 rounded" />
+            </div>
+          ))}
+        </div>
+      )}
+      <div
+        className={`border-border bg-surface flex flex-col items-center gap-3 rounded-xl border border-dashed p-6 text-center sm:flex-row sm:text-left ${
+          locked > 0 ? "shadow-raised absolute inset-x-3 top-1/2 -translate-y-1/2 border-solid" : ""
+        }`}
       >
-        Voir les offres
-      </Link>
+        <span className="bg-secondary text-accent grid h-11 w-11 shrink-0 place-items-center rounded-full">
+          <Icon name="lock" size={20} />
+        </span>
+        <div className="flex-1">
+          <p className="font-semibold">
+            {locked > 0 ? `+${nf.format(locked)} ${what} verrouillés` : `Débloque tous les ${what}`}
+          </p>
+          <p className="text-muted-foreground text-sm">
+            {shown > 0 ? `Ton offre en affiche ${shown}. ` : ""}Passe à {minPlan} pour tout voir.
+          </p>
+        </div>
+        <Link
+          href="/offres"
+          className="bg-accent text-accent-on hover:bg-accent-hover inline-flex min-h-10 shrink-0 items-center rounded-md px-4 text-sm font-semibold transition-colors"
+        >
+          Passer à {minPlan}
+        </Link>
+      </div>
     </div>
   );
 }

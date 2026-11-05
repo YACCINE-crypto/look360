@@ -14,9 +14,11 @@ export const PLAN_PRICING: Record<
   PaidPlan,
   { priceNormal: number; priceFirst: number }
 > = {
-  starter: { priceNormal: 7500, priceFirst: 5000 },
-  pro: { priceNormal: 15000, priceFirst: 10000 },
-  business: { priceNormal: 25000, priceFirst: 17500 },
+  // Offres v3 : prix FIXES (le prix bas EST l'offre de lancement, plus de
+  // tarif de bienvenue). priceFirst = priceNormal pour ne rien changer ailleurs.
+  starter: { priceNormal: 5000, priceFirst: 5000 },
+  pro: { priceNormal: 10000, priceFirst: 10000 },
+  business: { priceNormal: 15000, priceFirst: 15000 },
 };
 
 export function isPaidPlan(p: unknown): p is PaidPlan {
@@ -29,12 +31,9 @@ export function subscriptionPrice(plan: PaidPlan, hasEverPaid: boolean): number 
   return hasEverPaid ? p.priceNormal : p.priceFirst;
 }
 
-// Packs de recharge — crédits (même unité que la base, ×100).
-export const CREDIT_PACKS: { credits: number; price: number }[] = [
-  { credits: 50000, price: 3000 },
-  { credits: 120000, price: 6000 },
-  { credits: 300000, price: 13000 },
-];
+// Packs de recharge : SUPPRIMÉS (modèle 100 % abonnement). Liste vide →
+// findPack renvoie null → toute demande de pack est refusée (invalid_pack).
+export const CREDIT_PACKS: { credits: number; price: number }[] = [];
 
 /** Retrouve un pack par ses crédits internes (valeur validée, non falsifiable). */
 export function findPack(creditsInternal: number) {

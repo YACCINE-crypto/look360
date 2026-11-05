@@ -63,7 +63,11 @@ function extFromContentType(ct: string | null): string {
  * Retourne l'URL CDN stable + la clé. Lève si non configuré / source interdite
  * / échec — l'appelant gère le fallback (garder le lien source).
  */
-export async function storeFromUrl(sourceUrl: string, keyPrefix: string): Promise<StoredMedia> {
+export async function storeFromUrl(
+  sourceUrl: string,
+  keyPrefix: string,
+  opts: { fixedKey?: string } = {},
+): Promise<StoredMedia> {
   if (!mediaStorageConfigured()) throw new Error("media_storage_not_configured");
   if (!allowedSource(sourceUrl)) throw new Error("source_not_allowed");
 
@@ -86,7 +90,8 @@ export async function storeFromUrl(sourceUrl: string, keyPrefix: string): Promis
   }
   const buf = Buffer.concat(chunks);
   const ext = extFromContentType(r.headers.get("content-type"));
-  const key = `${keyPrefix}/${crypto.randomUUID()}.${ext}`;
+  // Clé fixe (miroir idempotent : même pub → même objet) ou aléatoire.
+  const key = opts.fixedKey ?? `${keyPrefix}/${crypto.randomUUID()}.${ext}`;
 
   const put = await fetch(`https://${storageHost()}/${ZONE}/${key}`, {
     method: "PUT",
@@ -120,6 +125,17 @@ export async function storeBuffer(
   if (!put.ok) throw new Error(`bunny_put_${put.status}`);
 
   return { cdnUrl: `${cdnBase()}/${key}`, key };
+}
+
+/** true si l'objet existe déjà sur le CDN (miroir idempotent, sans ré-upload). */
+export async function cdnObjectExists(key: string): Promise<boolean> {
+  if (!mediaStorageConfigured()) return false;
+  try {
+    const r = await fetch(`${cdnBase()}/${key}`, { method: "HEAD", cache: "no-store" });
+    return r.ok;
+  } catch {
+    return false;
+  }
 }
 
 /** URL CDN à partir d'une clé stockée. */

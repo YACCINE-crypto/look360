@@ -6,7 +6,7 @@ import { Icon } from "@/components/Icon";
 import { CountryFlag } from "@/components/dataviz";
 import { AdGrid } from "@/components/AdGrid";
 import { ShopProductCard, UnlockMore } from "@/components/shops/ShopCards";
-import { currentAccess, FREE_PREVIEW } from "@/lib/access";
+import { currentAccess, BASIC_CATALOG_PREVIEW, FREE_PREVIEW } from "@/lib/access";
 import { getShop, shopAds, shopProducts } from "@/lib/shopQueries";
 import { callShopCrawl, cleanTheme, formatPrice, isStale } from "@/lib/shops";
 import { countryLabel, formatReach } from "@/lib/spy";
@@ -37,14 +37,18 @@ export async function ShopView({
   // Données de plus de 7 jours → mise à jour en arrière-plan (prochaine visite).
   if (isStale(shop)) after(() => callShopCrawl({ mode: "domain", domain }).then(() => undefined));
 
-  const { paid } = await currentAccess();
-  const limit = !paid ? FREE_PREVIEW : all ? 1000 : 60;
+  // Enrichissement Shopify selon le plan EFFECTIF (filtré côté serveur) :
+  // aucun = aperçu ; basique = infos de base + 12 produits ; complet = tout.
+  const { paid, enrichment, pagesLimit } = await currentAccess();
+  const full = enrichment === "full";
+  const limit = !paid ? (pagesLimit ?? FREE_PREVIEW) : !full ? BASIC_CATALOG_PREVIEW : all ? 1000 : 60;
   const [{ items, total }, ads] = await Promise.all([
     shop.status === "ok" ? shopProducts(shop.id, limit) : Promise.resolve({ items: [], total: 0 }),
     paid ? shopAds(domain, null, 24) : Promise.resolve({ ads: [], total: shop.ads_count }),
   ]);
-  const withAds = items.filter((p) => p.ads_count > 0);
-  const others = items.filter((p) => p.ads_count === 0);
+  // Best-sellers (produits poussés par les pubs) : enrichissement complet uniquement.
+  const withAds = full ? items.filter((p) => p.ads_count > 0) : [];
+  const others = full ? items.filter((p) => p.ads_count === 0) : items;
   const shopLite = { domain: shop.domain, currency: shop.currency, name: shop.name, ad_countries: shop.ad_countries };
   const theme = cleanTheme(shop.theme);
 
@@ -101,18 +105,30 @@ export async function ShopView({
       {/* Chiffres clés */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <Kpi label="Produits" value={shop.product_count != null ? nf.format(shop.product_count) : "—"} hint="au catalogue public" />
-        <Kpi
-          label="Prix"
-          value={shop.price_min != null ? `${formatPrice(shop.price_min, shop.currency)}` : "—"}
-          hint={shop.price_max != null && shop.price_max !== shop.price_min ? `jusqu'à ${formatPrice(shop.price_max, shop.currency)}` : "prix unique"}
-        />
+        {full ? (
+          <Kpi
+            label="Prix"
+            value={shop.price_min != null ? `${formatPrice(shop.price_min, shop.currency)}` : "—"}
+            hint={shop.price_max != null && shop.price_max !== shop.price_min ? `jusqu'à ${formatPrice(shop.price_max, shop.currency)}` : "prix unique"}
+          />
+        ) : (
+          <LockedKpi label="Prix" />
+        )}
         <Kpi label="Pubs repérées" value={nf.format(shop.ads_count)} hint={`${nf.format(shop.ads_active)} actives`} accent />
-        <Kpi label="Nouveautés" value={shop.new_products_30d != null ? nf.format(shop.new_products_30d) : "—"} hint="produits ajoutés en 30 j" />
-        <Kpi
-          label={shop.eu_reach ? "Audience UE" : "En promotion"}
-          value={shop.eu_reach ? formatReach(shop.eu_reach) : shop.discounted_count != null ? nf.format(shop.discounted_count) : "—"}
-          hint={shop.eu_reach ? "personnes touchées (Meta)" : "produits avec prix barré"}
-        />
+        {full ? (
+          <Kpi label="Nouveautés" value={shop.new_products_30d != null ? nf.format(shop.new_products_30d) : "—"} hint="produits ajoutés en 30 j" />
+        ) : (
+          <LockedKpi label="Nouveautés" />
+        )}
+        {full ? (
+          <Kpi
+            label={shop.eu_reach ? "Audience UE" : "En promotion"}
+            value={shop.eu_reach ? formatReach(shop.eu_reach) : shop.discounted_count != null ? nf.format(shop.discounted_count) : "—"}
+            hint={shop.eu_reach ? "personnes touchées (Meta)" : "produits avec prix barré"}
+          />
+        ) : (
+          <LockedKpi label="Promotions" />
+        )}
       </div>
 
       {shop.status !== "ok" ? (
@@ -143,7 +159,7 @@ export async function ShopView({
           )}
           {others.length > 0 && (
             <section className="space-y-3">
-              <h2 className="font-semibold">Catalogue</h2>
+              <h2 className="font-semibold">{full ? "Catalogue" : "Aperçu du catalogue"}</h2>
               <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
                 {others.map((p) => (
                   <ShopProductCard key={p.id} product={p} shop={shopLite} base={base} />
@@ -152,7 +168,9 @@ export async function ShopView({
             </section>
           )}
           {!paid ? (
-            total > FREE_PREVIEW && <UnlockMore what="produits" total={total} />
+            total > limit && <UnlockMore what="produits" total={total} shown={limit} />
+          ) : !full ? (
+            <UnlockMore what="produits du catalogue (prix, nouveautés, best-sellers)" total={total} shown={limit} minPlan="Pro" />
           ) : (
             total > items.length && (
               <div className="flex justify-center">
@@ -174,10 +192,22 @@ export async function ShopView({
             <p className="text-muted-foreground text-sm">Aucune pub enregistrée pour cette boutique.</p>
           )
         ) : (
-          <UnlockMore what="pubs" total={ads.total + FREE_PREVIEW} />
+          <UnlockMore what="pubs" total={ads.total} shown={0} />
         )}
       </section>
     </div>
+  );
+}
+
+/** Indicateur réservé à l'enrichissement complet (aucune valeur envoyée). */
+function LockedKpi({ label }: { label: string }) {
+  return (
+    <Card className="p-4">
+      <p className="text-muted-foreground text-xs font-medium">{label}</p>
+      <p className="text-muted-foreground mt-1 flex items-center gap-1.5 text-sm font-semibold">
+        <Icon name="lock" size={14} /> Offre Pro
+      </p>
+    </Card>
   );
 }
 

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { currentAccess } from "@/lib/access";
 import { PageHeader, Card } from "@/components/ui";
 import { Icon } from "@/components/Icon";
 import { AdThumb } from "@/components/AdThumb";
@@ -9,7 +11,6 @@ import { AdGrid } from "@/components/AdGrid";
 import { ShopProductCard } from "@/components/shops/ShopCards";
 import { BellRing } from "lucide-react";
 import { countryLabel, cleanField, type SpyAd } from "@/lib/spy";
-import { getSubscription } from "@/lib/credits";
 import { planConfig } from "@/lib/billing";
 import { PRODUCT_COLS, type ShopProduct } from "@/lib/shops";
 import { FeatureLock } from "@/components/FeatureLock";
@@ -57,19 +58,20 @@ type CompAd = {
  */
 export default async function SurveillancePage() {
   const supabase = await createClient();
-  const { data: claims } = await supabase.auth.getClaims();
-  const userId = claims?.claims?.sub as string | undefined;
-  const sub = userId ? await getSubscription(userId) : null;
-  const slots = planConfig(sub?.plan).competitorSlots;
+  // Plan EFFECTIF : un abonnement expiré retombe à 0 place, mais les
+  // concurrents déjà suivis restent visibles (données conservées).
+  const { plan } = await currentAccess();
+  const slots = planConfig(plan).competitorSlots;
+  const { count: followed } = await supabase.from("competitors_watch").select("id", { count: "exact", head: true });
 
-  if (slots === 0) {
+  if (slots === 0 && !followed) {
     return (
       <div className="space-y-4">
         <PageHeader title="Surveillance" subtitle="Sois alerté dès qu'un concurrent lance une nouvelle pub." />
         <FeatureLock
           title="Surveillance des concurrents"
           minPlan="Starter"
-          description="Suis les pages de tes concurrents : nouvelles pubs, pubs gagnantes, flops et nouveaux produits de leur boutique. Disponible à partir de l'offre Starter (1 concurrent), Pro (3) et Business (10)."
+          description="Suis les pages de tes concurrents : nouvelles pubs, pubs gagnantes, flops et nouveaux produits de leur boutique. Disponible à partir de l'offre Starter (2 concurrents), Pro (5) et Business (10)."
         />
       </div>
     );
@@ -106,7 +108,7 @@ export default async function SurveillancePage() {
       .in("page_id", pageIds)
       .limit(3000),
     domains.length
-      ? supabase.from("shops").select("id, domain, name, currency, ad_countries").in("domain", domains)
+      ? createAdminClient().from("shops").select("id, domain, name, currency, ad_countries").in("domain", domains)
       : Promise.resolve({ data: [] as { id: string; domain: string; name: string | null; currency: string | null; ad_countries: string[] }[] }),
   ]);
   const ads = (adRows ?? []) as unknown as CompAd[];
@@ -134,7 +136,7 @@ export default async function SurveillancePage() {
   const shopById = new Map(shops.map((s) => [s.id, s]));
   let newProducts: ShopProduct[] = [];
   if (shops.length) {
-    const { data: prods } = await supabase
+    const { data: prods } = await createAdminClient()
       .from("shop_products")
       .select(PRODUCT_COLS)
       .in("shop_id", shops.map((s) => s.id))

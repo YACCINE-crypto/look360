@@ -1,5 +1,6 @@
 "use client";
 
+import { QuotaModal, isQuotaRefusal, type QuotaRefusal } from "@/components/QuotaModal";
 import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -79,7 +80,7 @@ type StreamMsg =
   | { type: "ads"; ads: SpyAd[] }
   | { type: "progress"; found: number }
   | { type: "done"; cached?: boolean; total?: number; took_ms?: number }
-  | { type: "error"; status?: number; message?: string };
+  | { type: "error"; status?: number; message?: string; error?: string; plan?: string; limite?: number };
 
 /** Tri client (identique au serveur) pour la fusion progressive des lots. */
 function sortAds(list: SpyAd[], t: string): SpyAd[] {
@@ -135,6 +136,8 @@ export function SpyClient({
   const [ads, setAds] = useState<SpyAd[]>([]);
   const [cached, setCached] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Refus du serveur (quota atteint / e-mail non vérifié) → modale d'upgrade. */
+  const [refusal, setRefusal] = useState<QuotaRefusal | null>(null);
   const [playing, setPlaying] = useState<PlayRequest | null>(null);
   const [limit, setLimit] = useState(DEFAULT_LIMIT);
   const [progress, setProgress] = useState(0);
@@ -284,7 +287,11 @@ export function SpyClient({
       });
       const data = await res.json();
       if (res.status === 402) {
-        setError(data?.error || "Limite atteinte pour ton offre.");
+        if (isQuotaRefusal(data)) {
+          setRefusal(data);
+          setUsed(data.limite);
+        }
+        setError(data?.message || data?.error || "Limite atteinte pour ton offre.");
         setStatus("error");
         return;
       }
@@ -359,8 +366,12 @@ export function SpyClient({
             if (!msg.cached) setUsed((u) => u + 1);
           } else if (msg.type === "error") {
             errored = true;
-            // Plafond (429) ou crédits insuffisants (402) → on s'arrête, pas de repli.
+            // Plafond du jour (429) ou quota du mois / e-mail non vérifié (402) → on s'arrête.
             if (msg.status === 429 || msg.status === 402) {
+              if (isQuotaRefusal(msg)) {
+                setRefusal(msg as unknown as QuotaRefusal);
+                if (msg.error === "quota_atteint") setUsed(msg.limite ?? used);
+              }
               setError(msg.message || "Recherche indisponible.");
               setStatus("error");
               return;
@@ -411,6 +422,7 @@ export function SpyClient({
 
   return (
     <div className="space-y-4">
+      <QuotaModal refusal={refusal} onClose={() => setRefusal(null)} />
       <PageHeader
         title="Spy Facebook"
         subtitle="Trouve des pubs qui tournent déjà — signaux réels de la bibliothèque Meta."
@@ -551,14 +563,22 @@ export function SpyClient({
         </div>
 
         <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-          <span className={maxMarkets > 0 && markets > maxMarkets ? "text-warn-fg font-semibold" : ""}>
-            {markets} marché{markets > 1 ? "s" : ""} / {maxMarkets} max par recherche
-          </span>
           {searchesLimit > 0 && (
-            <span className="tabular-nums">
-              · {nf(used)}/{nf(searchesLimit)} recherches ce mois
+            <span
+              className={`rounded-full px-2.5 py-1 font-semibold tabular-nums ${
+                searchesLimit - used <= 0
+                  ? "bg-danger-bg text-danger-fg"
+                  : searchesLimit - used <= Math.max(2, Math.round(searchesLimit * 0.1))
+                    ? "bg-warn-bg text-warn-fg"
+                    : "bg-secondary text-accent"
+              }`}
+            >
+              Il te reste {nf(Math.max(0, searchesLimit - used))} recherche{searchesLimit - used > 1 ? "s" : ""} ce mois
             </span>
           )}
+          <span className={maxMarkets > 0 && markets > maxMarkets ? "text-warn-fg font-semibold" : ""}>
+            {markets > 1 ? `${markets} pays = ${markets} recherches` : "1 pays = 1 recherche"} · déjà en cache = gratuit
+          </span>
           {!euDispo && <span>· Reach disponible seulement pour les pays de l&apos;UE</span>}
         </div>
       </form>
@@ -956,7 +976,8 @@ export function SpyCard({
           image={ad.thumbnail_url}
           alt={pageName ?? ""}
           isVideo={ad.media_type === "video"}
-          playUrl={ad.media_url}
+          missing={(ad as { media_missing?: boolean }).media_missing}
+          playUrl={(ad as { media_missing?: boolean }).media_missing ? null : ad.media_url}
           onPlay={(u) => onPlay?.(playRequest(ad, u))}
         >
           {ad.media_type !== "none" && (
@@ -1070,6 +1091,11 @@ export function SpyCard({
                     <Icon name="lock" size={15} /> Télécharger (Starter)
                   </Link>
                 ))}
+              {ad.media_type !== "video" && ad.thumbnail_url && (
+                <a href={`/api/spy/video?kind=image&url=${encodeURIComponent(ad.thumbnail_url)}`} className={menuItem}>
+                  <Icon name="download" size={15} /> Télécharger l&apos;image
+                </a>
+              )}
             </div>
           </details>
         </div>

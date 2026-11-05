@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { fetchAdDetail } from "@/lib/apify";
 import { getSubscription } from "@/lib/credits";
-import { planLimits } from "@/lib/billing";
 import { reserveUsage, releaseUsage, QuotaError } from "@/lib/usage";
 import { accountSuspended } from "@/lib/accountGuard";
 
@@ -31,7 +30,9 @@ export async function GET(request: Request) {
   if (await accountSuspended(userId)) return NextResponse.json({ error: "compte suspendu" }, { status: 403 });
 
   const sub = await getSubscription(userId);
-  if (planLimits(sub?.plan).monthlySearches <= 0) {
+  // Détail d'une pub (appel Apify) : offres payantes ; compté dans le plafond
+  // de coût caché (units), jamais dans les recherches affichées.
+  if ((sub?.plan ?? "free") === "free") {
     return NextResponse.json({ error: "offre payante requise" }, { status: 402 });
   }
   try {

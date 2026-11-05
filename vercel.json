@@ -38,6 +38,14 @@
     {
       "path": "/api/cron/discovery",
       "schedule": "40 2 * * 1"
+    },
+    {
+      "path": "/api/cron/media-mirror",
+      "schedule": "30 9 * * *"
+    },
+    {
+      "path": "/api/cron/media-mirror",
+      "schedule": "0 21 * * *"
     }
   ]
 }

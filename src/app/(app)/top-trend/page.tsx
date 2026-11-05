@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/ui";
 import { Icon } from "@/components/Icon";
 import { FeatureLock } from "@/components/FeatureLock";
 import { AdGrid } from "@/components/AdGrid";
-import { ShopCard, ShopProductCard } from "@/components/shops/ShopCards";
+import { ShopCard, ShopProductCard, UnlockMore } from "@/components/shops/ShopCards";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { currentAccess } from "@/lib/access";
 import { listNiches, listProducts, listShops, ZONE_CODES, type Zone } from "@/lib/shopQueries";
@@ -23,11 +23,12 @@ const SHOP_MIN_ACTIVE = 3;
  * Top Trend = sélection courte du MEILLEUR du moment, en un coup d'œil :
  * meilleures pubs, produits les plus poussés, boutiques les plus actives.
  * Les listes complètes restent dans Spy, Produits gagnants et Boutiques.
- * Réservé aux offres payantes.
+ * Accès (plan EFFECTIF, filtré CÔTÉ SERVEUR) : gratuit = verrouillé ;
+ * Starter = aperçu (3 produits + 3 boutiques, pas de pubs) ; Pro+ = complet.
  */
 export default async function TopTrendPage({ searchParams }: { searchParams: Promise<{ zone?: string; niche?: string }> }) {
-  const { paid } = await currentAccess();
-  if (!paid) {
+  const { topTrend, topTrendPreview } = await currentAccess();
+  if (topTrend === "locked") {
     return (
       <div className="space-y-4">
         <PageHeader title="Top Trend" subtitle="Le meilleur du moment : pubs, produits et boutiques." />
@@ -45,10 +46,12 @@ export default async function TopTrendPage({ searchParams }: { searchParams: Pro
   const niches = await listNiches();
   const niche = sp.niche && niches.includes(sp.niche) ? sp.niche : undefined;
 
+  const preview = topTrend === "preview";
+  // Aperçu : le serveur ne lit que les N premiers et ne calcule pas les pubs.
   const [ads, products, shops] = await Promise.all([
-    topAds(zone, niche),
-    listProducts({ zone, niche, sort: "pubs", withAds: true, minActive: PRODUCT_MIN_ACTIVE, limit: TOP_PRODUCTS }),
-    listShops({ zone, niche, sort: "pubs", minActive: SHOP_MIN_ACTIVE, limit: TOP_SHOPS }),
+    preview ? Promise.resolve([] as SpyAd[]) : topAds(zone, niche),
+    listProducts({ zone, niche, sort: "pubs", withAds: true, minActive: PRODUCT_MIN_ACTIVE, limit: preview ? topTrendPreview : TOP_PRODUCTS }),
+    listShops({ zone, niche, sort: "pubs", minActive: SHOP_MIN_ACTIVE, limit: preview ? topTrendPreview : TOP_SHOPS }),
   ]);
   const link = (patch: { zone?: Zone; niche?: string | null }) => {
     const z = patch.zone ?? zone;
@@ -123,17 +126,26 @@ export default async function TopTrendPage({ searchParams }: { searchParams: Pro
             </li>
           ))}
         </ol>
+        {preview && <UnlockMore what="produits du top" total={TOP_PRODUCTS} shown={topTrendPreview} minPlan="Pro" />}
       </Section>
 
-      <Section
-        icon="play"
-        title="Meilleures pubs"
-        rule={`Score ${AD_SCORE_MIN}+ · toujours actives · une seule pub par annonceur`}
-        more={{ href: "/spy", label: "Chercher dans le Spy" }}
-        empty={ads.length === 0}
-      >
-        <AdGrid ads={ads} ranked />
-      </Section>
+      {preview ? (
+        <FeatureLock
+          title="Meilleures pubs du moment"
+          minPlan="Pro"
+          description="Les pubs les plus fortes des 30 derniers jours (score 70+, toujours actives, une par annonceur) sont réservées à l'offre Pro."
+        />
+      ) : (
+        <Section
+          icon="play"
+          title="Meilleures pubs"
+          rule={`Score ${AD_SCORE_MIN}+ · toujours actives · une seule pub par annonceur`}
+          more={{ href: "/spy", label: "Chercher dans le Spy" }}
+          empty={ads.length === 0}
+        >
+          <AdGrid ads={ads} ranked />
+        </Section>
+      )}
 
       <Section
         icon="store"
@@ -150,6 +162,7 @@ export default async function TopTrendPage({ searchParams }: { searchParams: Pro
             </li>
           ))}
         </ol>
+        {preview && <UnlockMore what="boutiques du top" total={TOP_SHOPS} shown={topTrendPreview} minPlan="Pro" />}
       </Section>
     </div>
   );

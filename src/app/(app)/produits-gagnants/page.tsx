@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { ShopProductCard, UnlockMore } from "@/components/shops/ShopCards";
 import { CatalogFilters } from "@/components/shops/CatalogFilters";
 import { PageHeader } from "@/components/ui";
-import { currentAccess, FREE_PREVIEW } from "@/lib/access";
+import { currentAccess } from "@/lib/access";
 import { listNiches, listProducts, type ProductSort, type Zone } from "@/lib/shopQueries";
 
 export const dynamic = "force-dynamic";
@@ -22,9 +22,9 @@ export default async function ProduitsGagnantsPage({
   const sp = await searchParams;
   const zone: Zone = sp.zone === "africa" || sp.zone === "europe" || sp.zone === "america" ? sp.zone : "all";
   const page = Math.max(1, Number(sp.page) || 1);
-  const [{ paid }, niches] = await Promise.all([currentAccess(), listNiches()]);
+  const [{ paid, pagesLimit }, niches] = await Promise.all([currentAccess(), listNiches()]);
   const niche = sp.niche && niches.includes(sp.niche) ? sp.niche : undefined;
-  const limit = paid ? PAGE * page : FREE_PREVIEW;
+  const limit = pagesLimit ?? PAGE * page;
   const sort: ProductSort = sp.sort === "recent" || sp.sort === "promo" ? sp.sort : "pubs";
   const { items, total } = await listProducts({ zone, q: (sp.q ?? "").slice(0, 80), sort, withAds: sp.ads !== "0", limit, niche });
   const next = new URLSearchParams(Object.entries(sp).filter(([, v]) => v) as [string, string][]);
@@ -55,7 +55,7 @@ export default async function ProduitsGagnantsPage({
             ))}
           </div>
           {!paid ? (
-            total > FREE_PREVIEW && <UnlockMore what="produits" total={total} />
+            total > limit && <UnlockMore what="produits" total={total} shown={limit} />
           ) : (
             total > limit && (
               <div className="flex justify-center">

@@ -1,5 +1,7 @@
 import "server-only";
+import { after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { mirrorAds, type MirroredAd } from "@/lib/mediaMirror";
 import { fetchSpyAds } from "@/lib/apify";
 import { consumeCredits, refundCredits } from "@/lib/credits";
 import { applySpyFilters, SPY_COUNTRIES_HARD, type SpyFilters, type SpyAd } from "@/lib/spy";
@@ -9,7 +11,7 @@ import type { Json } from "@/lib/database.types";
 export type Bill = { amount: number; reason: string };
 
 /** Durée de validité d'une recherche en cache (§7 — éviter de re-payer Apify). */
-const TTL_MS = 12 * 60 * 60 * 1000; // 12 h
+const TTL_MS = 3 * 24 * 60 * 60 * 1000; // 3 jours (compromis fraîcheur / coût Apify)
 /** Plafond d'appels Apify réels par utilisateur et par jour (garde-fou coût). */
 const DAILY_CAP = 40;
 
@@ -81,16 +83,50 @@ export async function persistSearch(
   url: string,
   ads: SpyAd[],
   raw_count: number,
-): Promise<void> {
+): Promise<SpyAd[]> {
+  return storeSearch(cacheKey(filters), filters, userId, url, ads, raw_count);
+}
+
+/**
+ * Met une recherche en cache APRÈS avoir copié ses créas sur Bunny :
+ *  - miniatures tout de suite (rapide, ~quelques secondes) → le cache partagé
+ *    ne contient jamais de miniature Meta qui expirera ;
+ *  - vidéos brutes juste après la réponse (after()), puis mise à jour de la
+ *    ligne. Ce qui dépasse le temps imparti est repris par le job media-mirror.
+ * Renvoie les pubs avec leurs nouvelles URL (à renvoyer au client).
+ */
+async function storeSearch(
+  key: string,
+  filters: SpyFilters,
+  userId: string | null,
+  url: string,
+  ads: SpyAd[],
+  raw_count: number,
+): Promise<SpyAd[]> {
   const admin = createAdminClient();
-  await admin.from("spy_searches").insert({
-    user_id: userId,
-    cache_key: cacheKey(filters),
-    filters: filters as unknown as Json,
-    url,
-    results: ads as unknown as Json,
-    raw_count,
-  });
+  const thumbs = await mirrorAds(ads as MirroredAd[], { videos: false, budgetMs: 6_000 });
+  const { data: row } = await admin
+    .from("spy_searches")
+    .insert({
+      user_id: userId,
+      cache_key: key,
+      filters: filters as unknown as Json,
+      url,
+      results: thumbs.ads as unknown as Json,
+      raw_count,
+    })
+    .select("id")
+    .single();
+  if (row?.id) {
+    const id = row.id;
+    after(async () => {
+      const vids = await mirrorAds(thumbs.ads, { videos: true, budgetMs: 45_000 });
+      if (JSON.stringify(vids.ads) !== JSON.stringify(thumbs.ads)) {
+        await createAdminClient().from("spy_searches").update({ results: vids.ads as unknown as Json }).eq("id", id);
+      }
+    });
+  }
+  return thumbs.ads;
 }
 
 /**
@@ -150,16 +186,9 @@ export async function searchSpyWithCache(
     throw e;
   }
 
-  await admin.from("spy_searches").insert({
-    user_id: userId,
-    cache_key: key,
-    filters: filters as unknown as Json,
-    url: res.url,
-    results: res.ads as unknown as Json,
-    raw_count: res.raw_count,
-  });
+  const stored = await storeSearch(key, filters, userId, res.url, res.ads, res.raw_count);
 
-  const ads = applySpyFilters(res.ads, filters);
+  const ads = applySpyFilters(stored, filters);
   return { url: res.url, raw_count: res.raw_count, count: ads.length, ads, cached: false, units: 1 };
 }
 

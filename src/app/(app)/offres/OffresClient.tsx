@@ -4,15 +4,12 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { motion, type Variants } from "motion/react";
 import NumberFlow from "@number-flow/react";
-import { Check, X, Sparkles, Crown, ArrowUpRight, Loader2, Gift } from "lucide-react";
+import { Check, X, Crown, ArrowUpRight, Loader2, Gift } from "lucide-react";
 import { PLANS, PLAN_LIMITS, planLabel, type Plan } from "@/lib/billing";
 import { startPayment, verifyPendingPayments } from "@/lib/pay";
 import { PageHeader } from "@/components/ui";
 
-const fcfa = (n: number) => new Intl.NumberFormat("fr-FR").format(n) + " FCFA";
 const nf = (n: number) => new Intl.NumberFormat("fr-FR").format(n);
-const discountPct = (normal: number, first: number) =>
-  Math.round((1 - first / normal) * 100);
 
 /** On ne montre en grand que les offres PAYANTES. Le Gratuit = bandeau d'entrée. */
 const PAID_ORDER: Plan[] = ["starter", "pro", "business"];
@@ -55,17 +52,30 @@ function features(p: Plan): Feat[] {
       ),
       on: l.monthlySearches > 0,
     },
+    { label: "Feed des winners du jour en entier", on: p !== "free" },
+    { label: "Produits gagnants & Boutiques en entier", on: p !== "free" },
     {
-      label: (
-        <>
-          Jusqu&apos;à <b className="text-fg font-semibold">{l.maxMarkets}</b> marché
-          {l.maxMarkets > 1 ? "s" : ""} par recherche
-        </>
-      ),
-      on: l.maxMarkets > 0,
+      label:
+        p === "starter" ? (
+          <>
+            Top Trend <span className="text-muted-foreground">(aperçu : top 3)</span>
+          </>
+        ) : (
+          "Top Trend complet"
+        ),
+      on: p !== "free",
     },
-    { label: "Spy Facebook — recherche de pubs", on: true },
-    { label: "Feed des winners du jour + Top Trend", on: true },
+    {
+      label:
+        p === "starter" ? (
+          <>
+            Fiche boutique <span className="text-muted-foreground">(infos + aperçu du catalogue)</span>
+          </>
+        ) : (
+          "Fiche boutique complète — catalogue, prix, nouveautés, best-sellers"
+        ),
+      on: p !== "free",
+    },
     { label: "Analyse de concurrent", on: true },
     {
       label: (
@@ -76,15 +86,7 @@ function features(p: Plan): Feat[] {
       ),
       on: true,
     },
-    {
-      label: (
-        <>
-          Téléchargement des vidéos de pub{" "}
-          <span className="text-muted-foreground">({nf(l.monthlyDownloads)}/mois)</span>
-        </>
-      ),
-      on: l.monthlyDownloads > 0,
-    },
+    { label: "Téléchargement des vidéos et images de pub", on: true },
     {
       label: (
         <>
@@ -104,7 +106,7 @@ function features(p: Plan): Feat[] {
       ),
       on: c.winnerEnabled,
     },
-    { label: "Winners du jour sur WhatsApp", on: c.whatsapp },
+    { label: "Alertes winners sur WhatsApp", on: c.whatsapp },
     { label: "Vitrine des winners validés", on: c.vitrineEnabled },
     {
       label: (
@@ -280,25 +282,10 @@ export default function OffresClient({
             )}
           </p>
           <p className="text-muted-foreground text-sm">
-            Feed des winners du jour + Top Trend, en lecture. Pour lancer tes propres
-            recherches, passe en Starter.
+            5 recherches par mois, 20 winners du jour, un aperçu des produits et des
+            boutiques, et 50 produits en test. Sans carte bancaire.
           </p>
         </div>
-      </motion.div>
-
-      {/* Bandeau promo lancement */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, delay: 0.05 }}
-        className="bg-warn-bg text-warn-fg flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-center text-sm font-semibold"
-      >
-        <Sparkles size={16} className="shrink-0" />
-        {/* Un seul nœud texte : sinon le <sup> devient un item flex isolé et
-            « 1 » / « er » se séparent sur mobile. */}
-        <span>
-          Offre de lancement — jusqu&apos;à −33&nbsp;% sur le 1<sup>er</sup>&nbsp;mois
-        </span>
       </motion.div>
 
       {/* Grille des 3 offres payantes */}
@@ -307,10 +294,6 @@ export default function OffresClient({
           const cfg = PLANS[p];
           const isCurrent = p === current;
           const isPopular = p === POPULAR;
-          const pct =
-            cfg.priceFirst != null
-              ? discountPct(cfg.priceNormal, cfg.priceFirst)
-              : 0;
 
           return (
             <motion.div
@@ -349,28 +332,16 @@ export default function OffresClient({
                 </p>
               </div>
 
-              {/* Prix + promo */}
-              <div className="min-h-[100px]">
-                <div className="mb-1 flex items-center gap-2">
-                  <span className="text-muted-foreground text-base font-medium line-through">
-                    {fcfa(cfg.priceNormal)}
-                  </span>
-                  <span className="bg-warn-bg text-warn-fg inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold tabular-nums">
-                    −{pct}&nbsp;%
-                  </span>
-                </div>
+              {/* Prix fixe */}
+              <div className="min-h-[72px]">
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-accent text-4xl font-extrabold tabular-nums">
-                    <NumberFlow
-                      value={mounted ? (cfg.priceFirst ?? 0) : 0}
-                      locales="fr-FR"
-                    />
+                    <NumberFlow value={mounted ? cfg.priceNormal : 0} locales="fr-FR" />
                   </span>
                   <span className="text-accent text-base font-bold">FCFA</span>
+                  <span className="text-muted-foreground text-sm font-medium">/ mois</span>
                 </div>
-                <p className="text-muted-foreground mt-1 text-xs font-medium">
-                  le 1<sup>er</sup> mois, puis {fcfa(cfg.priceNormal)}/mois
-                </p>
+                <p className="text-muted-foreground mt-1 text-xs font-medium">Sans engagement</p>
               </div>
 
               {/* CTA */}

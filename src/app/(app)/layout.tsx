@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getSubscription } from "@/lib/credits";
-import { getUsage } from "@/lib/usage";
-import { planLimits } from "@/lib/billing";
+import { getQuota } from "@/lib/usage";
+import { BillingBanner, type BillingState } from "@/components/BillingBanner";
 import { AppShell } from "@/components/AppShell";
 import { PlanProvider } from "@/components/PlanProvider";
 
@@ -37,9 +36,12 @@ export default async function AppLayout({
   const initials = displayName.slice(0, 2).toUpperCase();
   const pendingCount = role === "superadmin" ? (count ?? 0) : 0;
 
-  const sub = await getSubscription(userId);
-  const plan = sub?.plan ?? "free";
-  const usage = await getUsage(userId);
+  // Plan EFFECTIF + quota + état de facturation, lus en base (jamais le plan brut).
+  const [quota, { data: billing }] = await Promise.all([
+    getQuota(userId),
+    (supabase as unknown as { rpc: (f: string) => Promise<{ data: unknown }> }).rpc("my_billing_state"),
+  ]);
+  const plan = quota?.plan ?? "free";
 
   return (
     <AppShell
@@ -47,11 +49,12 @@ export default async function AppLayout({
       initials={initials}
       role={role}
       pendingCount={pendingCount}
-      searchesUsed={usage?.searches_used ?? 0}
-      searchesLimit={planLimits(plan).monthlySearches}
+      searchesUsed={quota?.used ?? 0}
+      searchesLimit={quota?.limit ?? 0}
       plan={plan}
     >
-      <PlanProvider plan={sub?.plan ?? "free"}>{children}</PlanProvider>
+      <BillingBanner state={(billing as BillingState | null) ?? null} />
+      <PlanProvider plan={plan}>{children}</PlanProvider>
     </AppShell>
   );
 }
