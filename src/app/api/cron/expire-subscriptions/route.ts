@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { notifyUser } from "@/lib/notify";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,7 +33,18 @@ export async function GET(request: Request) {
   for (const s of data ?? []) {
     const { error: e } = await admin.rpc("expire_subscription", { p_user: s.user_id });
     if (e) failed.push(s.user_id);
-    else expired++;
+    else {
+      expired++;
+      // Notification transactionnelle (idempotente par jour) : e-mail + push.
+      await notifyUser({
+        userId: s.user_id,
+        eventKey: `subscription-expired:${new Date().toISOString().slice(0, 10)}`,
+        kind: "subscription",
+        title: "Ton abonnement Look360 a expiré",
+        body: "Tes données sont conservées. Renouvelle pour retrouver tes recherches et tes accès.",
+        link: "/offres",
+      }).catch(() => undefined);
+    }
   }
   if (failed.length) console.error("expire_subscription failed for", failed.length, "users");
   return NextResponse.json({ ok: true, expired, failed: failed.length });

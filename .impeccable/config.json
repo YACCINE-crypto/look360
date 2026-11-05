@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "arial",
+        "createdAt": "2026-11-05T18:08:52.110Z",
+        "reason": "Claude: HTML e-mail fallback in src/lib/notify.ts — mail clients only render web-safe fonts, Arial is the standard e-mail stack; not app UI"
+      }
+    ]
+  }
+}
