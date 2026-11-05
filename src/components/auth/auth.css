@@ -57,3 +57,15 @@ html:has(.auth), html:has(.auth) body { background: var(--night); }
 .auth-trust { margin-top: 28px; display: flex; justify-content: center; align-items: center; gap: 8px; color: var(--night-muted); font-size: 13px; text-align: center; }
 .auth-trust svg { color: var(--success); flex: none; }
 .auth :focus-visible { outline: 2px solid var(--night-accent-sky); outline-offset: 2px; }
+
+/* Bouton « Continuer avec Google » : clair et lisible sur le fond nuit. */
+.auth-google {
+  display: inline-flex; align-items: center; justify-content: center; gap: 12px; width: 100%; min-height: 52px; margin-top: 26px;
+  border-radius: 12px; border: 1px solid var(--night-line); background: var(--night-fg); color: var(--night);
+  font-size: 16px; font-weight: 700; cursor: pointer; transition: background-color .15s, transform .15s;
+}
+.auth-google:hover { background: var(--surface); transform: translateY(-1px); }
+.auth-google:disabled { opacity: .7; cursor: default; transform: none; }
+.auth-or { display: flex; align-items: center; gap: 14px; margin-top: 20px; color: var(--night-muted); font-size: 13px; }
+.auth-or::before, .auth-or::after { content: ""; flex: 1; height: 1px; background: var(--night-line); }
+.auth-or + .auth-form { margin-top: 18px; }
