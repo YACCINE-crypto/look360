@@ -21,6 +21,22 @@ export type StoredMedia = { cdnUrl: string; key: string };
 const BROWSER_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36";
 
+/**
+ * Même lien Meta, mais via l'adresse générique du CDN (scontent.xx.fbcdn.net /
+ * video.xx.fbcdn.net) au lieu d'un relais régional. Null si non applicable.
+ */
+export function genericMetaUrl(url: string): string | null {
+  try {
+    const u = new URL(url);
+    const m = /^(scontent|video)-[a-z0-9-]+\.xx\.fbcdn\.net$/i.exec(u.hostname);
+    if (!m) return null;
+    u.hostname = `${m[1].toLowerCase()}.xx.fbcdn.net`;
+    return u.toString();
+  } catch {
+    return null;
+  }
+}
+
 /** Cause réseau lisible d'un « fetch failed » (code système, sans URL ni secret). */
 function errCause(e: unknown): string {
   const c = (e as { cause?: { code?: string; message?: string } } | null)?.cause;
@@ -83,19 +99,25 @@ export async function storeFromUrl(
 
   // Redirections suivies seulement vers des hôtes autorisés + taille bornée.
   // Délai max : un CDN qui ne répond pas ne bloque jamais tout le job.
+  const init: RequestInit = {
+    signal: AbortSignal.timeout(20_000),
+    // En-têtes de navigateur : certains edges du CDN Meta coupent les clients « nus ».
+    headers: { "User-Agent": BROWSER_UA, Accept: "image/avif,image/webp,image/*,video/*,*/*;q=0.8" },
+  };
   let r: Response;
   try {
-    r = await fetchAllowedMedia(
-      sourceUrl,
-      {
-        signal: AbortSignal.timeout(25_000),
-        // En-têtes de navigateur : certains edges du CDN Meta coupent les clients « nus ».
-        headers: { "User-Agent": BROWSER_UA, Accept: "image/avif,image/webp,image/*,video/*,*/*;q=0.8" },
-      },
-      { archive: false },
-    );
+    r = await fetchAllowedMedia(sourceUrl, init, { archive: false });
   } catch (e) {
-    throw new Error(`meta_fetch_failed(${errCause(e)})`);
+    // Le scraper tourne aux États-Unis : Meta lui donne des relais régionaux
+    // (scontent-dfw5-2.xx…) parfois introuvables (ENOTFOUND) ou injoignables
+    // depuis l'Europe. Même fichier via l'adresse générique du CDN Meta.
+    const generic = genericMetaUrl(sourceUrl);
+    if (!generic) throw new Error(`meta_fetch_failed(${errCause(e)})`);
+    try {
+      r = await fetchAllowedMedia(generic, { ...init, signal: AbortSignal.timeout(20_000) }, { archive: false });
+    } catch (e2) {
+      throw new Error(`meta_unreachable(${errCause(e)}/${errCause(e2)})`);
+    }
   }
   if (!r.ok || !r.body) throw new Error(`source_fetch_${r.status}`);
   if (Number(r.headers.get("content-length") || 0) > MAX_SOURCE_BYTES) throw new Error("source_too_large");

@@ -61,7 +61,8 @@ const isMeta = (u: string | null | undefined): u is string => {
 const safeId = (id: unknown) => String(id).replace(/[^0-9A-Za-z_-]/g, "").slice(0, 64);
 
 /** Erreur « lien Meta expiré / introuvable » (inutile de réessayer). */
-const isGone = (e: unknown) => /source_fetch_(403|404|410)/.test(e instanceof Error ? e.message : String(e));
+const isGone = (e: unknown) =>
+  /source_fetch_(403|404|410)|meta_unreachable|source_too_large/.test(e instanceof Error ? e.message : String(e));
 
 /** Copie avec 1 nouvel essai (2 s) sur erreur transitoire ; jamais sur un lien expiré. */
 async function copyOnce(source: string, key: string): Promise<{ url: string; reused: boolean }> {
@@ -102,6 +103,7 @@ export async function mirrorAd(ad: MirroredAd, stats: MirrorStats, opts: { video
       else stats.thumbs++;
     } catch (e) {
       if (isGone(e)) {
+        out.thumbnail_source_url = src; // lien d'origine conservé (trace)
         out.thumbnail_url = null;
         if (out.media_type !== "video") out.media_missing = true;
         stats.missing++;
