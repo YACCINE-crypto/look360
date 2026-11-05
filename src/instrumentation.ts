@@ -8,6 +8,7 @@
 // (Sentry.init n'est pas appelé) — zéro impact en local / avant configuration.
 // ============================================================================
 import * as Sentry from "@sentry/nextjs";
+import { scrubEvent } from "@/lib/sentryScrub";
 
 const dsn = process.env.SENTRY_DSN ?? process.env.NEXT_PUBLIC_SENTRY_DSN;
 
@@ -21,6 +22,10 @@ export function register(): void {
       process.env.NEXT_PUBLIC_APP_ENV ?? process.env.VERCEL_ENV ?? "development",
     // Échantillonnage des traces de performance (10 %) — ajustable.
     tracesSampleRate: 0.1,
+    // Jamais d'IP, cookies ni en-têtes d'authentification ; filtre des secrets
+    // et données personnelles sur chaque événement (lib/sentryScrub).
+    dataCollection: { userInfo: false, cookies: false, httpHeaders: false, httpBodies: [], urlQueryParams: false },
+    beforeSend: scrubEvent,
   });
 }
 
