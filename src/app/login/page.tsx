@@ -69,8 +69,6 @@ function AuthCard() {
           {authError && <p className="auth-msg err">Lien invalide ou expiré. Réessaie de te connecter ou de réinitialiser.</p>}
           {oauthError && <p className="auth-msg err">La connexion avec Google n&apos;a pas abouti. Réessaie, ou connecte-toi avec ton e-mail.</p>}
 
-          <GoogleButton />
-
           <form action={loginAction} className="auth-form">
             <div className="auth-field">
               <label htmlFor="login-email" className="auth-label">
@@ -95,6 +93,8 @@ function AuthCard() {
             </button>
           </form>
 
+          <GoogleButton />
+
           <p className="auth-switch">
             Pas encore de compte ?{" "}
             <button type="button" onClick={() => go("signup")}>
@@ -107,8 +107,6 @@ function AuthCard() {
           <p className="auth-eyebrow">C&apos;est parti</p>
           <h1 className="auth-title">Crée ton compte</h1>
           <p className="auth-sub">Gratuit, sans carte bancaire. On t&apos;envoie un lien pour confirmer ton adresse e-mail.</p>
-
-          <GoogleButton />
 
           <form action={signupAction} className="auth-form">
             <div className="auth-field">
@@ -146,6 +144,8 @@ function AuthCard() {
               {signupPending ? "Création…" : "Créer mon compte"}
             </button>
           </form>
+
+          <GoogleButton />
 
           <p className="auth-switch">
             Tu as déjà un compte ?{" "}
