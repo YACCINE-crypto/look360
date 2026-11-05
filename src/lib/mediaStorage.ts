@@ -100,7 +100,7 @@ export async function storeFromUrl(
   // Redirections suivies seulement vers des hôtes autorisés + taille bornée.
   // Délai max : un CDN qui ne répond pas ne bloque jamais tout le job.
   const init: RequestInit = {
-    signal: AbortSignal.timeout(20_000),
+    signal: AbortSignal.timeout(12_000),
     // En-têtes de navigateur : certains edges du CDN Meta coupent les clients « nus ».
     headers: { "User-Agent": BROWSER_UA, Accept: "image/avif,image/webp,image/*,video/*,*/*;q=0.8" },
   };
@@ -114,7 +114,7 @@ export async function storeFromUrl(
     const generic = genericMetaUrl(sourceUrl);
     if (!generic) throw new Error(`meta_fetch_failed(${errCause(e)})`);
     try {
-      r = await fetchAllowedMedia(generic, { ...init, signal: AbortSignal.timeout(20_000) }, { archive: false });
+      r = await fetchAllowedMedia(generic, { ...init, signal: AbortSignal.timeout(12_000) }, { archive: false });
     } catch (e2) {
       throw new Error(`meta_unreachable(${errCause(e)}/${errCause(e2)})`);
     }
@@ -145,7 +145,7 @@ export async function storeFromUrl(
       method: "PUT",
       headers: { AccessKey: API_KEY as string, "Content-Type": "application/octet-stream" },
       body: buf,
-      signal: AbortSignal.timeout(60_000),
+      signal: AbortSignal.timeout(30_000),
     });
   } catch (e) {
     throw new Error(`bunny_put_failed(${errCause(e)})`);

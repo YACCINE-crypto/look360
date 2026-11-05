@@ -70,7 +70,8 @@ async function copyOnce(source: string, key: string): Promise<{ url: string; reu
   try {
     return { url: (await storeFromUrl(source, "", { fixedKey: key })).cdnUrl, reused: false };
   } catch (e) {
-    if (isGone(e) || /source_too_large/.test(String(e))) throw e;
+    // Pas de 2e essai sur un problème réseau Meta : le repli d'adresse a déjà été tenté.
+    if (isGone(e) || /source_too_large|meta_fetch_failed/.test(String(e))) throw e;
     await new Promise((r) => setTimeout(r, 3000));
     return { url: (await storeFromUrl(source, "", { fixedKey: key })).cdnUrl, reused: false };
   }
