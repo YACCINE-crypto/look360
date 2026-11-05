@@ -23,7 +23,7 @@ function parseCountries(src: Record<string, unknown>): string[] {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60; // l'actor met ~40-55s à répondre (run-sync)
+export const maxDuration = 120; // actor ~40-55 s + copie des miniatures + copie des vidéos après la réponse
 
 function toInt(v: unknown): number | undefined {
   const n = Number(v);

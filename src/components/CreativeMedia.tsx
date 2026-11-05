@@ -19,6 +19,7 @@ export function CreativeMedia({
   playUrl,
   onPlay,
   ratio = "square",
+  missing = false,
   children,
 }: {
   image: string | null;
@@ -27,14 +28,16 @@ export function CreativeMedia({
   playUrl?: string | null;
   onPlay?: (url: string) => void;
   ratio?: "square" | "portrait";
+  /** Créa introuvable chez Meta lors de la copie Bunny → placeholder de marque. */
+  missing?: boolean;
   children?: React.ReactNode;
 }) {
   const aspect = ratio === "portrait" ? "aspect-[4/5]" : "aspect-square";
   // Lien d'image expiré (CDN Meta) ou introuvable → aperçu propre, jamais de
   // cadre blanc vide.
   const [broken, setBroken] = useState<string | null>(null);
-  const showImage = Boolean(image) && broken !== image;
-  const canPlay = isVideo && !!playUrl && !!onPlay;
+  const showImage = !missing && Boolean(image) && broken !== image;
+  const canPlay = !missing && isVideo && !!playUrl && !!onPlay;
 
   return (
     <div className={`bg-input relative w-full overflow-hidden ${aspect}`}>
@@ -48,14 +51,16 @@ export function CreativeMedia({
         />
       ) : (
         <div className="text-muted-foreground flex h-full w-full flex-col items-center justify-center gap-1.5 px-4 text-center">
-          {/* Vidéo : le bouton play est superposé au centre → on réserve sa
-              place pour que le message passe dessous, sans chevauchement. */}
-          {isVideo ? <span aria-hidden className="h-12 w-12" /> : <Icon name="image" size={26} />}
-          {image && <span className="text-xs">Aperçu indisponible</span>}
+          {/* Vidéo jouable : le bouton play est superposé au centre → on
+              réserve sa place pour que le message passe dessous. */}
+          {canPlay ? <span aria-hidden className="h-12 w-12" /> : <Icon name={isVideo ? "play" : "image"} size={26} />}
+          <span className="text-xs font-medium">{canPlay ? "Aperçu indisponible" : "Média indisponible"}</span>
         </div>
       )}
 
       {isVideo &&
+        !missing &&
+        (showImage || canPlay) &&
         (canPlay ? (
           <button
             type="button"

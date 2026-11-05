@@ -976,7 +976,8 @@ export function SpyCard({
           image={ad.thumbnail_url}
           alt={pageName ?? ""}
           isVideo={ad.media_type === "video"}
-          playUrl={ad.media_url}
+          missing={(ad as { media_missing?: boolean }).media_missing}
+          playUrl={(ad as { media_missing?: boolean }).media_missing ? null : ad.media_url}
           onPlay={(u) => onPlay?.(playRequest(ad, u))}
         >
           {ad.media_type !== "none" && (

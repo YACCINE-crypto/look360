@@ -14,7 +14,7 @@ import type { SpyFilters, SpyMediaType, SpyPlatform, SpyStatut } from "@/lib/spy
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 120; // recherche (≤ 52 s) + copie des miniatures + copie des vidéos après la réponse
 
 const BATCH = 50;
 const POLL_MS = 1200;
@@ -160,7 +160,11 @@ export async function POST(request: Request) {
         //    brûle PAS d'unit (recherche sans résultat ≠ faute de l'utilisateur),
         //    mais la recherche reste comptée (anti-abus, borné par le cap/jour).
         if (accumulator.length > 0) {
-          await persistSearch(filters, userId, url, accumulator, accumulator.length);
+          // Créas copiées sur Bunny avant la mise en cache : on renvoie les pubs
+          // avec leurs URL définitives (le client remplace les cartes déjà affichées).
+          const stored = await persistSearch(filters, userId, url, accumulator, accumulator.length);
+          const finalAds = applySpyFilters(stored, filters);
+          if (finalAds.length > 0) send({ type: "ads", ads: finalAds });
         } else {
           await releaseUsage(userId, 0, 1);
         }
