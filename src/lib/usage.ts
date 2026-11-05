@@ -1,6 +1,5 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { planLimits } from "@/lib/billing";
 
 // ============================================================================
 // Quotas v2 — comptage SERVEUR des searches + market_search_units (table
@@ -12,7 +11,7 @@ import { planLimits } from "@/lib/billing";
 //   - consumeDownload / consumeWinnerRun : vérif + incrément atomiques.
 // ============================================================================
 
-export type QuotaKind = "searches" | "units" | "markets" | "downloads" | "winner_runs" | "media";
+export type QuotaKind = "searches" | "units" | "markets" | "downloads" | "winner_runs" | "media" | "email";
 
 export class QuotaError extends Error {
   kind: QuotaKind;
@@ -52,6 +51,7 @@ export async function getUsage(userId: string): Promise<Usage | null> {
 }
 
 function quotaFrom(message: string): QuotaError | null {
+  if (message.includes("email_unverified")) return new QuotaError("email");
   for (const k of ["searches", "units", "downloads", "winner_runs", "media"] as const) {
     if (message.includes(`quota_${k}`)) return new QuotaError(k);
   }
@@ -59,15 +59,68 @@ function quotaFrom(message: string): QuotaError | null {
 }
 
 /**
- * Réserve, AVANT un appel Apify, 1 search + `markets` units (pire cas : tous
- * les marchés en cache-miss). Vérif + incrément dans la même transaction SQL,
- * donc des requêtes parallèles ne peuvent pas dépasser le quota. Lève
- * QuotaError (markets | searches | units).
+ * Réserve, AVANT les appels Apify, `markets` recherches (1 recherche = 1 mot-clé
+ * × 1 pays = 1 appel Apify ; la même valeur alimente le plafond de coût caché).
+ * Vérif + incrément dans la même transaction SQL (FOR UPDATE) : des requêtes
+ * parallèles ne peuvent pas dépasser le quota. Le plan EFFECTIF est lu en base.
+ * Lève QuotaError (email | searches | units). Rendre ensuite ce qui a été servi
+ * par le cache avec releaseUsage(userId, n, n).
  */
-export async function reserveSearch(userId: string, plan: string, markets: number): Promise<void> {
-  const m = Math.max(1, markets);
-  if (m > planLimits(plan).maxMarkets) throw new QuotaError("markets");
-  await reserveUsage(userId, 1, m);
+export async function reserveSearch(userId: string, markets: number): Promise<void> {
+  const m = Math.max(1, Math.round(markets));
+  await reserveUsage(userId, m, m);
+}
+
+export type Quota = {
+  plan: string;
+  limit: number;
+  used: number;
+  remaining: number;
+  period_end: string | null;
+  email_verified: boolean;
+  allowed: boolean;
+  reason: "email_unverified" | "quota_atteint" | null;
+};
+
+/** État du quota de recherche (lecture seule, plan effectif). */
+export async function getQuota(userId: string): Promise<Quota | null> {
+  const { data, error } = await rpc("can_search", { p_user: userId });
+  if (error) {
+    console.error("can_search failed:", error.message, "user:", userId);
+    return null;
+  }
+  return (data as Quota) ?? null;
+}
+
+const PLAN_LABEL: Record<string, string> = { free: "Gratuit", starter: "Starter", pro: "Pro", business: "Business" };
+
+/**
+ * Réponse d'erreur unique quand une recherche est refusée :
+ *   { error: 'quota_atteint', plan, limite, message }  ou
+ *   { error: 'email_non_verifie', plan, limite, message }
+ * Jamais le mot « crédits ».
+ */
+export async function quotaRefusal(userId: string, kind: QuotaKind) {
+  const q = await getQuota(userId);
+  const plan = q?.plan ?? "free";
+  const limite = q?.limit ?? 0;
+  if (kind === "email") {
+    return {
+      error: "email_non_verifie" as const,
+      plan,
+      limite,
+      message: "Confirme ton adresse e-mail pour lancer tes recherches (lien envoyé à l'inscription).",
+    };
+  }
+  return {
+    error: "quota_atteint" as const,
+    plan,
+    limite,
+    message:
+      plan === "business"
+        ? `Tu as atteint tes ${limite} recherches ce mois. Elles se rechargent à ta date de renouvellement.`
+        : `Tu as atteint tes ${limite} recherches ce mois (offre ${PLAN_LABEL[plan] ?? plan}). Passe à l'offre supérieure pour continuer.`,
+  };
 }
 
 /** Réserve `searches` + `units` (atomique). Lève QuotaError si plafond. */

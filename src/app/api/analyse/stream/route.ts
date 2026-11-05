@@ -4,9 +4,7 @@ import { accountSuspended } from "@/lib/accountGuard";
 import { getCachedSearch, dailyCapReached, persistSearch } from "@/lib/spyCache";
 import { startSpyRun, getRunStatus, isTerminal, fetchDatasetItems } from "@/lib/apify";
 import { normalizeApifyItem, isEUCountry, type SpyAd, type SpyFilters } from "@/lib/spy";
-import { getSubscription } from "@/lib/credits";
-import { reserveSearch, releaseUsage, QuotaError } from "@/lib/usage";
-import { planLimits } from "@/lib/billing";
+import { reserveSearch, releaseUsage, quotaRefusal, QuotaError } from "@/lib/usage";
 
 // Analyse d'un annonceur = toutes ses pubs actives sur un marché.
 // Avant : rendu serveur synchrone (run-sync Apify) limité à 60 s → les
@@ -87,19 +85,13 @@ export async function POST(request: Request) {
           return;
         }
 
-        const sub = await getSubscription(userId);
-        const plan = sub?.plan ?? "free";
-        if (planLimits(plan).monthlySearches === 0) {
-          send({ type: "error", status: 402, message: "L'analyse d'un annonceur est réservée aux offres payantes." });
-          controller.close();
-          return;
-        }
+        // Analyser un annonceur = 1 appel Apify = 1 recherche (cache-miss uniquement).
         try {
-          await reserveSearch(userId, plan, 1);
+          await reserveSearch(userId, 1);
           reserved = true;
         } catch (e) {
           if (e instanceof QuotaError) {
-            send({ type: "error", status: 402, message: "Tu as atteint ta limite de recherches ce mois-ci. Passe à une offre supérieure pour continuer." });
+            send({ type: "error", status: 402, ...(await quotaRefusal(userId, e.kind)) });
             controller.close();
             return;
           }

@@ -3,29 +3,10 @@ import { allow } from "@/lib/rateLimit";
 import { createClient } from "@/lib/supabase/server";
 import { accountSuspended } from "@/lib/accountGuard";
 import { searchSpyWithCache, searchSpyManyCountries } from "@/lib/spyCache";
-import { getSubscription } from "@/lib/credits";
-import { reserveSearch, releaseUsage, QuotaError } from "@/lib/usage";
-import { planLimits } from "@/lib/billing";
+import { reserveSearch, releaseUsage, quotaRefusal, QuotaError } from "@/lib/usage";
 import type { SpyFilters, SpyMediaType, SpyPlatform, SpyStatut } from "@/lib/spy";
 
 /** Message clair par type de quota atteint (jamais le mot « crédits »). */
-function quotaMessage(kind: QuotaError["kind"], plan: string): string {
-  const lim = planLimits(plan);
-  switch (kind) {
-    case "markets":
-      return lim.maxMarkets === 0
-        ? "Les recherches personnelles sont réservées aux offres payantes. Passe en Starter pour lancer tes propres recherches."
-        : `Ton offre permet jusqu'à ${lim.maxMarkets} marché${lim.maxMarkets > 1 ? "s" : ""} par recherche. Retire des marchés ou passe à une offre supérieure.`;
-    case "searches":
-      return lim.monthlySearches === 0
-        ? "Les recherches personnelles sont réservées aux offres payantes. Passe en Starter pour lancer tes propres recherches."
-        : "Tu as atteint ta limite de recherches ce mois-ci. Passe à une offre supérieure pour continuer.";
-    case "units":
-      return "Tu as atteint ta limite de recherche ce mois-ci. Passe à une offre supérieure pour continuer.";
-    default:
-      return "Limite atteinte pour ton offre.";
-  }
-}
 
 /** Extrait la liste de pays (multi-sélection) ; retombe sur `country` unique. */
 function parseCountries(src: Record<string, unknown>): string[] {
@@ -87,20 +68,15 @@ async function handle(filters: SpyFilters, countries: string[]) {
     return NextResponse.json({ error: "mot-clé ou pays requis" }, { status: 400 });
   }
 
-  // Quotas v2 : on compte des market_search_units, pas des crédits. Réservation
-  // atomique AVANT Apify (pire cas = tous les marchés en cache-miss) ; on rend
-  // ensuite ce qui n'a pas été scrappé (un hit de cache = 0 unit).
-  const sub = await getSubscription(userId);
-  const plan = sub?.plan ?? "free";
+  // 1 recherche = 1 mot-clé × 1 pays = 1 appel Apify : 3 pays = 3 recherches.
+  // Réservation atomique en base (plan EFFECTIF) AVANT Apify, pire cas = tous
+  // les pays en cache-miss ; les pays servis par le cache sont rendus ensuite.
   const markets = Math.max(1, countries.length);
   try {
-    await reserveSearch(userId, plan, markets);
+    await reserveSearch(userId, markets);
   } catch (e) {
     if (e instanceof QuotaError) {
-      return NextResponse.json(
-        { error: quotaMessage(e.kind, plan), code: `quota_${e.kind}` },
-        { status: 402 },
-      );
+      return NextResponse.json(await quotaRefusal(userId, e.kind), { status: 402 });
     }
     throw e;
   }
@@ -113,17 +89,18 @@ async function handle(filters: SpyFilters, countries: string[]) {
         ? await searchSpyWithCache({ ...filters, country: countries[0] ?? filters.country }, userId)
         : await searchSpyManyCountries(filters, countries, userId);
     if (result.capped) {
-      await releaseUsage(userId, 1, markets);
+      await releaseUsage(userId, markets, markets);
       return NextResponse.json(
         { error: "Plafond de recherches Spy atteint pour aujourd'hui. Réessaie demain." },
         { status: 429 },
       );
     }
-    // Conso réelle (units = marchés réellement scrappés) : on rend le reste.
-    const usage = await releaseUsage(userId, 0, markets - Math.min(markets, result.units));
+    // Conso réelle = pays réellement scrappés ; ceux servis par le cache sont rendus.
+    const unused = markets - Math.min(markets, result.units);
+    const usage = await releaseUsage(userId, unused, unused);
     return NextResponse.json({ ...result, usage });
   } catch (e) {
-    await releaseUsage(userId, 1, markets);
+    await releaseUsage(userId, markets, markets);
     const msg = e instanceof Error ? e.message : "Erreur inconnue";
     return NextResponse.json({ error: msg }, { status: 502 });
   }

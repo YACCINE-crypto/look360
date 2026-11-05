@@ -117,10 +117,10 @@ export type PlanLimits = {
 };
 
 export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
-  free:     { monthlySearches: 0,   monthlyUnits: 0,   maxMarkets: 0, monthlyDownloads: 0,    maxSavedProducts: 0,     monthlyWinnerRuns: 0 },
-  starter:  { monthlySearches: 250, monthlyUnits: 300, maxMarkets: 2, monthlyDownloads: 100,  maxSavedProducts: 500,   monthlyWinnerRuns: 0 },
-  pro:      { monthlySearches: 500, monthlyUnits: 600, maxMarkets: 3, monthlyDownloads: 500,  maxSavedProducts: 2500,  monthlyWinnerRuns: 30 },
-  business: { monthlySearches: 700, monthlyUnits: 800, maxMarkets: 5, monthlyDownloads: 1500, maxSavedProducts: 10000, monthlyWinnerRuns: 60 },
+  free:     { monthlySearches: 5,   monthlyUnits: 5,   maxMarkets: 1, monthlyDownloads: 0, maxSavedProducts: 20,    monthlyWinnerRuns: 0 },
+  starter:  { monthlySearches: 200, monthlyUnits: 200, maxMarkets: 2, monthlyDownloads: 0, maxSavedProducts: 500,   monthlyWinnerRuns: 0 },
+  pro:      { monthlySearches: 400, monthlyUnits: 400, maxMarkets: 3, monthlyDownloads: 0, maxSavedProducts: 2500,  monthlyWinnerRuns: 30 },
+  business: { monthlySearches: 600, monthlyUnits: 600, maxMarkets: 5, monthlyDownloads: 0, maxSavedProducts: 10000, monthlyWinnerRuns: 60 },
 };
 
 export function planLimits(plan: string | null | undefined): PlanLimits {

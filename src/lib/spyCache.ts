@@ -9,7 +9,7 @@ import type { Json } from "@/lib/database.types";
 export type Bill = { amount: number; reason: string };
 
 /** Durée de validité d'une recherche en cache (§7 — éviter de re-payer Apify). */
-const TTL_MS = 12 * 60 * 60 * 1000; // 12 h
+const TTL_MS = 3 * 24 * 60 * 60 * 1000; // 3 jours (compromis fraîcheur / coût Apify)
 /** Plafond d'appels Apify réels par utilisateur et par jour (garde-fou coût). */
 const DAILY_CAP = 40;
 

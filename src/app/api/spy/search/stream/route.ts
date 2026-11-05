@@ -9,19 +9,8 @@ import {
   fetchDatasetItems,
 } from "@/lib/apify";
 import { normalizeApifyItem, applySpyFilters } from "@/lib/spy";
-import { getSubscription } from "@/lib/credits";
-import { reserveSearch, releaseUsage, QuotaError } from "@/lib/usage";
-import { planLimits } from "@/lib/billing";
+import { reserveSearch, releaseUsage, quotaRefusal, QuotaError } from "@/lib/usage";
 import type { SpyFilters, SpyMediaType, SpyPlatform, SpyStatut } from "@/lib/spy";
-
-/** Message clair par type de quota (jamais le mot « crédits »). */
-function quotaMessage(kind: QuotaError["kind"], plan: string): string {
-  const lim = planLimits(plan);
-  if (kind === "markets" || (kind === "searches" && lim.monthlySearches === 0)) {
-    return "Les recherches personnelles sont réservées aux offres payantes. Passe en Starter pour lancer tes propres recherches.";
-  }
-  return "Tu as atteint ta limite de recherche ce mois-ci. Passe à une offre supérieure pour continuer.";
-}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -122,15 +111,14 @@ export async function POST(request: Request) {
           return;
         }
 
-        // 3) Quota v2 (recherche 1 marché). Cache-miss uniquement (on est ici).
-        const sub = await getSubscription(userId);
-        const plan = sub?.plan ?? "free";
+        // 3) Cache-miss → quota (1 recherche = 1 pays = 1 appel Apify), réservé
+        //    atomiquement en base sur le plan EFFECTIF avant tout appel Apify.
         try {
-          await reserveSearch(userId, plan, 1);
+          await reserveSearch(userId, 1);
           reserved = true;
         } catch (e) {
           if (e instanceof QuotaError) {
-            send({ type: "error", status: 402, message: quotaMessage(e.kind, plan) });
+            send({ type: "error", status: 402, ...(await quotaRefusal(userId, e.kind)) });
             controller.close();
             return;
           }
@@ -168,7 +156,7 @@ export async function POST(request: Request) {
 
         // 5) Cache (jeu complet non filtré, comme le chemin classique) + conso.
         //    On ne met PAS en cache un résultat vide (throttling Meta transitoire
-        //    → sinon on servirait "0 pub" pendant 12 h). Résultat vide = on ne
+        //    → sinon on servirait "0 pub" pendant 3 jours). Résultat vide = on ne
         //    brûle PAS d'unit (recherche sans résultat ≠ faute de l'utilisateur),
         //    mais la recherche reste comptée (anti-abus, borné par le cap/jour).
         if (accumulator.length > 0) {
