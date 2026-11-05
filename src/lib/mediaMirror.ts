@@ -36,9 +36,18 @@ export type MirrorStats = {
   missing: number;
   failed: number;
   skipped: number;
+  /** Premiers messages d'erreur distincts (diagnostic, sans secret). */
+  errors?: string[];
 };
 
-export const emptyStats = (): MirrorStats => ({ thumbs: 0, videos: 0, reused: 0, missing: 0, failed: 0, skipped: 0 });
+export const emptyStats = (): MirrorStats => ({ thumbs: 0, videos: 0, reused: 0, missing: 0, failed: 0, skipped: 0, errors: [] });
+
+/** Note une erreur (max 8 messages distincts) pour le rapport du job. */
+function noteError(stats: MirrorStats, where: string, e: unknown) {
+  const msg = `${where}: ${e instanceof Error ? `${e.name === "Error" ? "" : e.name + " "}${e.message}` : String(e)}`.slice(0, 160);
+  stats.errors ??= [];
+  if (stats.errors.length < 8 && !stats.errors.includes(msg)) stats.errors.push(msg);
+}
 
 const isMeta = (u: string | null | undefined): u is string => {
   if (!u) return false;
@@ -49,7 +58,7 @@ const isMeta = (u: string | null | undefined): u is string => {
   }
 };
 
-const safeId = (id: string) => id.replace(/[^0-9A-Za-z_-]/g, "").slice(0, 64);
+const safeId = (id: unknown) => String(id).replace(/[^0-9A-Za-z_-]/g, "").slice(0, 64);
 
 /** Erreur « lien Meta expiré / introuvable » (inutile de réessayer). */
 const isGone = (e: unknown) => /source_fetch_(403|404|410)/.test(e instanceof Error ? e.message : String(e));
@@ -98,6 +107,7 @@ export async function mirrorAd(ad: MirroredAd, stats: MirrorStats, opts: { video
         stats.missing++;
       } else {
         stats.failed++;
+        noteError(stats, "miniature", e);
         console.error("[mirror] miniature KO", id, e instanceof Error ? e.message : e);
       }
     }
@@ -118,6 +128,7 @@ export async function mirrorAd(ad: MirroredAd, stats: MirrorStats, opts: { video
         stats.missing++;
       } else {
         stats.failed++;
+        noteError(stats, "image", e);
       }
     }
     touched = true;
@@ -142,6 +153,7 @@ export async function mirrorAd(ad: MirroredAd, stats: MirrorStats, opts: { video
           stats.missing++;
         } else {
           stats.failed++;
+          noteError(stats, "vidéo", e);
           console.error("[mirror] vidéo KO", id, e instanceof Error ? e.message : e);
         }
       }

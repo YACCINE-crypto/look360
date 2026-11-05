@@ -72,7 +72,8 @@ export async function storeFromUrl(
   if (!allowedSource(sourceUrl)) throw new Error("source_not_allowed");
 
   // Redirections suivies seulement vers des hôtes autorisés + taille bornée.
-  const r = await fetchAllowedMedia(sourceUrl, {}, { archive: false });
+  // Délai max : un CDN qui ne répond pas ne bloque jamais tout le job.
+  const r = await fetchAllowedMedia(sourceUrl, { signal: AbortSignal.timeout(25_000) }, { archive: false });
   if (!r.ok || !r.body) throw new Error(`source_fetch_${r.status}`);
   if (Number(r.headers.get("content-length") || 0) > MAX_SOURCE_BYTES) throw new Error("source_too_large");
   const chunks: Uint8Array[] = [];
@@ -97,6 +98,7 @@ export async function storeFromUrl(
     method: "PUT",
     headers: { AccessKey: API_KEY as string, "Content-Type": "application/octet-stream" },
     body: buf,
+    signal: AbortSignal.timeout(60_000),
   });
   if (!put.ok) throw new Error(`bunny_put_${put.status}`);
 
@@ -131,7 +133,7 @@ export async function storeBuffer(
 export async function cdnObjectExists(key: string): Promise<boolean> {
   if (!mediaStorageConfigured()) return false;
   try {
-    const r = await fetch(`${cdnBase()}/${key}`, { method: "HEAD", cache: "no-store" });
+    const r = await fetch(`${cdnBase()}/${key}`, { method: "HEAD", cache: "no-store", signal: AbortSignal.timeout(8_000) });
     return r.ok;
   } catch {
     return false;
