@@ -21,9 +21,8 @@ export const ONBOARDING_MARKETS: { code: string; label: string }[] = [
   { code: "BE", label: "Belgique" },
 ];
 
-/** Liens WhatsApp à brancher plus tard (vides = bouton « bientôt »). */
-export const WHATSAPP_CHANNEL_URL = "";
-export const WHATSAPP_COMMUNITY_URL = "";
+/** Communauté WhatsApp Look360 (lien d'invitation). */
+export const WHATSAPP_COMMUNITY_URL = "https://chat.whatsapp.com/HXFLm4XHmL3AGFbGE4MAEK";
 
 /** Normalise un numéro saisi (espaces, tirets, 00…) en +XXXXXXXX, ou null si invalide. */
 export function normalizePhone(raw: string): string | null {

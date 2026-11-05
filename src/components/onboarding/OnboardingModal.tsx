@@ -3,13 +3,12 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowLeft, ArrowRight, Check, FlaskConical, MessageCircle, Search, Trophy, Users, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, FlaskConical, Search, Trophy, Users, X } from "lucide-react";
 import { finishOnboarding } from "@/lib/onboarding/actions";
 import {
   normalizePhone,
   ONBOARDING_MARKETS,
   ONBOARDING_NICHES,
-  WHATSAPP_CHANNEL_URL,
   WHATSAPP_COMMUNITY_URL,
 } from "@/lib/onboarding/options";
 import "./onboarding.css";
@@ -299,9 +298,6 @@ export function OnboardingModal({ firstName, planLabel }: { firstName: string; p
                   </label>
                   <p className="onb-note">Tu peux te désinscrire à tout moment dans Paramètres.</p>
                   <div className="onb-wa">
-                    <WaLink href={WHATSAPP_CHANNEL_URL} icon={<MessageCircle size={16} aria-hidden />}>
-                      Rejoindre la chaîne Look360
-                    </WaLink>
                     <WaLink href={WHATSAPP_COMMUNITY_URL} icon={<Users size={16} aria-hidden />}>
                       Rejoindre la communauté
                     </WaLink>
@@ -355,7 +351,7 @@ export function OnboardingModal({ firstName, planLabel }: { firstName: string; p
   );
 }
 
-/** Lien WhatsApp (chaîne / communauté) ; tant qu'il n'est pas branché : « bientôt ». */
+/** Lien vers la communauté WhatsApp (« bientôt » si aucun lien). */
 function WaLink({ href, icon, children }: { href: string; icon: React.ReactNode; children: React.ReactNode }) {
   if (!href) {
     return (
