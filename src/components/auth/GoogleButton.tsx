@@ -19,14 +19,26 @@ function GoogleLogo() {
  * « Continuer avec Google » : redirige vers Google (OAuth, PKCE), retour sur
  * /auth/callback qui échange le code contre une session côté serveur.
  */
-export function GoogleButton({ next }: { next?: string }) {
+export function GoogleButton({
+  next,
+  consent,
+}: {
+  next?: string;
+  /** Inscription : `false` tant que la case CGU n'est pas cochée (bouton grisé). */
+  consent?: boolean;
+}) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function go() {
     setPending(true);
     setError(null);
-    const redirectTo = `${window.location.origin}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ""}`;
+    const q = new URLSearchParams();
+    if (next) q.set("next", next);
+    // Acceptation explicite des conditions (case cochée sur l'inscription).
+    if (consent) q.set("terms", "1");
+    const qs = q.toString();
+    const redirectTo = `${window.location.origin}/auth/callback${qs ? `?${qs}` : ""}`;
     const { error: e } = await createClient().auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo },
@@ -43,10 +55,13 @@ export function GoogleButton({ next }: { next?: string }) {
       <div className="auth-or" role="separator" aria-label="ou">
         <span>ou</span>
       </div>
-      <button type="button" onClick={go} disabled={pending} className="auth-google">
+      <button type="button" onClick={go} disabled={pending || consent === false} className="auth-google">
         <GoogleLogo />
         {pending ? "Redirection vers Google…" : "Continuer avec Google"}
       </button>
+      {consent === false && (
+        <p className="auth-hint auth-google-hint">Coche la case ci-dessus pour continuer avec Google.</p>
+      )}
       {error && (
         <p className="auth-msg err" role="alert">
           {error}

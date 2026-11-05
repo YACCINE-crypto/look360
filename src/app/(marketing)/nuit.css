@@ -436,3 +436,47 @@ html:has(.nuit), html:has(.nuit) body { background: var(--night); }
 .nuit .cmp .sm-only { display: none; }
 @media (max-width: 640px) { .nuit .cmp .sm-only { display: inline; } }
 .nuit .fi .pi { flex: none; width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center; color: var(--night-accent-sky); border: 1px solid var(--glow-line); }
+
+/* ---------------------------------------------------------------------------
+   Pages légales (conditions, confidentialité) : colonne de lecture ~700 px.
+   --------------------------------------------------------------------------- */
+.nuit .legal {
+  max-width: 720px; margin: 0 auto;
+  padding: calc(112px + env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-left, 0px)) 80px max(20px, env(safe-area-inset-right, 0px));
+  font-size: 16px; line-height: 1.7; color: var(--night-fg-2);
+}
+.nuit .legal-head { padding-bottom: 28px; border-bottom: 1px solid var(--night-line); }
+.nuit .legal-eyebrow { font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--night-accent-sky); }
+.nuit .legal-head h1 { margin-top: 10px; font-size: clamp(30px, 6vw, 44px); line-height: 1.1; letter-spacing: -.02em; font-weight: 800; color: var(--night-fg); text-wrap: balance; }
+.nuit .legal-date { margin-top: 12px; font-size: 14px; color: var(--night-muted); }
+.nuit .legal-intro { margin-top: 16px; }
+.nuit .legal-toc {
+  margin-top: 28px; padding: 18px 20px; border: 1px solid var(--night-line); border-radius: 14px;
+  background: var(--panel);
+}
+.nuit .legal-toc > p { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--night-fg); }
+.nuit .legal-toc ol { margin-top: 10px; padding-left: 22px; list-style: decimal; columns: 2 260px; column-gap: 28px; font-size: 14px; line-height: 1.6; }
+.nuit .legal-toc li { break-inside: avoid; padding: 2px 0; }
+.nuit .legal-toc a { color: var(--night-fg-2); }
+.nuit .legal-toc a:hover { color: var(--night-accent-sky); text-decoration: underline; }
+.nuit .legal-body h2 {
+  margin-top: 48px; padding-top: 8px; font-size: 22px; line-height: 1.3; font-weight: 800; color: var(--night-fg);
+  scroll-margin-top: 100px;
+}
+.nuit .legal-body h3 { margin-top: 28px; font-size: 17px; line-height: 1.35; font-weight: 700; color: var(--night-fg); }
+.nuit .legal-body p { margin-top: 14px; }
+.nuit .legal-body .legal-label { margin-top: 22px; font-weight: 700; color: var(--night-fg); }
+.nuit .legal-body ul { margin-top: 12px; padding-left: 0; list-style: none; }
+.nuit .legal-body li { position: relative; padding-left: 22px; margin-top: 8px; }
+.nuit .legal-body li::before {
+  content: ""; position: absolute; left: 4px; top: .72em; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--night-accent);
+}
+.nuit .legal-body strong { color: var(--night-fg); font-weight: 700; }
+.nuit .legal a { color: var(--night-accent-sky); text-underline-offset: 3px; }
+.nuit .legal-body a:hover { text-decoration: underline; }
+.nuit .legal-body a { word-break: break-word; }
+@media (max-width: 640px) {
+  .nuit .legal { padding-top: calc(96px + env(safe-area-inset-top, 0px)); font-size: 15.5px; }
+  .nuit .legal-body h2 { margin-top: 40px; font-size: 20px; }
+}

@@ -87,3 +87,9 @@ html:has(.auth), html:has(.auth) body { background: var(--night); }
   .auth-eyebrow, .auth-trust { display: none; }
   .auth-title { margin-top: 0; }
 }
+
+/* Case « J'accepte les conditions » (inscription). */
+.auth-consent { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; line-height: 1.5; color: var(--night-fg-2); cursor: pointer; }
+.auth-consent input { flex: none; width: 18px; height: 18px; min-height: 0; margin-top: 1px; padding: 0; accent-color: var(--night-accent); cursor: pointer; }
+.auth-consent a { color: var(--night-accent-sky); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.auth-google-hint { margin-top: 8px; text-align: center; }
