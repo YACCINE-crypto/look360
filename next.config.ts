@@ -7,11 +7,39 @@ const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
+  { key: "Reporting-Endpoints", value: 'csp="/api/csp-report"' },
 ];
+
+// Content-Security-Policy en MODE OBSERVATION (Report-Only) : rien n'est bloqué,
+// les violations sont envoyées à /api/csp-report pour affiner la liste avant de
+// passer à l'en-tête bloquant. Sources ajoutées à la liste de départ (vues dans
+// le code) : Shopify et Facebook pour les visuels, Bunny en connect-src (lecteur
+// HLS), Sentry hors US (*.sentry.io), workers blob: (hls.js).
+const csp = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://www.googletagmanager.com https://www.google-analytics.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com data:",
+  "img-src 'self' data: blob: https://*.b-cdn.net https://*.supabase.co https://cdn.shopify.com https://*.fbcdn.net",
+  "media-src 'self' blob: https://*.b-cdn.net https://*.fbcdn.net",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.ingest.sentry.io https://*.sentry.io https://www.google-analytics.com https://challenges.cloudflare.com https://*.b-cdn.net",
+  "worker-src 'self' blob:",
+  "frame-src https://challenges.cloudflare.com https://accounts.google.com",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self' https://accounts.google.com",
+  "report-uri /api/csp-report",
+  "report-to csp",
+].join("; ");
 
 const nextConfig: NextConfig = {
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      {
+        source: "/:path*",
+        headers: [...securityHeaders, { key: "Content-Security-Policy-Report-Only", value: csp }],
+      },
+    ];
   },
 };
 
