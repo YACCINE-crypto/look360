@@ -1,26 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { requireSuperadmin } from "@/lib/adminGuard";
 
 /**
- * Garde serveur : revérifie que l'appelant est superadmin AVANT toute action.
- * (Les fonctions SQL revérifient aussi is_superadmin — double barrière.)
+ * Chaque action revérifie que l'appelant est superadmin AVANT d'agir
+ * (lib/adminGuard). Les fonctions SQL revérifient aussi is_superadmin.
  */
-async function guard(): Promise<SupabaseClient> {
-  const supabase = await createClient();
-  const { data: c } = await supabase.auth.getClaims();
-  const uid = c?.claims?.sub as string | undefined;
-  if (!uid) throw new Error("unauthenticated");
-  const { data: p } = await supabase
-    .from("profiles")
-    .select("role, suspended")
-    .eq("id", uid)
-    .maybeSingle();
-  if (p?.role !== "superadmin" || p.suspended) throw new Error("forbidden");
-  return supabase;
-}
+const guard = requireSuperadmin;
 
 export async function grantCredits(formData: FormData): Promise<void> {
   const supabase = await guard();

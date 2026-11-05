@@ -63,9 +63,11 @@ export function ActivityFeed({ initial }: { initial: ActivityEvent[] }) {
     if (busy.current) return;
     busy.current = true;
     try {
-      const supabase = createClient();
-      const { data } = await supabase.rpc("admin_activity");
-      if (Array.isArray(data)) setEvents(data as unknown as ActivityEvent[]);
+      // Passe par le serveur (garde superadmin) : plus d'appel RPC admin depuis le navigateur.
+      const r = await fetch("/api/admin/activity", { cache: "no-store" });
+      if (!r.ok) return;
+      const data = (await r.json()) as { events?: unknown };
+      if (Array.isArray(data.events)) setEvents(data.events as ActivityEvent[]);
     } finally {
       busy.current = false;
     }
