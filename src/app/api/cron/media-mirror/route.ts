@@ -75,7 +75,7 @@ async function mirrorPayloadTable(
       }
     }
   };
-  await Promise.all(Array.from({ length: 4 }, worker));
+  await Promise.all(Array.from({ length: 2 }, worker));
   rep.remaining = Math.max(0, todo.length - i);
   return rep;
 }

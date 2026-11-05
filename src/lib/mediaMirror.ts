@@ -69,8 +69,8 @@ async function copyOnce(source: string, key: string): Promise<{ url: string; reu
   try {
     return { url: (await storeFromUrl(source, "", { fixedKey: key })).cdnUrl, reused: false };
   } catch (e) {
-    if (isGone(e)) throw e;
-    await new Promise((r) => setTimeout(r, 2000));
+    if (isGone(e) || /source_too_large/.test(String(e))) throw e;
+    await new Promise((r) => setTimeout(r, 3000));
     return { url: (await storeFromUrl(source, "", { fixedKey: key })).cdnUrl, reused: false };
   }
 }
@@ -204,6 +204,7 @@ export async function mirrorAds(
       out[i] = await mirrorAd(out[i], stats, opts);
     }
   };
-  await Promise.all(Array.from({ length: 6 }, worker));
+  // 3 copies en parallèle : le CDN Meta coupe les connexions au-delà.
+  await Promise.all(Array.from({ length: 3 }, worker));
   return { ads: out, stats, complete };
 }

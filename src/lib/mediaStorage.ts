@@ -18,6 +18,16 @@ const MAX_SOURCE_BYTES = 100 * 1024 * 1024;
 
 export type StoredMedia = { cdnUrl: string; key: string };
 
+const BROWSER_UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36";
+
+/** Cause réseau lisible d'un « fetch failed » (code système, sans URL ni secret). */
+function errCause(e: unknown): string {
+  const c = (e as { cause?: { code?: string; message?: string } } | null)?.cause;
+  const name = e instanceof Error ? e.name : "";
+  return (c?.code || c?.message || name || "inconnu").toString().slice(0, 60);
+}
+
 /** true si le stockage média est configuré (sinon on reste sur les liens Meta). */
 export function mediaStorageConfigured(): boolean {
   return Boolean(ZONE && API_KEY && CDN_HOST);
@@ -73,7 +83,20 @@ export async function storeFromUrl(
 
   // Redirections suivies seulement vers des hôtes autorisés + taille bornée.
   // Délai max : un CDN qui ne répond pas ne bloque jamais tout le job.
-  const r = await fetchAllowedMedia(sourceUrl, { signal: AbortSignal.timeout(25_000) }, { archive: false });
+  let r: Response;
+  try {
+    r = await fetchAllowedMedia(
+      sourceUrl,
+      {
+        signal: AbortSignal.timeout(25_000),
+        // En-têtes de navigateur : certains edges du CDN Meta coupent les clients « nus ».
+        headers: { "User-Agent": BROWSER_UA, Accept: "image/avif,image/webp,image/*,video/*,*/*;q=0.8" },
+      },
+      { archive: false },
+    );
+  } catch (e) {
+    throw new Error(`meta_fetch_failed(${errCause(e)})`);
+  }
   if (!r.ok || !r.body) throw new Error(`source_fetch_${r.status}`);
   if (Number(r.headers.get("content-length") || 0) > MAX_SOURCE_BYTES) throw new Error("source_too_large");
   const chunks: Uint8Array[] = [];
@@ -94,12 +117,17 @@ export async function storeFromUrl(
   // Clé fixe (miroir idempotent : même pub → même objet) ou aléatoire.
   const key = opts.fixedKey ?? `${keyPrefix}/${crypto.randomUUID()}.${ext}`;
 
-  const put = await fetch(`https://${storageHost()}/${ZONE}/${key}`, {
-    method: "PUT",
-    headers: { AccessKey: API_KEY as string, "Content-Type": "application/octet-stream" },
-    body: buf,
-    signal: AbortSignal.timeout(60_000),
-  });
+  let put: Response;
+  try {
+    put = await fetch(`https://${storageHost()}/${ZONE}/${key}`, {
+      method: "PUT",
+      headers: { AccessKey: API_KEY as string, "Content-Type": "application/octet-stream" },
+      body: buf,
+      signal: AbortSignal.timeout(60_000),
+    });
+  } catch (e) {
+    throw new Error(`bunny_put_failed(${errCause(e)})`);
+  }
   if (!put.ok) throw new Error(`bunny_put_${put.status}`);
 
   return { cdnUrl: `${cdnBase()}/${key}`, key };
