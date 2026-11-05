@@ -18,6 +18,7 @@ import { planLabel, planLimits } from "@/lib/billing";
 import { PageHeader } from "@/components/ui";
 import { NotifBell } from "@/components/NotifBell";
 import { ShareToggle } from "./ShareToggle";
+import { FeedPreferences, WhatsAppSettings } from "./WhatsAppSettings";
 
 export const dynamic = "force-dynamic";
 
@@ -130,6 +131,16 @@ export default async function ParametresPage() {
     getSubscription(uid),
     getUsage(uid),
   ]);
+  // Colonnes onboarding/WhatsApp lues à part : si la migration 0041 n'est pas
+  // encore appliquée, le reste de la page fonctionne normalement.
+  const { data: prefs, error: prefsErr } = (await supabase
+    .from("profiles")
+    .select("pref_niches, pref_markets, whatsapp_number, whatsapp_optin" as "nom")
+    .eq("id", uid)
+    .maybeSingle()) as unknown as {
+    data: { pref_niches: string[]; pref_markets: string[]; whatsapp_number: string | null; whatsapp_optin: boolean } | null;
+    error: unknown;
+  };
   const share = profile?.vitrine_share ?? true;
   const isAdmin = (profile?.role ?? "membre") === "superadmin";
   const displayName = profile?.nom ?? email ?? "Mon compte";
@@ -182,6 +193,17 @@ export default async function ParametresPage() {
           <NotifBell />
         </ControlRow>
       </Group>
+
+      {!prefsErr && prefs && (
+        <>
+          <Group title="WhatsApp">
+            <WhatsAppSettings number={prefs.whatsapp_number} optin={prefs.whatsapp_optin} />
+          </Group>
+          <Group title="Mon feed">
+            <FeedPreferences niches={prefs.pref_niches ?? []} markets={prefs.pref_markets ?? []} />
+          </Group>
+        </>
+      )}
 
       <Group title="Partage">
         <ControlRow

@@ -1,0 +1,131 @@
+/* ==========================================================================
+   Onboarding de 1re connexion — thème « Nuit » (navy + accent Look360).
+   Couleurs = tokens --night-* / --accent de /design-system/tokens.css.
+   Scopé sous .onb : aucun effet ailleurs dans l'app.
+   ========================================================================== */
+.onb {
+  position: fixed; inset: 0; z-index: 100;
+  display: grid; place-items: center;
+  padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px));
+  font-family: var(--font-body); color: var(--night-fg); color-scheme: dark;
+}
+.onb-backdrop {
+  position: absolute; inset: 0;
+  background: color-mix(in srgb, var(--night) 72%, transparent);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.onb-panel {
+  position: relative; width: 100%; max-width: 520px; max-height: calc(100dvh - 32px);
+  display: flex; flex-direction: column; overflow: hidden; outline: none;
+  border: 1px solid var(--night-line); border-radius: 22px;
+  background:
+    radial-gradient(ellipse 90% 60% at 50% -15%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 70%),
+    var(--night);
+  box-shadow: 0 30px 80px -20px rgb(0 0 0 / .6), 0 0 0 1px color-mix(in srgb, var(--night-accent) 12%, transparent);
+}
+.onb-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 20px 0; }
+.onb-count { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--night-accent-sky); }
+.onb-skip {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 0 10px; border-radius: 8px;
+  font-size: 13px; font-weight: 600; color: var(--night-muted); background: transparent; border: 0; cursor: pointer;
+}
+.onb-skip:hover { color: var(--night-fg); background: var(--night-2); }
+
+.onb-dots { display: flex; gap: 6px; padding: 14px 20px 0; }
+.onb-dot { height: 6px; border-radius: 99px; border: 0; padding: 0; background: var(--night-line); cursor: default; }
+.onb-dot.on { background: var(--accent); }
+.onb-dot:not(:disabled) { cursor: pointer; }
+
+.onb-stage { flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+.onb-body { padding: 22px 24px 8px; }
+.onb-body h2 { font-size: clamp(22px, 5.5vw, 28px); line-height: 1.15; letter-spacing: -.02em; font-weight: 800; text-wrap: balance; }
+.onb-lead { margin-top: 8px; font-size: 15px; line-height: 1.55; color: var(--night-fg-2); }
+
+.onb-mark {
+  display: grid; place-items: center; width: 64px; height: 64px; margin-bottom: 18px; border-radius: 18px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent); border: 1px solid color-mix(in srgb, var(--night-accent) 35%, transparent);
+}
+.onb-mark.done { background: var(--accent); color: var(--accent-on); border: 0; box-shadow: 0 12px 30px -10px var(--night-glow); }
+.onb-pill {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 18px; padding: 6px 12px; border-radius: 99px;
+  font-size: 13px; font-weight: 600; color: color-mix(in srgb, var(--success), white 35%);
+  background: color-mix(in srgb, var(--success) 14%, transparent); border: 1px solid color-mix(in srgb, var(--success) 35%, transparent);
+}
+
+/* Comment ça marche : 3 cartes Trouve → Teste → Valide */
+.onb-flow { display: grid; gap: 10px; margin-top: 18px; counter-reset: step; }
+.onb-flow li {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px;
+  padding: 14px; border-radius: 16px; border: 1px solid var(--night-line); background: var(--night-2);
+}
+.onb-flow b { font-size: 15px; font-weight: 800; }
+.onb-flow p { margin-top: 2px; font-size: 13.5px; line-height: 1.45; color: var(--night-fg-2); }
+.onb-ico { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--accent); color: var(--accent-on); }
+.onb-vis { display: grid; justify-items: end; gap: 5px; width: 78px; }
+.onb-bar { height: 6px; border-radius: 99px; background: var(--night-line); }
+.onb-bar.w80 { width: 100%; } .onb-bar.w55 { width: 70%; }
+.onb-tag { font-size: 11px; font-weight: 700; color: var(--night-accent-sky); white-space: nowrap; }
+.onb-ring { width: 30px; height: 30px; border-radius: 50%; background: conic-gradient(var(--night-accent) 0 68%, var(--night-line) 68% 100%); mask: radial-gradient(circle, transparent 52%, #000 53%); -webkit-mask: radial-gradient(circle, transparent 52%, #000 53%); }
+.onb-ok { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: color-mix(in srgb, var(--success) 22%, transparent); color: color-mix(in srgb, var(--success), white 30%); }
+
+/* Profil : puces niches / marchés */
+.onb-group { margin-top: 18px; border: 0; padding: 0; }
+.onb-group legend { font-size: 13px; font-weight: 700; color: var(--night-fg); margin-bottom: 8px; }
+.onb-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.onb-chip {
+  display: inline-flex; align-items: center; gap: 5px; min-height: 36px; padding: 0 13px; border-radius: 99px;
+  font: inherit; font-size: 13.5px; font-weight: 600; color: var(--night-fg-2); cursor: pointer;
+  background: var(--night-2); border: 1px solid var(--night-line); transition: background-color .15s, border-color .15s, color .15s;
+}
+.onb-chip:hover { color: var(--night-fg); border-color: color-mix(in srgb, var(--night-accent) 45%, transparent); }
+.onb-chip[aria-pressed="true"] { color: var(--night-fg); background: color-mix(in srgb, var(--accent) 28%, transparent); border-color: var(--night-accent); }
+
+/* WhatsApp */
+.onb-field { display: grid; gap: 6px; margin-top: 18px; font-size: 13px; font-weight: 700; }
+.onb-field input {
+  min-height: 46px; padding: 0 14px; border-radius: 12px; font: inherit; font-size: 16px; font-weight: 500;
+  color: var(--night-fg); background: var(--night-2); border: 1px solid var(--night-line); outline: none;
+}
+.onb-field input:focus { border-color: var(--night-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--night-accent) 25%, transparent); }
+.onb-check { display: flex; align-items: flex-start; gap: 10px; margin-top: 14px; font-size: 14px; line-height: 1.45; color: var(--night-fg); cursor: pointer; }
+.onb-check input { flex: none; width: 18px; height: 18px; margin-top: 1px; accent-color: var(--night-accent); cursor: pointer; }
+.onb-note { margin-top: 6px; padding-left: 28px; font-size: 12.5px; color: var(--night-muted); }
+.onb-wa { display: grid; gap: 8px; margin-top: 18px; }
+
+/* Boutons */
+.onb-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 0 18px;
+  border-radius: 12px; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; text-decoration: none;
+  border: 1px solid transparent; transition: background-color .15s, transform .15s, opacity .15s;
+}
+.onb-btn.primary { background: var(--accent); color: var(--accent-on); box-shadow: 0 10px 28px -12px var(--night-glow); }
+.onb-btn.primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+.onb-btn.ghost { background: transparent; color: var(--night-fg-2); border-color: var(--night-line); }
+.onb-btn.ghost:hover { color: var(--night-fg); background: var(--night-2); }
+.onb-btn.wa { justify-content: flex-start; background: var(--night-2); color: var(--night-fg); border-color: var(--night-line); }
+.onb-btn.wa:hover { border-color: color-mix(in srgb, var(--success) 50%, transparent); }
+.onb-btn.wa svg { color: color-mix(in srgb, var(--success), white 25%); }
+.onb-btn.disabled { opacity: .6; cursor: default; }
+.onb-btn.wa em { margin-left: auto; font-style: normal; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--night-muted); }
+.onb-btn:disabled { opacity: .6; cursor: default; transform: none; }
+.onb-ctas { display: grid; gap: 10px; margin-top: 22px; }
+
+.onb-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 20px 20px; border-top: 1px solid var(--night-line); }
+.onb-error {
+  margin: 0 20px 6px; padding: 10px 12px; border-radius: 10px; font-size: 13.5px; line-height: 1.45;
+  color: color-mix(in srgb, var(--danger), white 40%); background: color-mix(in srgb, var(--danger) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
+}
+.onb :focus-visible { outline: 2px solid var(--night-accent-sky); outline-offset: 2px; }
+
+@media (max-width: 480px) {
+  .onb { padding: 0; place-items: end stretch; }
+  .onb-panel { max-width: none; max-height: 94dvh; border-radius: 22px 22px 0 0; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .onb-body { padding: 18px 18px 6px; }
+  .onb-vis { display: none; }
+  .onb-flow li { grid-template-columns: auto 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .onb-btn, .onb-chip { transition: none; }
+}
+.onb .onb-panel:focus, .onb .onb-panel:focus-visible { outline: none; }
