@@ -5,7 +5,7 @@ import { Icon } from "@/components/Icon";
 import { CountryFlag } from "@/components/dataviz";
 import { AdGrid } from "@/components/AdGrid";
 import { ShopProductCard, StageBadge, UnlockMore } from "@/components/shops/ShopCards";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { currentAccess } from "@/lib/access";
 import { getShop, shopAds, shopProducts } from "@/lib/shopQueries";
 import { discountPct, formatPrice, PRODUCT_COLS, type ShopProduct } from "@/lib/shops";
@@ -26,8 +26,8 @@ export async function ProductView({ domain: rawD, handle: rawH, base }: { domain
   const handle = decodeURIComponent(rawH).toLowerCase();
   const shop = await getShop(domain);
   if (!shop) notFound();
-  const supabase = await createClient();
-  const { data } = await supabase.from("shop_products").select(PRODUCT_COLS).eq("shop_id", shop.id).eq("handle", handle).maybeSingle();
+  // Catalogue partagé lu côté serveur (la lecture directe est réservée aux payants).
+  const { data } = await createAdminClient().from("shop_products").select(PRODUCT_COLS).eq("shop_id", shop.id).eq("handle", handle).maybeSingle();
   const p = data as unknown as ShopProduct | null;
   if (!p) notFound();
 

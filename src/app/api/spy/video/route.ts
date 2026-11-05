@@ -9,9 +9,10 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 /**
- * Télécharge à la volée la vidéo d'une pub depuis media_url (CDN Meta) et la
+ * Télécharge à la volée la vidéo (ou l'image, `kind=image`) d'une pub et la
  * renvoie en pièce jointe. Passe par le serveur pour éviter CORS/expiration.
- * Aucun stockage permanent.
+ * Ouvert à TOUTES les offres ; seul garde-fou : 100 téléchargements / jour /
+ * compte (anti-scripts, protection bande passante), appliqué en base.
  */
 export async function GET(request: Request) {
   const supabase = await createClient();
@@ -29,6 +30,7 @@ export async function GET(request: Request) {
   // Mode lecture (inline) : autorisé à tous, proxy même origine avec Range pour
   // une lecture fiable in-app. Mode téléchargement (défaut) : offres payantes.
   const inline = params.get("inline") === "1";
+  const image = params.get("kind") === "image";
 
   if (!u) return NextResponse.json({ error: "url requise" }, { status: 400 });
 
@@ -55,7 +57,10 @@ export async function GET(request: Request) {
   // exécuteraient du script sur notre origine) : seul video/* passe, sinon
   // video/mp4. nosniff + CSP sandbox en défense en profondeur.
   const upCt = (upstream.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
-  const ct = /^video\/[a-z0-9.+-]+$/.test(upCt) ? upCt : "video/mp4";
+  // Image : uniquement des formats raster (jamais de SVG, qui peut contenir du script).
+  const ct = image
+    ? /^image\/(jpeg|png|webp|gif)$/.test(upCt) ? upCt : "image/jpeg"
+    : /^video\/[a-z0-9.+-]+$/.test(upCt) ? upCt : "video/mp4";
   const headers: Record<string, string> = {
     "Content-Type": ct,
     "Cache-Control": "no-store",
@@ -71,17 +76,21 @@ export async function GET(request: Request) {
     headers["Content-Disposition"] = "inline";
     headers["Accept-Ranges"] = headers["accept-ranges"] || "bytes";
   } else {
-    // Téléchargement = consomme 1 du quota mensuel (free = 0 → bloqué). Compté
+    // Téléchargement : garde-fou anti-abus de 100 / jour (toutes offres). Compté
     // seulement une fois l'amont confirmé OK, pour ne pas débiter un échec.
     try {
       await consumeDownload(userId);
     } catch (e) {
       if (e instanceof QuotaError) {
-        return NextResponse.redirect(new URL("/offres?locked=video", request.url));
+        return NextResponse.json(
+          { error: "Limite de 100 téléchargements par jour atteinte. Réessaie demain." },
+          { status: 429 },
+        );
       }
       throw e;
     }
-    headers["Content-Disposition"] = `attachment; filename="look360-pub-${Date.now()}.mp4"`;
+    const ext = image ? (ct === "image/png" ? "png" : ct === "image/webp" ? "webp" : ct === "image/gif" ? "gif" : "jpg") : "mp4";
+    headers["Content-Disposition"] = `attachment; filename="look360-pub-${Date.now()}.${ext}"`;
   }
   return new NextResponse(upstream.body, { status: upstream.status, headers });
 }

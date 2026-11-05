@@ -1,5 +1,6 @@
 import { after, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { callShopCrawl } from "@/lib/shops";
 
 export const runtime = "nodejs";
@@ -35,7 +36,8 @@ export async function POST(request: Request) {
   ].slice(0, 200);
   if (domains.length === 0) return NextResponse.json({ cod: [], known: [] });
 
-  const { data: rows } = await supabase.from("shops").select("domain, status, cod_apps").in("domain", domains);
+  // Badge COD seulement (pas le catalogue) : lu côté serveur pour tous les plans.
+  const { data: rows } = await createAdminClient().from("shops").select("domain, status, cod_apps").in("domain", domains);
   const known = (rows ?? []).map((r) => r.domain as string);
   const cod = (rows ?? []).filter((r) => Array.isArray(r.cod_apps) && r.cod_apps.length > 0).map((r) => r.domain as string);
 

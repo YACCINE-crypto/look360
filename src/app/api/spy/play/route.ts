@@ -4,7 +4,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { accountSuspended } from "@/lib/accountGuard";
 import { isAllowedMediaUrl } from "@/lib/mediaHosts";
 import { getSubscription } from "@/lib/credits";
-import { planLimits } from "@/lib/billing";
 import {
   getOrCreateStream,
   streamConfigured,
@@ -38,7 +37,7 @@ const API = "https://video.bunnycdn.com";
 
 async function allowedToTranscode(userId: string, source: string, adId: string | null): Promise<boolean> {
   const sub = await getSubscription(userId);
-  if (planLimits(sub?.plan).monthlySearches > 0) return true;
+  if ((sub?.plan ?? "free") !== "free") return true;
   // Offre gratuite : seulement une créative du feed commun, et la bonne vidéo.
   if (!adId || !/^\d{1,32}$/.test(adId)) return false;
   const admin = createAdminClient();

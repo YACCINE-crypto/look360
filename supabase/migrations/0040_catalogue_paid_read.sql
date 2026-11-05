@@ -13,3 +13,9 @@ drop policy if exists shop_products_read on public.shop_products;
 create policy shop_products_read on public.shop_products for select to authenticated
   using ((select public.my_plan()) <> 'free');
 
+
+-- Plafond de coût caché (units) : marge de 25 % au-dessus des recherches pour
+-- les offres payantes, afin que le détail d'une pub (1 appel Apify, compté en
+-- units seulement) n'ampute jamais les recherches affichées à l'utilisateur.
+update public.plan_limits set monthly_market_search_units = case plan
+  when 'free' then 5 when 'starter' then 250 when 'pro' then 500 when 'business' then 750 end;

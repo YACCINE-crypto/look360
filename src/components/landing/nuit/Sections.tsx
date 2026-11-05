@@ -703,16 +703,16 @@ function features(p: Plan): { label: ReactNode; on: boolean }[] {
     {
       label: (
         <>
-          <b>{nf(l.monthlySearches)}</b> recherches / mois · jusqu&apos;à {l.maxMarkets} marché{l.maxMarkets > 1 ? "s" : ""}
+          <b>{nf(l.monthlySearches)}</b> recherches / mois
         </>
       ),
       on: l.monthlySearches > 0,
     },
-    { label: "Spy Facebook — recherche de pubs", on: true },
-    { label: "Top Trend — classement produits", on: true },
-    { label: "Analyse de concurrent", on: true },
+    { label: "Feed, produits gagnants et boutiques en entier", on: true },
+    { label: p === "starter" ? "Top Trend (aperçu : top 3)" : "Top Trend complet", on: true },
+    { label: p === "starter" ? "Fiche boutique : infos + aperçu du catalogue" : "Fiche boutique complète : catalogue, prix, best-sellers", on: true },
     { label: <><b>Testing &amp; validation produit</b> — closing, marge, verdict</>, on: true },
-    { label: "Téléchargement des vidéos de pub", on: true },
+    { label: "Téléchargement des vidéos et images de pub", on: true },
     { label: <>Suivi de <b>{c.competitorSlots}</b> concurrent{c.competitorSlots > 1 ? "s" : ""}</>, on: c.competitorSlots > 0 },
     {
       label: c.winnerEnabled ? (
@@ -724,7 +724,7 @@ function features(p: Plan): { label: ReactNode; on: boolean }[] {
       ),
       on: c.winnerEnabled,
     },
-    { label: "Winners du jour sur WhatsApp", on: c.whatsapp },
+    { label: "Alertes winners sur WhatsApp", on: c.whatsapp },
     { label: "Vitrine des winners validés", on: c.vitrineEnabled },
     { label: <>Support <b>{SUPPORT[p]}</b></>, on: true },
   ];
@@ -798,7 +798,7 @@ export function Tarifs() {
         <div className="free rv">
           <div>
             <b>Offre gratuite · 0 FCFA</b>
-            <p>Feed des winners du jour et aperçu des produits et boutiques gagnants · sans carte bancaire</p>
+            <p>5 recherches par mois, 20 winners du jour, aperçu des produits et boutiques, 50 produits en test · sans carte bancaire</p>
           </div>
           <Link className="btn" href={SIGNUP}>
             Commencer gratuitement

@@ -23,7 +23,7 @@ export type PlanConfig = {
 export const PLANS: Record<Plan, PlanConfig> = {
   free: {
     label: "Gratuit",
-    monthlyCredits: 10000,
+    monthlyCredits: 0,
     competitorSlots: 0,
     winnerEnabled: false,
     winnerKeywords: 0,
@@ -35,39 +35,39 @@ export const PLANS: Record<Plan, PlanConfig> = {
   },
   starter: {
     label: "Starter",
-    monthlyCredits: 120000,
-    competitorSlots: 1,
+    monthlyCredits: 0,
+    competitorSlots: 2,
     winnerEnabled: false,
     winnerKeywords: 0,
     winnerCountries: 0,
     whatsapp: false,
     vitrineEnabled: false,
-    priceNormal: 7500,
-    priceFirst: 5000,
+    priceNormal: 5000,
+    priceFirst: null,
   },
   pro: {
     label: "Pro",
-    monthlyCredits: 300000,
-    competitorSlots: 3,
+    monthlyCredits: 0,
+    competitorSlots: 5,
     winnerEnabled: true,
-    winnerKeywords: 2,
+    winnerKeywords: 3,
     winnerCountries: 1,
-    whatsapp: false, // WhatsApp Winners = Business uniquement (spec v2)
+    whatsapp: true,
     vitrineEnabled: false,
-    priceNormal: 15000,
-    priceFirst: 10000,
+    priceNormal: 10000,
+    priceFirst: null,
   },
   business: {
     label: "Business",
-    monthlyCredits: 600000,
+    monthlyCredits: 0,
     competitorSlots: 10,
     winnerEnabled: true,
-    winnerKeywords: 5,
+    winnerKeywords: 10,
     winnerCountries: 2,
     whatsapp: true,
     vitrineEnabled: true,
-    priceNormal: 25000,
-    priceFirst: 17500,
+    priceNormal: 15000,
+    priceFirst: null,
   },
 };
 
@@ -139,12 +139,7 @@ export function searchCost(nCountries: number): number {
   return SEARCH_COST_PER_COUNTRY * Math.max(1, nCountries);
 }
 
-// --- Packs de recharge (achat en plus, tout plan) ---
-export const CREDIT_PACKS = [
-  { credits: 50000, price: 3000 },
-  { credits: 120000, price: 6000 },
-  { credits: 300000, price: 13000 },
-];
+// Packs de recharge : supprimés (offres v3, modèle 100 % abonnement).
 
 /** Formate des crédits pour l'affichage (même unité que la base). */
 export function formatCredits(n: number | null | undefined): string {

@@ -1,5 +1,5 @@
 import "server-only";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { AFRICA_CODES, AMERICA_CODES, EU_CODES, PRODUCT_COLS, SHOP_COLS, type Shop, type ShopProduct } from "@/lib/shops";
 
 export type Zone = "all" | "africa" | "europe" | "america";
@@ -24,7 +24,7 @@ export async function listProducts(o: {
   minActive?: number;
   niche?: string;
 }): Promise<{ items: ProductWithShop[]; total: number }> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   let query = supabase
     .from("shop_products")
     .select(`${PRODUCT_COLS}, shops!inner(domain, name, currency, ad_countries, status)`, { count: "exact" })
@@ -54,7 +54,7 @@ export async function listShops(o: {
   minActive?: number;
   niche?: string;
 }): Promise<{ shops: Shop[]; total: number; thumbs: Map<string, string[]> }> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   let query = supabase.from("shops").select(SHOP_COLS, { count: "exact" }).eq("status", "ok");
   if (o.zone !== "all") query = query.overlaps("ad_countries", ZONE_CODES[o.zone]);
   if (o.q) query = query.or(`domain.ilike.${like(o.q)},name.ilike.${like(o.q)}`);
@@ -75,7 +75,7 @@ export async function listShops(o: {
 export async function shopThumbs(ids: string[]): Promise<Map<string, string[]>> {
   const map = new Map<string, string[]>();
   if (ids.length === 0) return map;
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data } = await supabase
     .from("shop_products")
     .select("shop_id, image_url")
@@ -94,14 +94,14 @@ export async function shopThumbs(ids: string[]): Promise<Map<string, string[]>> 
 
 /** Boutique par domaine (null si inconnue). */
 export async function getShop(domain: string): Promise<Shop | null> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data } = await supabase.from("shops").select(SHOP_COLS).eq("domain", domain.toLowerCase()).maybeSingle();
   return (data as unknown as Shop) ?? null;
 }
 
 /** Produits d'une boutique (ceux avec pubs d'abord). */
 export async function shopProducts(shopId: string, limit: number): Promise<{ items: ShopProduct[]; total: number }> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, count } = await supabase
     .from("shop_products")
     .select(PRODUCT_COLS, { count: "exact" })
@@ -114,7 +114,7 @@ export async function shopProducts(shopId: string, limit: number): Promise<{ ite
 
 /** Pubs repérées vers une boutique (ou un produit précis). */
 export async function shopAds(domain: string, handle: string | null, limit: number) {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   let q = supabase
     .from("shop_ad_links")
     .select("payload, is_active, start_date", { count: "exact" })
@@ -129,7 +129,7 @@ export async function shopAds(domain: string, handle: string | null, limit: numb
 
 /** Niches présentes dans le catalogue (pour les filtres), les plus fréquentes d'abord. */
 export async function listNiches(): Promise<string[]> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data } = await supabase.from("shops").select("niches").eq("status", "ok").not("niches", "eq", "{}").limit(2000);
   const count = new Map<string, number>();
   for (const r of data ?? []) for (const n of (r.niches as string[]) ?? []) count.set(n, (count.get(n) ?? 0) + 1);

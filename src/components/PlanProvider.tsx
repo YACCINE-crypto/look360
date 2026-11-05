@@ -21,7 +21,8 @@ export function usePlan(): string {
   return useContext(PlanContext);
 }
 
-/** Le téléchargement des vidéos est réservé aux offres payantes (Starter+). */
+/** Téléchargement des vidéos et images : ouvert à toutes les offres (garde-fou
+ *  anti-abus de 100 / jour appliqué côté serveur). */
 export function useCanDownload(): boolean {
-  return useContext(PlanContext) !== "free";
+  return true;
 }

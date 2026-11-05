@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { ShopCard, UnlockMore } from "@/components/shops/ShopCards";
 import { CatalogFilters } from "@/components/shops/CatalogFilters";
 import { PageHeader } from "@/components/ui";
-import { currentAccess, FREE_PREVIEW } from "@/lib/access";
+import { currentAccess } from "@/lib/access";
 import { listNiches, listShops, type ShopSort, type Zone } from "@/lib/shopQueries";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +12,7 @@ const PAGE = 48;
 
 /**
  * Boutiques : boutiques Shopify derrière les pubs repérées (catalogue, prix,
- * COD, pubs actives). Gratuit : 5 éléments.
+ * COD, pubs actives). Gratuit : aperçu limité CÔTÉ SERVEUR (plan_limits.pages_limit).
  */
 export default async function BoutiquesPage({
   searchParams,
@@ -22,9 +22,9 @@ export default async function BoutiquesPage({
   const sp = await searchParams;
   const zone: Zone = sp.zone === "africa" || sp.zone === "europe" || sp.zone === "america" ? sp.zone : "all";
   const page = Math.max(1, Number(sp.page) || 1);
-  const [{ paid }, niches] = await Promise.all([currentAccess(), listNiches()]);
+  const [{ paid, pagesLimit }, niches] = await Promise.all([currentAccess(), listNiches()]);
   const niche = sp.niche && niches.includes(sp.niche) ? sp.niche : undefined;
-  const limit = paid ? PAGE * page : FREE_PREVIEW;
+  const limit = pagesLimit ?? PAGE * page;
   const sort: ShopSort = sp.sort === "produits" || sp.sort === "cod" ? sp.sort : "pubs";
   const { shops, total, thumbs } = await listShops({ zone, q: (sp.q ?? "").slice(0, 80), sort, limit, niche });
   const next = new URLSearchParams(Object.entries(sp).filter(([, v]) => v) as [string, string][]);
@@ -53,7 +53,7 @@ export default async function BoutiquesPage({
             ))}
           </div>
           {!paid ? (
-            total > FREE_PREVIEW && <UnlockMore what="boutiques" total={total} />
+            total > limit && <UnlockMore what="boutiques" total={total} shown={limit} />
           ) : (
             total > limit && (
               <div className="flex justify-center">
