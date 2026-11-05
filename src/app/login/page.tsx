@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Turnstile } from "@/components/Turnstile";
 import { PasswordInput } from "@/components/PasswordInput";
 import { AuthInput, AuthPasswordWrap, AuthShell } from "@/components/auth/AuthShell";
+import { GoogleButton } from "@/components/auth/GoogleButton";
 import { login } from "./actions";
 import { signup } from "@/app/signup/actions";
 
@@ -26,6 +27,7 @@ function AuthCard() {
 
   const reset = params.get("reset") === "1";
   const authError = params.get("error") === "auth";
+  const oauthError = params.get("error") === "oauth";
   const sent = params.get("sent") === "1";
 
   const go = (t: "login" | "signup") => {
@@ -65,6 +67,9 @@ function AuthCard() {
 
           {reset && <p className="auth-msg ok">Mot de passe mis à jour. Connecte-toi.</p>}
           {authError && <p className="auth-msg err">Lien invalide ou expiré. Réessaie de te connecter ou de réinitialiser.</p>}
+          {oauthError && <p className="auth-msg err">La connexion avec Google n&apos;a pas abouti. Réessaie, ou connecte-toi avec ton e-mail.</p>}
+
+          <GoogleButton />
 
           <form action={loginAction} className="auth-form">
             <div className="auth-field">
@@ -102,6 +107,8 @@ function AuthCard() {
           <p className="auth-eyebrow">C&apos;est parti</p>
           <h1 className="auth-title">Crée ton compte</h1>
           <p className="auth-sub">Gratuit, sans carte bancaire. On t&apos;envoie un lien pour confirmer ton adresse e-mail.</p>
+
+          <GoogleButton />
 
           <form action={signupAction} className="auth-form">
             <div className="auth-field">
