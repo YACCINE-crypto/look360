@@ -24,16 +24,8 @@ type Admin = SupabaseClient<Database>;
  */
 
 // Niches par défaut (mot-clé FR → libellé niche).
-export const FEED_NICHES: { niche: string; kw: string }[] = [
-  { niche: "Montre & tech", kw: "montre" },
-  { niche: "Beauté", kw: "beauté" },
-  { niche: "Maison & cuisine", kw: "cuisine" },
-  { niche: "Bien-être", kw: "masseur" },
-  { niche: "Mode & accessoires", kw: "ceinture" },
-  { niche: "Bébé & enfant", kw: "bébé" },
-  { niche: "Auto & moto", kw: "voiture" },
-  { niche: "Sport & plein air", kw: "sport" },
-];
+export { FEED_NICHES } from "@/lib/feed-niches";
+import { FEED_NICHES } from "@/lib/feed-niches";
 // Marchés principaux (francophones + FR pour le volume/reach UE).
 export const FEED_MARKETS = ["CI", "SN", "GA", "FR"];
 
@@ -364,21 +356,32 @@ export async function seedFeedFromCache(
   return { found: ranked.length, stored: rows.length, scanned: searches.length };
 }
 
-/** Lit le feed commun (pour affichage). Renvoie des SpyAd prêts pour la carte. */
+/**
+ * Lit le feed commun (pour affichage). Renvoie des SpyAd prêts pour la carte.
+ * `prefer` (niches / pays de l'utilisateur) : ces pubs passent en tête, puis le
+ * reste par score. Le nombre renvoyé reste `limit` (aperçu gratuit inchangé).
+ */
 export async function getFeed(
   admin: Admin,
-  opts: { niche?: string; limit?: number } = {},
+  opts: { niche?: string; limit?: number; prefer?: { niches: string[]; markets: string[] } } = {},
 ): Promise<SpyAd[]> {
   const limit = opts.limit ?? 48;
+  const pref = opts.prefer && (opts.prefer.niches.length || opts.prefer.markets.length) ? opts.prefer : null;
   let q = admin
     .from("feed_ads")
-    .select("payload")
+    .select("payload, niche, country")
     .order("score", { ascending: false })
     .order("refreshed_at", { ascending: false })
-    .limit(limit);
+    .limit(pref ? Math.max(limit * 3, 60) : limit);
   if (opts.niche) q = q.eq("niche", opts.niche);
   const { data } = await q;
-  return (data ?? [])
-    .map((r) => (r as { payload: unknown }).payload as SpyAd)
+  let rows = (data ?? []) as { payload: unknown; niche: string | null; country: string | null }[];
+  if (pref) {
+    const hit = (r: (typeof rows)[number]) =>
+      (r.niche != null && pref.niches.includes(r.niche)) || (r.country != null && pref.markets.includes(r.country));
+    rows = [...rows.filter(hit), ...rows.filter((r) => !hit(r))].slice(0, limit);
+  }
+  return rows
+    .map((r) => r.payload as SpyAd)
     .filter((a): a is SpyAd => Boolean(a && a.ad_archive_id));
 }

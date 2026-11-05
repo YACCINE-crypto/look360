@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getQuota } from "@/lib/usage";
 import { BillingBanner, type BillingState } from "@/components/BillingBanner";
+import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
+import { planLabel } from "@/lib/billing";
 import { AppShell } from "@/components/AppShell";
 import { PlanProvider } from "@/components/PlanProvider";
 
@@ -37,10 +39,19 @@ export default async function AppLayout({
   const pendingCount = role === "superadmin" ? (count ?? 0) : 0;
 
   // Plan EFFECTIF + quota + état de facturation, lus en base (jamais le plan brut).
-  const [quota, { data: billing }] = await Promise.all([
+  const [quota, { data: billing }, onboarding] = await Promise.all([
     getQuota(userId),
     (supabase as unknown as { rpc: (f: string) => Promise<{ data: unknown }> }).rpc("my_billing_state"),
+    // Requête séparée : si la colonne n'existe pas encore, rien d'autre ne casse.
+    supabase
+      .from("profiles")
+      .select("onboarding_done_at" as "nom")
+      .eq("id", userId)
+      .maybeSingle()
+      .then((r) => r as unknown as { data: { onboarding_done_at: string | null } | null; error: unknown }),
   ]);
+  // 1re connexion : onboarding affiché tant qu'il n'a pas été terminé ou passé.
+  const showOnboarding = !onboarding.error && onboarding.data != null && onboarding.data.onboarding_done_at === null;
   const plan = quota?.plan ?? "free";
 
   return (
@@ -54,6 +65,7 @@ export default async function AppLayout({
       plan={plan}
     >
       <BillingBanner state={(billing as BillingState | null) ?? null} />
+      {showOnboarding && <OnboardingModal firstName={(profile?.nom ?? "").split(" ")[0]} planLabel={planLabel(plan)} />}
       <PlanProvider plan={plan}>{children}</PlanProvider>
     </AppShell>
   );

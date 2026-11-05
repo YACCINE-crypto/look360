@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { getFeed } from "@/lib/feed";
 import { PageHeader } from "@/components/ui";
 import { FeedClient } from "./FeedClient";
@@ -16,9 +17,21 @@ export const dynamic = "force-dynamic";
  */
 export default async function RecherchePage() {
   const admin = createAdminClient();
-  const { feedLimit } = await currentAccess();
+  const { feedLimit, userId } = await currentAccess();
+  // Niches / pays choisis à l'onboarding : mis en avant en premier (si la
+  // colonne n'existe pas encore, feed classique).
+  const { data: prefs } = userId
+    ? ((await (await createClient())
+        .from("profiles")
+        .select("pref_niches, pref_markets" as "nom")
+        .eq("id", userId)
+        .maybeSingle()) as unknown as { data: { pref_niches: string[]; pref_markets: string[] } | null })
+    : { data: null };
   const [visible, { count }] = await Promise.all([
-    getFeed(admin, { limit: feedLimit ?? 60 }),
+    getFeed(admin, {
+      limit: feedLimit ?? 60,
+      prefer: prefs ? { niches: prefs.pref_niches ?? [], markets: prefs.pref_markets ?? [] } : undefined,
+    }),
     admin.from("feed_ads").select("id", { count: "exact", head: true }),
   ]);
   const total = count ?? visible.length;
