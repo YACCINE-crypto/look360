@@ -1,4 +1,3 @@
--- ============================================================================
 -- 0039 — Offres v3 + gating 100 % serveur.
 --
 --  1. plan_limits : nouvelles valeurs (recherches 5/200/400/600, concurrents
@@ -14,7 +13,6 @@
 --  6. (Catalogue partagé : voir 0040, appliquée avec le déploiement du code.)
 --  7. État de facturation (bannières) : my_billing_state().
 -- Aucune modification de payments / apply_payment_success / SasPay.
--- ============================================================================
 
 -- 1) Niveaux d'accès + valeurs v3 --------------------------------------------
 alter table public.plan_limits
