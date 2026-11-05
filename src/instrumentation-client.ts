@@ -7,6 +7,7 @@
 // pas un secret. Tant qu'il est absent, le monitoring client reste DÉSACTIVÉ.
 // ============================================================================
 import * as Sentry from "@sentry/nextjs";
+import { scrubEvent } from "@/lib/sentryScrub";
 
 const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
 
@@ -18,6 +19,10 @@ if (dsn) {
     // Pas de Session Replay par défaut (perf + vie privée).
     replaysSessionSampleRate: 0,
     replaysOnErrorSampleRate: 0,
+    // Jamais d'IP, cookies ni en-têtes d'authentification ; filtre des secrets
+    // et données personnelles sur chaque événement (lib/sentryScrub).
+    dataCollection: { userInfo: false, cookies: false, httpHeaders: false, httpBodies: [], urlQueryParams: false },
+    beforeSend: scrubEvent,
   });
 }
 

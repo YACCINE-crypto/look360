@@ -32,5 +32,10 @@
     "eslint-config-next": "16.4.5",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@sentry/bundler-plugins": {
+      "glob": "^14.0.3"
+    }
   }
 }
