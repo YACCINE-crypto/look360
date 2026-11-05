@@ -1,6 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getWebPush, type PushPayload, type StoredSubscription } from "@/lib/webpush";
+import { notifyUser } from "@/lib/notify";
 import { searchSpyWithCache } from "@/lib/spyCache";
 import { WINNER_SEARCH_CAP, type SpyAd } from "@/lib/spy";
 import type { Database, Json } from "@/lib/database.types";
@@ -81,32 +81,21 @@ export async function runWinnerForConfig(
   );
 
   if (opts.sendPush) {
-    const { data: subs } = await admin
-      .from("push_subscriptions")
-      .select("id, endpoint, keys")
-      .eq("user_id", cfg.user_id);
-    if (subs && subs.length > 0) {
-      const webpush = getWebPush();
-      const payload: PushPayload = {
-        title: `${winners.length} winner${winners.length > 1 ? "s" : ""} du jour repéré${winners.length > 1 ? "s" : ""}`,
-        body: "Ouvre la vue Winners du jour pour les découvrir.",
-        url: "/winners",
-        tag: "winner-daily",
-      };
-      for (const s of subs) {
-        try {
-          await webpush.sendNotification(
-            { endpoint: s.endpoint, keys: s.keys } as unknown as StoredSubscription as never,
-            JSON.stringify(payload),
-          );
-        } catch (e: unknown) {
-          const code = (e as { statusCode?: number }).statusCode;
-          if (code === 404 || code === 410) {
-            await admin.from("push_subscriptions").delete().eq("id", s.id);
-          }
-        }
-      }
-    }
+    // Alerte unique par jour (idempotente) : WhatsApp pour les abonnés Pro/Business
+    // qui ont accepté, sinon e-mail + notification push. Image = copie Bunny.
+    const top = winners[0];
+    const thumb = top?.thumbnail_url && !/fbcdn|facebook\.com/.test(top.thumbnail_url) ? top.thumbnail_url : null;
+    await notifyUser({
+      userId: cfg.user_id,
+      eventKey: `winners:${today}`,
+      kind: "winners",
+      title: `${winners.length} winner${winners.length > 1 ? "s" : ""} du jour repéré${winners.length > 1 ? "s" : ""}`,
+      body: top
+        ? `En tête : ${top.page_name ?? "une pub"} (score ${top.score}). Ouvre Winners du jour pour tout voir.`
+        : "Ouvre la vue Winners du jour pour les découvrir.",
+      imageUrl: thumb,
+      link: "/winners",
+    });
   }
 
   return { winners: winners.length, searches };

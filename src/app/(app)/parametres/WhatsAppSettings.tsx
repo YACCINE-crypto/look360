@@ -32,7 +32,7 @@ export function WhatsAppSettings({ number, optin }: { number: string | null; opt
         <div className="min-w-0 flex-1">
           <p className="text-fg text-sm font-semibold">Alertes WhatsApp</p>
           <p className="text-muted-foreground mt-0.5 text-xs leading-snug">
-            Winners et infos Look360 sur WhatsApp. Uniquement avec ton accord, désactivable ici à tout moment.
+            Winners et infos Look360 sur WhatsApp (offres Pro et Business). Uniquement avec ton accord, désactivable ici ou en répondant STOP.
           </p>
         </div>
         <button

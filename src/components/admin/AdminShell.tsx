@@ -13,6 +13,7 @@ const NAV = [
   { href: "/admin/clients", label: "Clients", icon: "users" as const },
   { href: "/admin/revenus", label: "Revenus & marge", icon: "store" as const },
   { href: "/admin/activite", label: "Activité", icon: "bell" as const },
+  { href: "/admin/whatsapp", label: "WhatsApp", icon: "mail" as const },
   { href: "/admin/reglages", label: "Réglages", icon: "settings" as const },
 ];
 
