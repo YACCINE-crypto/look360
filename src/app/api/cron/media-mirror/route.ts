@@ -34,7 +34,9 @@ function authorized(request: Request): boolean {
 type Admin = ReturnType<typeof createAdminClient>;
 type TableReport = { scanned: number; repaired: number; remaining: number };
 
-const BUDGET_MS = 270_000;
+// On arrête de LANCER des copies à 150 s : celles en cours (≤ ~60 s chacune)
+// finissent avant la limite Vercel de 300 s. Relancer la page reprend la suite.
+const BUDGET_MS = 150_000;
 
 const isMetaUrl = (u: string | null | undefined): u is string => {
   if (!u) return false;
