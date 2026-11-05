@@ -878,10 +878,11 @@ export function Faq() {
 const COLS: { title: string; links: { label: string; href: string }[] }[] = [
   { title: "Produit", links: [{ label: "Fonctions", href: "#fonctions" }, { label: "Comparatif", href: "#comparatif" }, { label: "Tarifs", href: "#tarifs" }] },
   { title: "Ressources", links: [{ label: "FAQ", href: "#faq" }, { label: "Support", href: `mailto:${SUPPORT_EMAIL}` }, { label: "WhatsApp", href: WHATSAPP_URL }] },
-  { title: "Légal", links: [{ label: "CGU", href: "/cgu" }, { label: "Confidentialité", href: "/confidentialite" }, { label: "Remboursement", href: "/remboursement" }] },
+  { title: "Légal", links: [{ label: "Conditions d'utilisation", href: "/conditions" }, { label: "Confidentialité", href: "/confidentialite" }] },
 ];
 
-export function Footer() {
+/** `anchorBase="/"` hors landing : les liens #section renvoient vers la landing. */
+export function Footer({ anchorBase = "" }: { anchorBase?: string }) {
   return (
     <>
       <footer className="foot layer">
@@ -901,7 +902,7 @@ export function Footer() {
                       {l.href.startsWith("/") ? (
                         <Link href={l.href}>{l.label}</Link>
                       ) : (
-                        <a href={l.href} {...(l.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
+                        <a href={l.href.startsWith("#") ? `${anchorBase}${l.href}` : l.href} {...(l.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
                           {l.label}
                         </a>
                       )}

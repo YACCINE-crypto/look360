@@ -9,7 +9,8 @@ export const NAV_LINKS = [
   { href: "#faq", label: "FAQ" },
 ];
 
-export function NuitNav() {
+/** `anchorBase="/"` hors landing (pages légales) : les ancres renvoient vers la landing. */
+export function NuitNav({ anchorBase = "" }: { anchorBase?: string }) {
   return (
     <nav className="nav" aria-label="Navigation principale">
       <div className="nav-in">
@@ -19,7 +20,7 @@ export function NuitNav() {
         </Link>
         <div className="nav-links">
           {NAV_LINKS.map((l) => (
-            <a key={l.href} href={l.href}>
+            <a key={l.href} href={`${anchorBase}${l.href}`}>
               {l.label}
             </a>
           ))}

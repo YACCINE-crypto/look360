@@ -18,6 +18,11 @@ export async function signup(
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
 
+  // Acceptation des conditions : vérifiée CÔTÉ SERVEUR (la case du formulaire
+  // ne suffit pas, un appel direct sans elle est refusé).
+  if (formData.get("accept_terms") !== "1") {
+    return "Accepte les Conditions d'utilisation et la Politique de confidentialité pour créer ton compte.";
+  }
   if (!email) return "Email requis.";
   if (password.length < 8) return "Mot de passe : 8 caractères minimum.";
 
@@ -39,7 +44,7 @@ export async function signup(
     email,
     password,
     options: {
-      data: { nom: nom || email.split("@")[0] },
+      data: { nom: nom || email.split("@")[0], terms_accepted_at: new Date().toISOString() },
       emailRedirectTo: `${origin}/auth/confirm?next=/bienvenue`,
     },
   });

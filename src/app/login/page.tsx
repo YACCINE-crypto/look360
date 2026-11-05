@@ -28,6 +28,9 @@ function AuthCard() {
   const reset = params.get("reset") === "1";
   const authError = params.get("error") === "auth";
   const oauthError = params.get("error") === "oauth";
+  const termsError = params.get("error") === "terms";
+  // Case « J'accepte les conditions » (inscription email ET Google).
+  const [accepted, setAccepted] = useState(false);
   const sent = params.get("sent") === "1";
 
   const go = (t: "login" | "signup") => {
@@ -107,6 +110,11 @@ function AuthCard() {
           <p className="auth-eyebrow">C&apos;est parti</p>
           <h1 className="auth-title">Crée ton compte</h1>
           <p className="auth-sub">Gratuit, sans carte bancaire. On t&apos;envoie un lien pour confirmer ton adresse e-mail.</p>
+          {termsError && (
+            <p className="auth-msg err" role="alert">
+              Pour créer ton compte avec Google, coche d&apos;abord la case d&apos;acceptation des conditions.
+            </p>
+          )}
 
           <form action={signupAction} className="auth-form">
             <div className="auth-field">
@@ -136,6 +144,28 @@ function AuthCard() {
               </AuthPasswordWrap>
             </div>
 
+            <label className="auth-consent">
+              <input
+                type="checkbox"
+                name="accept_terms"
+                value="1"
+                required
+                checked={accepted}
+                onChange={(e) => setAccepted(e.target.checked)}
+              />
+              <span>
+                J&apos;accepte les{" "}
+                <Link href="/conditions" target="_blank">
+                  Conditions d&apos;utilisation
+                </Link>{" "}
+                et la{" "}
+                <Link href="/confidentialite" target="_blank">
+                  Politique de confidentialité
+                </Link>
+                .
+              </span>
+            </label>
+
             <Turnstile theme="dark" />
 
             {signupError && <p className="auth-msg err" role="alert">{signupError}</p>}
@@ -145,7 +175,7 @@ function AuthCard() {
             </button>
           </form>
 
-          <GoogleButton />
+          <GoogleButton consent={accepted} />
 
           <p className="auth-switch">
             Tu as déjà un compte ?{" "}
