@@ -11,8 +11,7 @@ export default async function AdminWhatsAppPage() {
       <div>
         <h1 className="text-fg text-2xl font-extrabold tracking-tight">WhatsApp</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Alertes Winners et notifications aux abonnés Pro et Business qui ont accepté. Tant que l&apos;envoi réel est
-          coupé, toutes les alertes partent par e-mail et notification push.
+          Alertes Winners envoyées sur WhatsApp aux abonnés Pro et Business qui ont accepté.
         </p>
       </div>
       <WhatsAppAdmin initial={initial} />
