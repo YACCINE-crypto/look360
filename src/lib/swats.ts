@@ -129,6 +129,47 @@ export async function getInstance(id: string) {
   };
 }
 
+export type SwatsInstanceInfo = { id: string; name: string | null; state: string; phone: string | null };
+
+/**
+ * Liste des instances du compte. La doc SWATS n'est pas joignable d'ici : on
+ * essaie les chemins usuels (le premier qui répond une liste gagne).
+ */
+export async function listInstances(): Promise<{ ok: boolean; items: SwatsInstanceInfo[]; tried: string[]; error: string | null }> {
+  const tried: string[] = [];
+  let lastErr: string | null = null;
+  for (const path of ["/instances", "/instance", "/instance/list", "/instance/fetchInstances", "/instance/all"]) {
+    tried.push(path);
+    const r = await call<unknown>("GET", path);
+    if (!r.ok) {
+      lastErr = r.code ?? `http_${r.status}`;
+      if (r.status === 401 || r.status === 403) break;
+      continue;
+    }
+    const raw = r.data as unknown;
+    const obj = raw as Record<string, unknown> | null;
+    const arr = Array.isArray(raw)
+      ? raw
+      : Array.isArray(obj?.instances)
+        ? (obj!.instances as unknown[])
+        : Array.isArray(obj?.items)
+          ? (obj!.items as unknown[])
+          : null;
+    if (!arr) continue;
+    const items = arr
+      .map((x) => {
+        const o = ((x as Record<string, unknown>)?.instance ?? x) as Record<string, unknown>;
+        const id = pick(o, "id", "instanceId", "instance_id", "instanceName", "name");
+        return id
+          ? { id, name: pick(o, "name", "instanceName"), state: normalizeStatus(pick(o, "status", "state", "connectionStatus")), phone: pick(o, "phone", "number", "phoneNumber", "owner") }
+          : null;
+      })
+      .filter((x): x is SwatsInstanceInfo => x !== null);
+    return { ok: true, items, tried, error: null };
+  }
+  return { ok: false, items: [], tried, error: lastErr };
+}
+
 export async function restartInstance(id: string) {
   return call("POST", `/instance/${encodeURIComponent(id)}/restart`);
 }

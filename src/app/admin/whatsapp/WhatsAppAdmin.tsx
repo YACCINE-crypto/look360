@@ -141,7 +141,7 @@ export function WhatsAppAdmin({ initial }: { initial: WaState }) {
                 ? `Connecté${s.instance?.phone ? ` : ${s.instance.phone}` : ""}.`
                 : s.instance
                   ? "Un numéro réservé à Look360, jamais ton numéro perso. Connexion par QR code."
-                  : "Colle l'ID de l'instance créée dans le tableau de bord SWATS (aucune nouvelle instance n'est créée)."}
+                  : "Colle l'ID de l'instance SWATS, même tronqué : le début suffit. Laisse vide pour détecter l'instance de ton compte. Aucune instance n'est créée."}
             </p>
             {!blocked[2] && !connected && (
               <div className="mt-3 flex flex-wrap gap-2">
@@ -158,14 +158,14 @@ export function WhatsAppAdmin({ initial }: { initial: WaState }) {
                     </label>
                     <input
                       id="wa-instance-id"
-                      placeholder="ID de l'instance (ex. scalor_6af3…)"
+                      placeholder="ID ou début de l'ID (ex. scalor_6af3…)"
                       value={linkId}
                       onChange={(e) => setLinkId(e.target.value)}
                       autoComplete="off"
                       spellCheck={false}
                       className="border-border bg-surface text-fg focus:border-accent focus-visible:ring-accent/30 min-h-10 flex-1 rounded-md border px-3 font-mono text-sm outline-none focus-visible:ring-2"
                     />
-                    <Btn primary type="submit" disabled={pending || linkId.trim().length < 6} icon={<Link2 size={16} />}>
+                    <Btn primary type="submit" disabled={pending} icon={<Link2 size={16} />}>
                       Relier l&apos;instance
                     </Btn>
                   </form>

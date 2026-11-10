@@ -6,6 +6,7 @@ import {
   createInstance,
   getInstance,
   getQrCode,
+  listInstances,
   restartInstance,
   sendMessage,
   setWebhook,
@@ -86,23 +87,40 @@ export async function waQr(): Promise<Res<string>> {
  */
 export async function waLink(rawId: string): Promise<Res<string>> {
   await requireSuperadmin();
-  const id = rawId.trim();
-  if (!/^[A-Za-z0-9_-]{6,100}$/.test(id)) return { ok: false, error: "ID invalide : copie l'ID complet de l'instance depuis SWATS." };
-  const r = await getInstance(id);
-  if (!r.ok) {
-    return {
-      ok: false,
-      error:
-        r.status === 404
-          ? "SWATS ne trouve pas cette instance avec ta clé : vérifie l'ID complet (et que la clé SWATS_API_KEY est celle du même compte)."
-          : `SWATS refuse : ${errText(r)}`,
-    };
+  const typed = rawId.trim();
+  if (typed && !/^[A-Za-z0-9_.-]{4,120}$/.test(typed)) return { ok: false, error: "ID invalide : colle l'ID (ou son début) tel qu'affiché dans SWATS." };
+
+  // 1) ID complet ? 2) sinon : liste des instances du compte → celle dont l'ID
+  // (ou le nom) commence par ce qui a été collé ; champ vide → l'unique instance.
+  let id: string | null = null;
+  let r = typed ? await getInstance(typed) : null;
+  if (r?.ok) id = typed;
+  else {
+    const list = await listInstances();
+    if (!list.ok) {
+      return {
+        ok: false,
+        error: typed
+          ? `SWATS ne trouve pas « ${typed} » et ne donne pas la liste des instances (${list.error ?? "inconnu"}). Copie l'ID complet depuis SWATS (bouton copier ou détail de l'instance).`
+          : `Impossible de lister les instances SWATS (${list.error ?? "inconnu"}). Colle l'ID de l'instance.`,
+      };
+    }
+    const t = typed.toLowerCase();
+    const matches = t
+      ? list.items.filter((i) => i.id.toLowerCase().startsWith(t) || (i.name ?? "").toLowerCase().startsWith(t))
+      : list.items;
+    if (matches.length === 0) return { ok: false, error: `Aucune instance ${t ? `qui commence par « ${typed} »` : "sur ce compte SWATS"} (${list.items.length} trouvée(s)).` };
+    if (matches.length > 1) return { ok: false, error: `${matches.length} instances correspondent : colle un ID plus long (${matches.map((m) => m.id).join(", ")}).` };
+    id = matches[0].id;
+    r = await getInstance(id);
+    if (!r.ok) return { ok: false, error: `Instance ${id} trouvée mais illisible : ${errText(r)}` };
   }
+
   const admin = createAdminClient();
   const db = admin as unknown as { from: (t: string) => any }; // eslint-disable-line @typescript-eslint/no-explicit-any
   await db.from("whatsapp_instance").delete().neq("id", id);
   await saveInstanceStatus(admin, id, r.state, { name: "look360-alerts", phone: r.phone, last_error: null });
-  return { ok: true, data: r.state };
+  return { ok: true, data: `${r.state} (ID ${id})` };
 }
 
 /** Statut en direct (appelé en boucle pendant le scan). */
