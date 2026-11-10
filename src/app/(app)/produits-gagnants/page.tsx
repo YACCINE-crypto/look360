@@ -4,7 +4,7 @@ import { ShopProductCard, UnlockMore } from "@/components/shops/ShopCards";
 import { CatalogFilters } from "@/components/shops/CatalogFilters";
 import { PageHeader } from "@/components/ui";
 import { currentAccess } from "@/lib/access";
-import { listNiches, listProducts, type ProductSort, type Zone } from "@/lib/shopQueries";
+import { listNiches, listProducts, WINNER_MIN_SCORE, type ProductSort, type Zone } from "@/lib/shopQueries";
 
 export const dynamic = "force-dynamic";
 
@@ -25,14 +25,23 @@ export default async function ProduitsGagnantsPage({
   const [{ paid, pagesLimit }, niches] = await Promise.all([currentAccess(), listNiches()]);
   const niche = sp.niche && niches.includes(sp.niche) ? sp.niche : undefined;
   const limit = pagesLimit ?? PAGE * page;
-  const sort: ProductSort = sp.sort === "recent" || sp.sort === "promo" ? sp.sort : "pubs";
-  const { items, total } = await listProducts({ zone, q: (sp.q ?? "").slice(0, 80), sort, withAds: sp.ads !== "0", limit, niche });
+  const sort: ProductSort = sp.sort === "recent" || sp.sort === "promo" || sp.sort === "pubs" ? sp.sort : "new";
+  const winners = sp.ads !== "0";
+  const { items, total } = await listProducts({
+    zone,
+    q: (sp.q ?? "").slice(0, 80),
+    sort,
+    withAds: winners,
+    minScore: winners ? WINNER_MIN_SCORE : undefined,
+    limit,
+    niche,
+  });
   const next = new URLSearchParams(Object.entries(sp).filter(([, v]) => v) as [string, string][]);
   next.set("page", String(page + 1));
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Produits gagnants" subtitle="Les produits vers lesquels mènent les pubs repérées, avec leur prix réel et leurs pubs actives. Catalogues mis à jour tous les 7 jours." />
+      <PageHeader title="Produits gagnants" subtitle="Les produits vers lesquels mènent les pubs repérées, les derniers arrivés en premier. Ajoutés automatiquement à chaque recherche et à chaque collecte du feed." />
       <Suspense>
         <CatalogFilters basePath="/produits-gagnants" kind="produits" niches={niches} />
       </Suspense>
