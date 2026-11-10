@@ -271,7 +271,7 @@ select public.catalog_reaggregate(null);
 -- s'alimentent tout seuls.
 --  * catalog_ingest(ads) : indexe des pubs (lien pub → boutique/produit),
 --    ajoute les nouvelles boutiques (dédup sur le domaine), recalcule
---    uniquement les boutiques touchées. Rapide (quelques ms par recherche).
+--    uniquement les boutiques touchées (~1 s par recherche).
 --  * Déclencheurs (par instruction) sur spy_searches (recherche Apify d'un
 --    user, et mise à jour du miroir Bunny) et sur feed_ads (feed commun) :
 --    chaque pub repérée est indexée immédiatement. Une erreur n'empêche
