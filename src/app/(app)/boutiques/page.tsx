@@ -25,14 +25,14 @@ export default async function BoutiquesPage({
   const [{ paid, pagesLimit }, niches] = await Promise.all([currentAccess(), listNiches()]);
   const niche = sp.niche && niches.includes(sp.niche) ? sp.niche : undefined;
   const limit = pagesLimit ?? PAGE * page;
-  const sort: ShopSort = sp.sort === "produits" || sp.sort === "cod" ? sp.sort : "pubs";
+  const sort: ShopSort = sp.sort === "produits" || sp.sort === "cod" || sp.sort === "pubs" ? sp.sort : "new";
   const { shops, total, thumbs } = await listShops({ zone, q: (sp.q ?? "").slice(0, 80), sort, limit, niche });
   const next = new URLSearchParams(Object.entries(sp).filter(([, v]) => v) as [string, string][]);
   next.set("page", String(page + 1));
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Boutiques" subtitle="Les boutiques Shopify derrière les pubs repérées : catalogue, prix, paiement à la livraison et pubs actives." />
+      <PageHeader title="Boutiques" subtitle="Les boutiques Shopify derrière les pubs repérées, les nouvelles en premier : catalogue, prix, paiement à la livraison et pubs actives." />
       <Suspense>
         <CatalogFilters basePath="/boutiques" kind="boutiques" niches={niches} />
       </Suspense>

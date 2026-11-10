@@ -4,8 +4,11 @@ import { AFRICA_CODES, AMERICA_CODES, EU_CODES, PRODUCT_COLS, SHOP_COLS, type Sh
 
 export type Zone = "all" | "africa" | "europe" | "america";
 export const ZONE_CODES: Record<Exclude<Zone, "all">, string[]> = { africa: AFRICA_CODES, europe: EU_CODES, america: AMERICA_CODES };
-export type ProductSort = "pubs" | "recent" | "promo";
-export type ShopSort = "pubs" | "produits" | "cod";
+export type ProductSort = "new" | "pubs" | "recent" | "promo" | "score";
+export type ShopSort = "new" | "pubs" | "produits" | "cod" | "score";
+
+/** Seuil d'entrée dans les Produits gagnants (winner_score 0–100, calculé en base). */
+export const WINNER_MIN_SCORE = 10;
 export type ProductWithShop = ShopProduct & {
   shops: Pick<Shop, "domain" | "name" | "currency" | "ad_countries" | "status">;
 };
@@ -22,7 +25,10 @@ export async function listProducts(o: {
   offset?: number;
   /** Minimum de pubs actives (sélection « meilleurs »). */
   minActive?: number;
+  /** Score minimum (Produits gagnants). */
+  minScore?: number;
   niche?: string;
+  ids?: string[];
 }): Promise<{ items: ProductWithShop[]; total: number }> {
   const supabase = createAdminClient();
   let query = supabase
@@ -33,12 +39,18 @@ export async function listProducts(o: {
   if (o.q) query = query.ilike("title", like(o.q));
   if (o.withAds) query = query.gt("ads_count", 0);
   if (o.minActive) query = query.gte("ads_active", o.minActive);
+  if (o.minScore) query = query.gte("winner_score", o.minScore);
+  if (o.ids) query = query.in("id", o.ids);
   if (o.niche) query = query.contains("shops.niches", [o.niche]);
   if (o.sort === "promo") query = query.not("compare_at_price", "is", null);
   query =
     o.sort === "recent"
       ? query.order("created_at_shop", { ascending: false, nullsFirst: false })
-      : query.order("ads_active", { ascending: false }).order("ads_count", { ascending: false }).order("position");
+      : o.sort === "new"
+        ? query.order("discovered_at", { ascending: false, nullsFirst: false }).order("winner_score", { ascending: false })
+        : o.sort === "score"
+          ? query.order("winner_score", { ascending: false }).order("ads_active", { ascending: false })
+          : query.order("ads_active", { ascending: false }).order("ads_count", { ascending: false }).order("position");
   const from = o.offset ?? 0;
   const { data, count } = await query.range(from, from + o.limit - 1);
   return { items: (data ?? []) as unknown as ProductWithShop[], total: count ?? 0 };
@@ -53,6 +65,7 @@ export async function listShops(o: {
   offset?: number;
   minActive?: number;
   niche?: string;
+  ids?: string[];
 }): Promise<{ shops: Shop[]; total: number; thumbs: Map<string, string[]> }> {
   const supabase = createAdminClient();
   let query = supabase.from("shops").select(SHOP_COLS, { count: "exact" }).eq("status", "ok");
@@ -61,10 +74,15 @@ export async function listShops(o: {
   if (o.sort === "cod") query = query.not("cod_apps", "eq", "{}");
   if (o.minActive) query = query.gte("ads_active", o.minActive);
   if (o.niche) query = query.contains("niches", [o.niche]);
+  if (o.ids) query = query.in("id", o.ids);
   query =
     o.sort === "produits"
       ? query.order("product_count", { ascending: false, nullsFirst: false })
-      : query.order("ads_active", { ascending: false }).order("ads_count", { ascending: false });
+      : o.sort === "new"
+        ? query.order("first_seen", { ascending: false }).order("winner_score", { ascending: false })
+        : o.sort === "score"
+          ? query.order("winner_score", { ascending: false }).order("ads_active", { ascending: false })
+          : query.order("ads_active", { ascending: false }).order("ads_count", { ascending: false });
   const from = o.offset ?? 0;
   const { data, count } = await query.range(from, from + o.limit - 1);
   const shops = (data ?? []) as unknown as Shop[];

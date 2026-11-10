@@ -70,6 +70,22 @@
     {
       "path": "/api/cron/whatsapp-dispatch",
       "schedule": "0 11 * * *"
+    },
+    {
+      "path": "/api/cron/trends",
+      "schedule": "20 1 * * *"
+    },
+    {
+      "path": "/api/cron/trends",
+      "schedule": "20 7 * * *"
+    },
+    {
+      "path": "/api/cron/trends",
+      "schedule": "20 13 * * *"
+    },
+    {
+      "path": "/api/cron/trends",
+      "schedule": "20 19 * * *"
     }
   ]
 }

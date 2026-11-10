@@ -33,6 +33,8 @@ export type Shop = {
   next_crawl_at: string;
   last_error: string | null;
   niches: string[];
+  first_seen: string;
+  winner_score: number;
 };
 
 export type ShopProduct = {
@@ -55,12 +57,14 @@ export type ShopProduct = {
   first_ad_date: string | null;
   eu_reach: number | null;
   niche: string | null;
+  discovered_at: string | null;
+  winner_score: number;
 };
 
 export const SHOP_COLS =
-  "id, domain, platform, status, name, country, currency, theme, product_count, price_min, price_max, catalog_type, niche, cod_apps, pixels, new_products_30d, discounted_count, ads_count, ads_active, ad_countries, eu_reach, first_ad_date, last_crawled, next_crawl_at, last_error, niches";
+  "id, domain, platform, status, name, country, currency, theme, product_count, price_min, price_max, catalog_type, niche, cod_apps, pixels, new_products_30d, discounted_count, ads_count, ads_active, ad_countries, eu_reach, first_ad_date, last_crawled, next_crawl_at, last_error, niches, first_seen, winner_score";
 export const PRODUCT_COLS =
-  "id, shop_id, handle, title, product_type, price, compare_at_price, image_url, images, variants_count, available, body_excerpt, created_at_shop, published_at, ads_count, ads_active, first_ad_date, eu_reach, niche";
+  "id, shop_id, handle, title, product_type, price, compare_at_price, image_url, images, variants_count, available, body_excerpt, created_at_shop, published_at, ads_count, ads_active, first_ad_date, eu_reach, niche, discovered_at, winner_score";
 
 /** Zone d'une boutique d'après les pays où ses pubs sont diffusées. */
 export function shopZone(adCountries: string[]): "europe" | "africa" | "unknown" {

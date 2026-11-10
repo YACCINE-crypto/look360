@@ -31,7 +31,7 @@ export function CatalogFilters({
   const sp = useSearchParams();
   const [q, setQ] = useState(sp.get("q") ?? "");
   const zone = sp.get("zone") ?? "all";
-  const sort = sp.get("sort") ?? "pubs";
+  const sort = sp.get("sort") ?? "new";
   const niche = sp.get("niche") ?? "";
   const ads = sp.get("ads") !== "0";
 
@@ -96,11 +96,12 @@ export function CatalogFilters({
 
         <label className="relative ml-auto shrink-0">
           <span className="sr-only">Tri</span>
-          <select value={sort} onChange={(e) => set({ sort: e.target.value === "pubs" ? null : e.target.value })} className={chip}>
+          <select value={sort} onChange={(e) => set({ sort: e.target.value === "new" ? null : e.target.value })} className={chip}>
+            <option value="new">Tri : nouveautés</option>
             <option value="pubs">Tri : plus de pubs</option>
             {kind === "produits" ? (
               <>
-                <option value="recent">Tri : nouveautés</option>
+                <option value="recent">Tri : publiés récemment</option>
                 <option value="promo">En promotion</option>
               </>
             ) : (

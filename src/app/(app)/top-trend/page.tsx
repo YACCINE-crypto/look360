@@ -4,20 +4,17 @@ import { Icon } from "@/components/Icon";
 import { FeatureLock } from "@/components/FeatureLock";
 import { AdGrid } from "@/components/AdGrid";
 import { ShopCard, ShopProductCard, UnlockMore } from "@/components/shops/ShopCards";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { currentAccess } from "@/lib/access";
-import { listNiches, listProducts, listShops, ZONE_CODES, type Zone } from "@/lib/shopQueries";
+import { listNiches, listProducts, listShops, type Zone } from "@/lib/shopQueries";
+import { AD_SCORE_MIN, PRODUCT_MIN_ACTIVE, readRanking, SHOP_MIN_ACTIVE, type RankedAd } from "@/lib/trends";
 import { type SpyAd } from "@/lib/spy";
 
 export const dynamic = "force-dynamic";
 
-// Seuils « meilleurs » : seuls les signaux forts entrent dans Top Trend.
+// Nombre d'éléments affichés ; les seuils et le calcul sont dans lib/trends.
 const TOP_ADS = 8;
 const TOP_PRODUCTS = 8;
 const TOP_SHOPS = 6;
-const AD_SCORE_MIN = 70;
-const PRODUCT_MIN_ACTIVE = 2;
-const SHOP_MIN_ACTIVE = 3;
 
 /**
  * Top Trend = sélection courte du MEILLEUR du moment, en un coup d'œil :
@@ -47,12 +44,37 @@ export default async function TopTrendPage({ searchParams }: { searchParams: Pro
   const niche = sp.niche && niches.includes(sp.niche) ? sp.niche : undefined;
 
   const preview = topTrend === "preview";
-  // Aperçu : le serveur ne lit que les N premiers et ne calcule pas les pubs.
-  const [ads, products, shops] = await Promise.all([
-    preview ? Promise.resolve([] as SpyAd[]) : topAds(zone, niche),
-    listProducts({ zone, niche, sort: "pubs", withAds: true, minActive: PRODUCT_MIN_ACTIVE, limit: preview ? topTrendPreview : TOP_PRODUCTS }),
-    listShops({ zone, niche, sort: "pubs", minActive: SHOP_MIN_ACTIVE, limit: preview ? topTrendPreview : TOP_SHOPS }),
+  const nProducts = preview ? topTrendPreview : TOP_PRODUCTS;
+  const nShops = preview ? topTrendPreview : TOP_SHOPS;
+  // Classement recalculé par le job (/api/cron/trends). Aperçu : le serveur ne
+  // lit que les N premiers et jamais les pubs.
+  const [rp, rs, ra] = await Promise.all([
+    readRanking("product", zone),
+    readRanking("shop", zone),
+    preview ? Promise.resolve(null) : readRanking("ad", zone),
   ]);
+  const order = (ids: string[]) => (a: { id: string }, b: { id: string }) => ids.indexOf(a.id) - ids.indexOf(b.id);
+  const pIds = rp.rows.map((r) => r.item_id);
+  const sIds = rs.rows.map((r) => r.item_id);
+  const [products, shops] = await Promise.all([
+    pIds.length
+      ? listProducts({ zone: "all", niche, ids: pIds, sort: "score", withAds: true, limit: pIds.length }).then((r) => ({
+          ...r,
+          items: r.items.sort(order(pIds)).slice(0, nProducts),
+        }))
+      : listProducts({ zone, niche, sort: "score", withAds: true, minActive: PRODUCT_MIN_ACTIVE, limit: nProducts }),
+    sIds.length
+      ? listShops({ zone: "all", niche, ids: sIds, sort: "score", limit: sIds.length }).then((r) => ({
+          ...r,
+          shops: r.shops.sort(order(sIds)).slice(0, nShops),
+        }))
+      : listShops({ zone, niche, sort: "score", minActive: SHOP_MIN_ACTIVE, limit: nShops }),
+  ]);
+  const ads: SpyAd[] = (ra?.rows ?? [])
+    .map((r) => r.payload as RankedAd)
+    .filter((a) => a && (!niche || a.trend_niche === niche))
+    .slice(0, TOP_ADS);
+  const computedAt = rp.computedAt ?? rs.computedAt;
   const link = (patch: { zone?: Zone; niche?: string | null }) => {
     const z = patch.zone ?? zone;
     const n = patch.niche === undefined ? niche : patch.niche;
@@ -69,7 +91,9 @@ export default async function TopTrendPage({ searchParams }: { searchParams: Pro
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <PageHeader
           title="Top Trend"
-          subtitle="Le meilleur du moment, en un coup d'œil : uniquement les signaux les plus forts des 30 derniers jours."
+          subtitle={`Le meilleur du moment : classement recalculé automatiquement plusieurs fois par jour${
+            computedAt ? ` (dernier calcul ${since(computedAt)})` : ""
+          }.`}
         />
         <div className="bg-input flex shrink-0 gap-0.5 self-start rounded-lg p-0.5 sm:self-auto">
           {(
@@ -168,51 +192,12 @@ export default async function TopTrendPage({ searchParams }: { searchParams: Pro
   );
 }
 
-/** Meilleures pubs des 30 derniers jours (recherches + feed), une par annonceur. */
-async function topAds(zone: Zone, niche?: string): Promise<SpyAd[]> {
-  const admin = createAdminClient();
-  const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
-  const [{ data: rows }, { data: feed }, { data: kws }] = await Promise.all([
-    admin.from("spy_searches").select("results, filters").gte("created_at", since).order("created_at", { ascending: false }).limit(400),
-    admin.from("feed_ads").select("payload, niche, thumbnail_cdn_url, media_cdn_url"),
-    niche ? admin.from("discovery_keywords").select("keyword").eq("niche", niche) : Promise.resolve({ data: [] as { keyword: string }[] }),
-  ]);
-  const nicheWords = new Set((kws ?? []).map((k) => k.keyword.toLowerCase()));
-  const FEED_NICHE: Record<string, string> = { "Auto & moto": "Automobile", "Bien-être": "Santé", "Montre & tech": "High-tech" };
-  const archived = new Map<string, { thumb: string | null; media: string | null }>();
-  const all: SpyAd[] = [];
-  for (const f of feed ?? []) {
-    const ad = f.payload as unknown as SpyAd;
-    if (!ad?.ad_archive_id) continue;
-    archived.set(ad.ad_archive_id, { thumb: f.thumbnail_cdn_url, media: f.media_cdn_url });
-    if (niche && (FEED_NICHE[f.niche ?? ""] ?? f.niche) !== niche) continue;
-    all.push(ad);
-  }
-  for (const r of rows ?? []) {
-    const q = String((r.filters as { q?: string } | null)?.q ?? "").toLowerCase().trim();
-    if (niche && !nicheWords.has(q)) continue;
-    for (const ad of (r.results as unknown as SpyAd[]) ?? []) if (ad?.ad_archive_id) all.push(ad);
-  }
-
-  const codes = zone === "all" ? null : new Set(ZONE_CODES[zone]);
-  const inZone = (a: SpyAd) => !codes || codes.has(a.country ?? "");
-  // Une pub par annonceur (la meilleure), pour une sélection variée.
-  const best = new Map<string, SpyAd>();
-  for (const a of all) {
-    if (!a.is_active || a.score < AD_SCORE_MIN || !inZone(a)) continue;
-    const key = a.page_id ?? a.page_name ?? a.ad_archive_id;
-    const prev = best.get(key);
-    if (!prev || a.score > prev.score || (a.score === prev.score && (a.reach ?? 0) > (prev.reach ?? 0))) best.set(key, a);
-  }
-  return [...best.values()]
-    .sort((a, b) => b.score - a.score || (b.reach ?? 0) - (a.reach ?? 0) || (b.jours_actifs ?? 0) - (a.jours_actifs ?? 0))
-    .slice(0, TOP_ADS)
-    .map((ad) => {
-      const a = archived.get(ad.ad_archive_id);
-      return a
-        ? { ...ad, thumbnail_url: a.thumb ?? ad.thumbnail_url, media_hls_url: a.media ?? ad.media_hls_url ?? null, media_source_url: ad.media_source_url ?? ad.media_url }
-        : ad;
-    });
+/** « il y a 2 h » (calcul serveur, au moment du rendu). */
+function since(iso: string): string {
+  const min = Math.max(1, Math.round((Date.now() - Date.parse(iso)) / 60_000));
+  if (min < 60) return `il y a ${min} min`;
+  const h = Math.round(min / 60);
+  return h < 48 ? `il y a ${h} h` : `il y a ${Math.round(h / 24)} j`;
 }
 
 function Section({
@@ -245,7 +230,7 @@ function Section({
       </div>
       {empty ? (
         <p className="border-border bg-surface text-muted-foreground rounded-xl border border-dashed p-6 text-center text-sm">
-          Rien d&apos;assez fort pour cette zone en ce moment. La sélection se met à jour à chaque collecte.
+          Rien d&apos;assez fort pour cette zone en ce moment. Le classement est recalculé plusieurs fois par jour.
         </p>
       ) : (
         children
