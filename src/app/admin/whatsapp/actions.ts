@@ -79,6 +79,32 @@ export async function waQr(): Promise<Res<string>> {
   return { ok: true, data: r.qr };
 }
 
+/**
+ * Relie une instance EXISTANTE (créée dans le tableau de bord SWATS) : on vérifie
+ * qu'elle répond avec notre clé, puis on l'enregistre. Ne crée JAMAIS d'instance
+ * (plan SWATS gratuit = 1 instance). Remplace une éventuelle ancienne ligne.
+ */
+export async function waLink(rawId: string): Promise<Res<string>> {
+  await requireSuperadmin();
+  const id = rawId.trim();
+  if (!/^[A-Za-z0-9_-]{6,100}$/.test(id)) return { ok: false, error: "ID invalide : copie l'ID complet de l'instance depuis SWATS." };
+  const r = await getInstance(id);
+  if (!r.ok) {
+    return {
+      ok: false,
+      error:
+        r.status === 404
+          ? "SWATS ne trouve pas cette instance avec ta clé : vérifie l'ID complet (et que la clé SWATS_API_KEY est celle du même compte)."
+          : `SWATS refuse : ${errText(r)}`,
+    };
+  }
+  const admin = createAdminClient();
+  const db = admin as unknown as { from: (t: string) => any }; // eslint-disable-line @typescript-eslint/no-explicit-any
+  await db.from("whatsapp_instance").delete().neq("id", id);
+  await saveInstanceStatus(admin, id, r.state, { name: "look360-alerts", phone: r.phone, last_error: null });
+  return { ok: true, data: r.state };
+}
+
 /** Statut en direct (appelé en boucle pendant le scan). */
 export async function waRefresh(): Promise<Res<string>> {
   await requireSuperadmin();
