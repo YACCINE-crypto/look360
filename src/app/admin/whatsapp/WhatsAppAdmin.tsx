@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { Check, Loader2, Lock, Plug, QrCode, RefreshCw, RotateCcw, Send, ShieldAlert, Webhook } from "lucide-react";
-import { waCreate, waDispatch, waQr, waRefresh, waRestart, waState, waTest, waWebhook, type WaState } from "./actions";
+import { Check, Link2, Loader2, Lock, QrCode, RefreshCw, RotateCcw, Send, ShieldAlert, Webhook } from "lucide-react";
+import { waDispatch, waLink, waQr, waRefresh, waRestart, waState, waTest, waWebhook, type WaState } from "./actions";
 
 // Écran superadmin : un PARCOURS de mise en service (5 étapes, dans l'ordre réel)
 // + un panneau d'état (instance, volume du jour). Chaque bouton désactivé dit pourquoi.
@@ -31,6 +31,7 @@ export function WhatsAppAdmin({ initial }: { initial: WaState }) {
   const [qr, setQr] = useState<string | null>(null);
   const [msg, setMsg] = useState<Msg | null>(null);
   const [testNumber, setTestNumber] = useState("");
+  const [linkId, setLinkId] = useState("");
   const [webhookOk, setWebhookOk] = useState(false);
   const [testOk, setTestOk] = useState(false);
   const [pending, start] = useTransition();
@@ -138,14 +139,36 @@ export function WhatsAppAdmin({ initial }: { initial: WaState }) {
             <p className="text-muted-foreground mt-1 text-sm">
               {connected
                 ? `Connecté${s.instance?.phone ? ` : ${s.instance.phone}` : ""}.`
-                : "Un numéro réservé à Look360, jamais ton numéro perso. Connexion par QR code."}
+                : s.instance
+                  ? "Un numéro réservé à Look360, jamais ton numéro perso. Connexion par QR code."
+                  : "Colle l'ID de l'instance créée dans le tableau de bord SWATS (aucune nouvelle instance n'est créée)."}
             </p>
             {!blocked[2] && !connected && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {!s.instance ? (
-                  <Btn primary disabled={pending} onClick={() => run(2, waCreate, "Instance créée. Affiche le QR code.")} icon={<Plug size={16} />}>
-                    Créer l&apos;instance
-                  </Btn>
+                  <form
+                    className="flex w-full max-w-lg flex-col gap-2 sm:flex-row"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      run(2, () => waLink(linkId), "Instance reliée. Statut :");
+                    }}
+                  >
+                    <label htmlFor="wa-instance-id" className="sr-only">
+                      ID de l&apos;instance SWATS
+                    </label>
+                    <input
+                      id="wa-instance-id"
+                      placeholder="ID de l'instance (ex. scalor_6af3…)"
+                      value={linkId}
+                      onChange={(e) => setLinkId(e.target.value)}
+                      autoComplete="off"
+                      spellCheck={false}
+                      className="border-border bg-surface text-fg focus:border-accent focus-visible:ring-accent/30 min-h-10 flex-1 rounded-md border px-3 font-mono text-sm outline-none focus-visible:ring-2"
+                    />
+                    <Btn primary type="submit" disabled={pending || linkId.trim().length < 6} icon={<Link2 size={16} />}>
+                      Relier l&apos;instance
+                    </Btn>
+                  </form>
                 ) : (
                   <Btn
                     primary
@@ -285,7 +308,7 @@ export function WhatsAppAdmin({ initial }: { initial: WaState }) {
               <Row label="Vérifié" value={fmt(s.instance.statusAt)} />
             </dl>
           ) : (
-            <p className="text-muted-foreground mt-1 text-sm">Se crée à l&apos;étape 2.</p>
+            <p className="text-muted-foreground mt-1 text-sm">À relier à l&apos;étape 2.</p>
           )}
           {s.instance?.lastError && (
             <p className="bg-danger-bg text-danger-fg mt-3 flex items-start gap-2 rounded-md p-2.5 text-sm">
