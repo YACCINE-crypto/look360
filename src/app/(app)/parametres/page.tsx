@@ -9,6 +9,7 @@ import {
   Store,
   ShieldCheck,
   ChevronRight,
+  Gift,
   type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -19,6 +20,8 @@ import { PageHeader } from "@/components/ui";
 import { NotifBell } from "@/components/NotifBell";
 import { ShareToggle } from "./ShareToggle";
 import { FeedPreferences, WhatsAppSettings } from "./WhatsAppSettings";
+import { CopyLink } from "../parrainage/ReferralClient";
+import { fcfa, referralLink, ruleText, type ReferralSettings } from "@/lib/referralFormat";
 
 export const dynamic = "force-dynamic";
 
@@ -141,6 +144,11 @@ export default async function ParametresPage() {
     data: { pref_niches: string[]; pref_markets: string[]; whatsapp_number: string | null; whatsapp_optin: boolean } | null;
     error: unknown;
   };
+  // Parrainage (crée le code au besoin). Erreur → la section est simplement masquée.
+  const { data: refData } = await (supabase as unknown as {
+    rpc: (f: string) => PromiseLike<{ data: unknown }>;
+  }).rpc("my_referral_dashboard");
+  const referral = refData as { code: string; settings: ReferralSettings; balance: { available: number } } | null;
   const share = profile?.vitrine_share ?? true;
   const isAdmin = (profile?.role ?? "membre") === "superadmin";
   const displayName = profile?.nom ?? email ?? "Mon compte";
@@ -203,6 +211,23 @@ export default async function ParametresPage() {
             <FeedPreferences niches={prefs.pref_niches ?? []} markets={prefs.pref_markets ?? []} />
           </Group>
         </>
+      )}
+
+      {referral?.code && (
+        <Group title="Parrainage">
+          <ControlRow
+            icon={Gift}
+            label={referralLink(referral.code).replace(/^https?:\/\//, "")}
+            sub={`Code ${referral.code} · ${ruleText(referral.settings)} · disponible : ${fcfa(referral.balance.available)}`}
+          >
+            <div className="flex items-center gap-2">
+              <CopyLink link={referralLink(referral.code)} compact />
+              <Link href="/parrainage" className="text-accent hidden text-sm font-semibold hover:underline sm:inline">
+                Mes gains
+              </Link>
+            </div>
+          </ControlRow>
+        </Group>
       )}
 
       <Group title="Partage">

@@ -16,6 +16,7 @@ const ITEMS = [
   { href: "/surveillance", label: "Surveillance", icon: "bell" as const, needs: "competitor" as const, group: "Suivre" },
   { href: "/testing", label: "Testing", icon: "flask" as const, group: "Suivre" },
   { href: "/vitrine", label: "Vitrine winners", icon: "trophy" as const, needs: "vitrine" as const, group: "Suivre" },
+  { href: "/parrainage", label: "Parrainage", icon: "gift" as const, group: "Suivre" },
   { href: "/validation", label: "Validation", icon: "inbox" as const, adminOnly: true, group: "Admin" },
   { href: "/equipe", label: "Équipe", icon: "users" as const, adminOnly: true, group: "Admin" },
 ];
