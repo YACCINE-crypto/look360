@@ -1,4 +1,7 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { RefClaim } from "@/components/referral/RefTracker";
+import { REF_COOKIE } from "@/lib/referral";
 import { createClient } from "@/lib/supabase/server";
 import { getQuota } from "@/lib/usage";
 import { BillingBanner, type BillingState } from "@/components/BillingBanner";
@@ -53,6 +56,8 @@ export default async function AppLayout({
   // 1re connexion : onboarding affiché tant qu'il n'a pas été terminé ou passé.
   const showOnboarding = !onboarding.error && onboarding.data != null && onboarding.data.onboarding_done_at === null;
   const plan = quota?.plan ?? "free";
+  // Lien de parrainage cliqué avant l'inscription : rattachement (règles en base).
+  const hasRefCookie = (await cookies()).has(REF_COOKIE);
 
   return (
     <AppShell
@@ -64,6 +69,7 @@ export default async function AppLayout({
       searchesLimit={quota?.limit ?? 0}
       plan={plan}
     >
+      {hasRefCookie && <RefClaim />}
       <BillingBanner state={(billing as BillingState | null) ?? null} />
       {showOnboarding && <OnboardingModal firstName={(profile?.nom ?? "").split(" ")[0]} planLabel={planLabel(plan)} />}
       <PlanProvider plan={plan}>{children}</PlanProvider>

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans } from "next/font/google";
 import "./globals.css";
+import { RefTracker } from "@/components/referral/RefTracker";
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="fr" className={`${dmSans.variable} h-full antialiased`}>
       <body className="bg-bg text-fg min-h-full">
         {children}
+        <RefTracker />
       </body>
     </html>
   );
